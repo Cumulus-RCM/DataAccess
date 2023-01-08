@@ -17,6 +17,8 @@ public sealed class DbConnectionManager {
             connectionString = config["ConnectionStrings:DefaultConnection"] ?? "";
     }
 
+    public DbConnectionManager(string connString) => connectionString = connString;
+
     private static readonly List<IDbConnection> connections = new();
     private static readonly object locker = new();
 

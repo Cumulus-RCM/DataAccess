@@ -3,13 +3,17 @@ using System.Data;
 using System.Data.SqlClient;
 using Dapper;
 using DataAccess.Enums;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
 namespace DataAccess;
 
 public class SimpleSingleEntitySaveStrategy : SaveStrategy {
-    public SimpleSingleEntitySaveStrategy(DbConnectionManager dbConnection, DatabaseMapper databaseMapper) : base(dbConnection, databaseMapper) { }
+    private readonly ILogger<SimpleSingleEntitySaveStrategy> logger;
+    public SimpleSingleEntitySaveStrategy(DbConnectionManager dbConnection, DatabaseMapper databaseMapper, ILoggerFactory loggerFactory) : base(dbConnection, databaseMapper) {
+        this.logger = loggerFactory.CreateLogger<SimpleSingleEntitySaveStrategy>();
+    }
 
     public override async Task<int> SaveAsync(IEnumerable<IDataChange> dataChanges) {
         var conn = dbConnection.CreateConnection();
@@ -19,7 +23,7 @@ public class SimpleSingleEntitySaveStrategy : SaveStrategy {
             foreach (var dataChange in dataChanges) {
                 var tableInfo = databaseMapper.GetTableInfo(dataChange.EntityType);
                 var sql = getSql(dataChange, tableInfo);
-                int rowsEffected;
+                int rowsEffected = 0;
                 if (dataChange.DataChangeKind == DataChangeKind.Insert) {
                     if (dataChange.IsCollection) {
                         var collection = (ICollection) dataChange.Entity;
@@ -28,6 +32,7 @@ public class SimpleSingleEntitySaveStrategy : SaveStrategy {
                                 var id = await conn.ExecuteAsync($"{sql}", item).ConfigureAwait(false);
                                 tableInfo.SetPrimaryKeyValue(item, id);
                             }
+                            rowsEffected = collection.Count;
                         }
                         else {
                             if (conn is SqlConnection sqlConn && dbTransaction is SqlTransaction sqlTransaction) {
@@ -35,10 +40,9 @@ public class SimpleSingleEntitySaveStrategy : SaveStrategy {
                                 foreach (var item in collection) {
                                     tableInfo.SetPrimaryKeyValue(item, firstId++);
                                 }
-                                await bulkInsert(sqlConn, tableName: tableInfo.TableName, collection, sqlTransaction).ConfigureAwait(false);
+                                rowsEffected = await bulkInsert(sqlConn, tableName: tableInfo.TableName, collection, sqlTransaction).ConfigureAwait(false);
                             }
                         }
-                        rowsEffected = collection.Count;
                     }
                     else {
                         var id = await conn.ExecuteScalarAsync<int>($"{sql}", dataChange.Entity, dbTransaction).ConfigureAwait(false);
@@ -56,7 +60,8 @@ public class SimpleSingleEntitySaveStrategy : SaveStrategy {
         }
         catch (Exception ex) {
             dbTransaction.Rollback();
-            throw;
+            logger.LogError(ex, nameof(SaveAsync));
+            return 0;
         }
     }
 
@@ -70,9 +75,7 @@ public class SimpleSingleEntitySaveStrategy : SaveStrategy {
         };
     }
 
-
-
-    private static async Task<int> getSequenceValuesAsync(IDbConnection conn, string sequenceName, int cnt) {
+    private async Task<int> getSequenceValuesAsync(IDbConnection conn, string sequenceName, int cnt) {
         try {
             object objResult = new();
             var parameters = new DynamicParameters();
@@ -86,12 +89,12 @@ public class SimpleSingleEntitySaveStrategy : SaveStrategy {
             return objResult as int? ?? throw new Exception("No SequenceName value returned.");
         }
         catch (Exception ex) {
-            // Log.Error(ex, "Failed to get new SequenceName value");
+            logger.LogError(ex, "Failed to get new SequenceName value");
             throw;
         }
     }
 
-    private static async Task bulkInsert(SqlConnection conn, string tableName, ICollection items,
+    private static async Task<int> bulkInsert(SqlConnection conn, string tableName, ICollection items,
         SqlTransaction? transaction) {
         using var bulkCopy = new SqlBulkCopy(conn,
             SqlBulkCopyOptions.CheckConstraints | SqlBulkCopyOptions.FireTriggers, transaction);
@@ -101,21 +104,22 @@ public class SimpleSingleEntitySaveStrategy : SaveStrategy {
         bulkCopy.EnableStreaming = true;
 
         using var dataTable = convertItemsToDataTable();
+        if (dataTable is null) return 0;
         //ensure columns are in the same order required by BulkLoader
         foreach (DataColumn col in dataTable.Columns) {
             bulkCopy.ColumnMappings.Add(col.ColumnName, col.ColumnName);
         }
 
         await bulkCopy.WriteToServerAsync(dataTable).ConfigureAwait(false);
+        return dataTable.Rows.Count;
 
-        DataTable convertItemsToDataTable() {
-            var json = JsonConvert.SerializeObject(items,
-                new JsonSerializerSettings {ContractResolver = new WritablePropertiesOnlyResolver()});
+        DataTable? convertItemsToDataTable() {
+            var json = JsonConvert.SerializeObject(items, new JsonSerializerSettings {ContractResolver = new writablePropertiesOnlyResolver()});
             return JsonConvert.DeserializeObject<DataTable>(json);
         }
     }
 
-    private class WritablePropertiesOnlyResolver : DefaultContractResolver {
+    private class writablePropertiesOnlyResolver : DefaultContractResolver {
         protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization) =>
             base.CreateProperties(type, memberSerialization).Where(p => p.Writable).ToList();
     }
