@@ -3,15 +3,11 @@
 public class DatabaseMapper {
     private readonly Dictionary<Type, ITableInfo> tableInfos = new();
 
-    public DatabaseMapper(IEnumerable<ITableInfo>? config = null) {
-        if (config is not null) LoadMap(config);
-    }
-
-    public void LoadMap(IEnumerable<ITableInfo>? config = null) {
+    public DatabaseMapper(IDatabaseMap? dbMap = null) {
         tableInfos.Clear();
-        if (config is null) return;
+        if (dbMap is null) return;
 
-        foreach (var entry in config) {
+        foreach (var entry in dbMap.Map) {
             tableInfos.Add(entry.EntityType, entry);
         }
     }
