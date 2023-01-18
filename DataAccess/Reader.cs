@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using Dapper;
+using DataAccess.Shared;
 using Microsoft.Extensions.Logging;
 
 namespace DataAccess;
@@ -16,11 +17,11 @@ public class Reader<T> : IReader<T> where T : class {
         sqlBuilder = new SqlBuilder(tableInfo);
     }
     
-    public virtual async Task<ReadOnlyCollection<T>> GetAllAsync(string where = "", object? args = null, int pageSize = 0, int pageNum = 0, string orderBy = "") {
+    public virtual async Task<ReadOnlyCollection<T>> GetAllAsync(Filter<T>? filter = null, object? filterValues = null, int pageSize = 0, int pageNum = 0, string orderBy = "") {
         try {
-            var sql = sqlBuilder.GetSelectSql(where, pageSize, pageNum);
+            var sql = sqlBuilder.GetSelectSql(filter?.ToString() ?? "", pageSize, pageNum);
             using var conn = dbConnectionService.CreateConnection();
-            var result = await conn.QueryAsync<T>(sql, args).ConfigureAwait(false);
+            var result = await conn.QueryAsync<T>(sql, filterValues).ConfigureAwait(false);
             return result.ToList().AsReadOnly();
         }
         catch (Exception e)
@@ -58,8 +59,8 @@ public class Reader<T> : IReader<T> where T : class {
     //    return await conn.ExecuteScalarAsync<int>(sqlBuilder.GetCountSql());
     //}
 
-    public virtual  async Task<int> GetCountAsync(string filter="", object? values = null) {
+    public virtual  async Task<int> GetCountAsync(Filter<T>? filter = null, object? args = null) {
         using var conn = dbConnectionService.CreateConnection();
-        return await conn.ExecuteScalarAsync<int>(sqlBuilder.GetCountSql(filter), values );
+        return await conn.ExecuteScalarAsync<int>(sqlBuilder.GetCountSql(filter?.ToString() ?? ""), args );
     }
 }

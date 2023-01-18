@@ -1,9 +1,10 @@
-﻿using DataAccess.Shared;
+﻿using System.Text.Json;
+using DataAccess.Shared;
 using Microsoft.Extensions.Logging;
 
 namespace DataAccess;
 
-public class Crud<T> where T : class {
+public class Crud<T> : ICrud<T> where T : class {
     protected readonly DbConnectionManager connectionManager;
     protected readonly DatabaseMapper databaseMapper;
     protected readonly ILoggerFactory loggerFactory;
@@ -11,7 +12,11 @@ public class Crud<T> where T : class {
     private readonly Reader<T> reader;
     private readonly SimpleWriter writer;
 
-    public Crud(DbConnectionManager connectionManager, DatabaseMapper databaseMapper, ILoggerFactory loggerFactory)  {
+    public static ICrud<T> Create(DbConnectionManager connectionManager, DatabaseMapper databaseMapper, ILoggerFactory loggerFactory) {
+        return new Crud<T>(connectionManager, databaseMapper, loggerFactory);
+    }
+
+    protected Crud(DbConnectionManager connectionManager, DatabaseMapper databaseMapper, ILoggerFactory loggerFactory) {
         this.connectionManager = connectionManager;
         this.databaseMapper = databaseMapper;
         this.loggerFactory = loggerFactory;
@@ -20,41 +25,55 @@ public class Crud<T> where T : class {
         this.writer = new SimpleWriter(connectionManager, databaseMapper, loggerFactory);
     }
 
-    public async Task<Response<T>> GetAllAsync(string? filter, int? pageSize, int? pageNumber)  {
+    public Task<Response<T>> GetAllAsync(Filter<T>? filter = null, string argsJson = "", int pageSize = 0, int pageNumber = 1) {
+        var parameterValues = string.IsNullOrEmpty(argsJson) ? null : JsonSerializer.Deserialize<object>(argsJson);
+        return getAllAsync(filter, parameterValues, pageSize, pageNumber);
+    }
+
+    private async Task<Response<T>> getAllAsync(Filter<T>? filter = null, object? parameterValues = null, int pageSize = 0,
+        int pageNumber = 1) {
         try {
             var cnt = 0;
-            if (pageSize== 0 && pageNumber == 1) {
-                cnt = await reader.GetCountAsync(filter ?? "").ConfigureAwait(false);
+            if (pageNumber == 0) {
+                cnt = await reader.GetCountAsync(filter, parameterValues).ConfigureAwait(false);
                 if (cnt == 0) return Response<T>.Empty();
             }
-            var items = await reader.GetAllAsync(where: filter ?? "", pageSize: pageSize ?? 0, pageNum: pageNumber ?? 1).ConfigureAwait(false);
-            if (pageSize == 0) cnt=items.Count;
-            var response = new Response<T>(true, items, cnt);
-            return response;
+
+            var items = await reader.GetAllAsync(filter, parameterValues, pageSize, pageNumber).ConfigureAwait(false);
+            return new Response<T>(true, items, cnt);
         }
         catch (Exception ex) {
             logger.LogError(ex, nameof(GetAllAsync));
-            return Response<T>.Empty(false,ex.Message);
+            return Response<T>.Empty(false, ex.Message);
         }
     }
 
-    public async Task<Response<T>> GetByIdAsync(int id) {
-        var item = await reader.GetByIdAsync(id);
-        return item is not null ? new Response<T>(item) : Response<T>.Empty(false, $"No row for {typeof(T).Name} found with Id={id}");
+    public Task<Response<T>> GetByPkAsync(object pkValue) {
+        var tableInfo = databaseMapper.GetTableInfo<T>();
+        var filter = new Filter<T>(tableInfo.PrimaryKeyName, Operator.Equal);
+        return getAllAsync(filter, pkValue);
     }
 
-    public async Task<bool> UpdateItemAsync(T item) {
+    public Task<Response<T>> GetByIdAsync(int id) {
+        var filter = new Filter<T>("Id", Operator.Equal);
+        return getAllAsync(filter, new{Id = id});
+    }
+
+    public async Task<Response> UpdateItemAsync(T item) {
         writer.AddForUpdate(item);
-        return await writer.SaveAsync().ConfigureAwait(false) == 1;
+        var updatedRowCount = await writer.SaveAsync().ConfigureAwait(false);
+        return new Response(updatedRowCount == 1);
     }
 
-    public async Task<bool> CreateItemAsync(T item)  {
+    public async Task<Response<T>> CreateItemAsync(T item) {
         writer.AddForInsert(item);
-        return await writer.SaveAsync().ConfigureAwait(false) == 1;
+        await writer.SaveAsync().ConfigureAwait(false);
+        return new Response<T>(item);
     }
 
-    public async Task<bool> DeleteItemAsync(int id) {
+    public async Task<Response> DeleteItemAsync(int id) {
         writer.AddForDelete<T>(id);
-        return await writer.SaveAsync().ConfigureAwait(false) == 1;
+        var updatedRowCount = await writer.SaveAsync().ConfigureAwait(false);
+        return new Response(updatedRowCount == 1);
     }
 }

@@ -15,6 +15,8 @@ public record Response<T>(bool Success, IReadOnlyCollection<T?> Items, int Total
 
     public Response(T? value) : this(isNullOrZero(value), value.ItemAsReadOnlyCollection(), isNullOrZero(value) ? 0 : 1) { }
 
+    public Response(T? value, bool success) : this(success, value.ItemAsReadOnlyCollection(), isNullOrZero(value) ? 0 : 1) { }
+
     public static Response<T> Empty(bool success = true, string errorMessage = "") => new(success, new List<T?>().AsReadOnly());
 
     private static bool isNumeric => numericTypes.Contains(typeof(T)) || numericTypes.Contains(Nullable.GetUnderlyingType(typeof(T)));
