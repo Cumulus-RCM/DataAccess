@@ -36,8 +36,9 @@ public class Filter<T> {
 public record FilterExpression(string PropertyName, Operator Operator) {
     public string PropertyName { get; protected set; } = PropertyName;
     public Operator Operator { get; protected set; } = Operator;
+    public string? ColumnName { get; set; }
 
-    public override string ToString() => $"{PropertyName} {Operator.DisplayName} {Operator.PreTemplate}@{PropertyName}{Operator.PostTemplate}";
+    public override string ToString() => $"{ColumnName ?? PropertyName} {Operator.DisplayName} {Operator.PreTemplate}@{PropertyName}{Operator.PostTemplate}";
 
     public static bool TryParse(string value, out FilterExpression? result) {
         result = JsonSerializer.Deserialize<FilterExpression>(value);
@@ -46,12 +47,12 @@ public record FilterExpression(string PropertyName, Operator Operator) {
 }
 
 public record FilterExpression<T> : FilterExpression {
-    public FilterExpression(string propertyName, Operator oper) : base(propertyName, oper) {
-      if (typeof(T).GetProperty(propertyName) is null) throw new ArgumentException($"Property: {propertyName} NOT found on {typeof(T).Name}");
+    public FilterExpression(string propertyName, Operator oper, bool shouldCheck = true) : base(propertyName, oper) {
+      if (shouldCheck && typeof(T).GetProperty(propertyName) is null) throw new ArgumentException($"Property: {propertyName} NOT found on {typeof(T).Name}");
     }
 
     public FilterExpression(Expression<Func<T,object>> propertyName, Operator oper) : base(MemberHelpers.GetMemberName(propertyName), oper){ }
 
-    public override string ToString() => $"{PropertyName} {Operator.DisplayName} {Operator.PreTemplate}@{PropertyName}{Operator.PostTemplate}";
+    public override string ToString() => $"{ColumnName ?? PropertyName} {Operator.DisplayName} {Operator.PreTemplate}@{PropertyName}{Operator.PostTemplate}";
 
 }

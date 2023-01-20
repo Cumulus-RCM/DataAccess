@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using DataAccess.Shared;
+﻿using DataAccess.Shared;
 using Microsoft.Extensions.Logging;
 
 namespace DataAccess;

@@ -24,7 +24,7 @@ public class Reader<T> : IReader<T> where T : class {
         var newFilter = new Filter<T>();
         foreach (var expr in inFilter.Expressions) {
             var mappedName = tableInfo.ColumnsMap.SingleOrDefault(x => x.PropertyName == expr.PropertyName)?.ColumnName;
-            newFilter.Add(new FilterExpression<T>(mappedName ?? expr.PropertyName, expr.Operator));
+            newFilter.Add(new FilterExpression<T>(expr.PropertyName, expr.Operator, false){ ColumnName = mappedName});
         }
         return newFilter;
     }
