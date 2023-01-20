@@ -3,21 +3,21 @@
 namespace DataAccess.Shared;
 
 public interface ICrud<T> {
-    [Get("/")]
-    Task<Response<T>> GetAllAsync(Filter<T>? filter = null, string? argsJson = "", int pageSize = 0, int pageNumber=1);
+    [Get("")]
+    Task<Response<T>> GetAllAsync(Filter<T>? filter = null, object? args = null, int pageSize = 0, int pageNumber=1);
     
-    [Get("/")]
+    [Get("/{pkValue")]
     Task<Response<T>> GetByPkAsync(object pkValue);
 
-    [Get("/")]
+    [Get("/{id}")]
     Task<Response<T>> GetByIdAsync(int id);
 
-    [Post("/")]
+    [Post("")]
     Task<Response> UpdateItemAsync([Body] T item);
 
-    [Put("/")]
+    [Put("")]
     Task<Response<T>> CreateItemAsync([Body] T item);
 
-    [Delete("/")]
+    [Delete("")]
     Task<Response> DeleteItemAsync(int id);
 }

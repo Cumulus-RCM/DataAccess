@@ -16,7 +16,7 @@ public class Crud<T> : ICrud<T> where T : class {
         return new Crud<T>(connectionManager, databaseMapper, loggerFactory);
     }
 
-    protected Crud(DbConnectionManager connectionManager, DatabaseMapper databaseMapper, ILoggerFactory loggerFactory) {
+    public Crud(DbConnectionManager connectionManager, DatabaseMapper databaseMapper, ILoggerFactory loggerFactory) {
         this.connectionManager = connectionManager;
         this.databaseMapper = databaseMapper;
         this.loggerFactory = loggerFactory;
@@ -25,13 +25,9 @@ public class Crud<T> : ICrud<T> where T : class {
         this.writer = new SimpleWriter(connectionManager, databaseMapper, loggerFactory);
     }
 
-    public Task<Response<T>> GetAllAsync(Filter<T>? filter = null, string argsJson = "", int pageSize = 0, int pageNumber = 1) {
-        var parameterValues = string.IsNullOrEmpty(argsJson) ? null : JsonSerializer.Deserialize<object>(argsJson);
-        return getAllAsync(filter, parameterValues, pageSize, pageNumber);
-    }
+    public Task<Response<T>> GetAllAsync(Filter<T>? filter = null, object? args = null, int pageSize = 0, int pageNumber = 1) => getAllAsync(filter, args, pageSize, pageNumber);
 
-    private async Task<Response<T>> getAllAsync(Filter<T>? filter = null, object? parameterValues = null, int pageSize = 0,
-        int pageNumber = 1) {
+    private async Task<Response<T>> getAllAsync(Filter<T>? filter = null, object? parameterValues = null, int pageSize = 0, int pageNumber = 1) {
         try {
             var cnt = 0;
             if (pageNumber == 0) {

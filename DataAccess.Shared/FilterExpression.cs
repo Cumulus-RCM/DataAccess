@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using System.Text.Json;
 using DataAccess.Shared.Helpers;
 
 namespace DataAccess.Shared;
@@ -11,13 +12,13 @@ public class Filter<T> {
 
     public Filter(FilterExpression<T> expression) => Add(expression);
 
-    public Filter(Expression<Func<T,object>> propertyName, Operator oper, string? value = null) {
-        var fe = new FilterExpression<T>(propertyName, oper, value);
+    public Filter(Expression<Func<T,object>> propertyName, Operator oper) {
+        var fe = new FilterExpression<T>(propertyName, oper);
         Add(fe);
     }
 
-    public Filter(string propertyName, Operator oper, string? value=null) {
-        var fe = new FilterExpression<T>(propertyName, oper, value);
+    public Filter(string propertyName, Operator oper) {
+        var fe = new FilterExpression<T>(propertyName, oper);
         Add(fe);
     }
 
@@ -25,27 +26,32 @@ public class Filter<T> {
        expressions.Add(filterExpression);
     }
     public override string ToString() => string.Join("", expressions.Select(e=>e.ToString()));
+
+    public static bool TryParse(string value, out Filter<T>? result) {
+        result = JsonSerializer.Deserialize<Filter<T>>(value);
+        return result is null;
+    }
 }
 
-public record FilterExpression<T> {
-    public string PropertyName { get; }
-    public Operator Operator { get; }
-    public object? Value { get; }
+public record FilterExpression(string PropertyName, Operator Operator) {
+    public string PropertyName { get; protected set; } = PropertyName;
+    public Operator Operator { get; protected set; } = Operator;
 
-    private FilterExpression(string propertyName, Operator oper, bool skipCheck, object? value) {
-        if (!skipCheck) if (typeof(T).GetProperty(propertyName) is null) throw new ArgumentException($"Property: {propertyName} NOT found on {typeof(T).Name}");
-        PropertyName = propertyName;
-        Operator = oper;
-        Value = value;
+    public override string ToString() => $"{PropertyName} {Operator.DisplayName} {Operator.PreTemplate}@{PropertyName}{Operator.PostTemplate}";
+
+    public static bool TryParse(string value, out FilterExpression? result) {
+        result = JsonSerializer.Deserialize<FilterExpression>(value);
+        return result is null;
+    }
+}
+
+public record FilterExpression<T> : FilterExpression {
+    public FilterExpression(string propertyName, Operator oper) : base(propertyName, oper) {
+      if (typeof(T).GetProperty(propertyName) is null) throw new ArgumentException($"Property: {propertyName} NOT found on {typeof(T).Name}");
     }
 
-    public FilterExpression(string propertyName, Operator oper, object? value = null) : this(propertyName, oper, false, value) { }
+    public FilterExpression(Expression<Func<T,object>> propertyName, Operator oper) : base(MemberHelpers.GetMemberName(propertyName), oper){ }
 
-    public FilterExpression(Expression<Func<T,object>> propertyName, Operator oper, object? value = null) : this(MemberHelpers.GetMemberName(propertyName), oper, true, value){ }
+    public override string ToString() => $"{PropertyName} {Operator.DisplayName} {Operator.PreTemplate}@{PropertyName}{Operator.PostTemplate}";
 
-    public override string ToString() {
-        return Value is null
-            ? $"{PropertyName} {Operator.DisplayName} @{PropertyName}"
-            : $"{PropertyName} {Operator.DisplayName} {Value}";
-    }
 }
