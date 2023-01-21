@@ -3,6 +3,21 @@ using Microsoft.Extensions.Logging;
 
 namespace DataAccess;
 
+public class CrudFactory {
+    protected readonly DbConnectionManager connectionManager;
+    protected readonly DatabaseMapper databaseMapper;
+    protected readonly ILoggerFactory loggerFactory;
+
+    public CrudFactory(DbConnectionManager connectionManager, DatabaseMapper databaseMapper, ILoggerFactory loggerFactory) {
+        this.connectionManager = connectionManager;
+        this.databaseMapper = databaseMapper;
+        this.loggerFactory = loggerFactory;
+    }
+    public virtual  ICrud<T> Create<T>() where T : class {
+        return new Crud<T>(connectionManager, databaseMapper, loggerFactory);
+    }
+}
+
 public class Crud<T> : ICrud<T> where T : class {
     protected readonly DbConnectionManager connectionManager;
     protected readonly DatabaseMapper databaseMapper;
@@ -10,10 +25,6 @@ public class Crud<T> : ICrud<T> where T : class {
     private readonly ILogger<Crud<T>> logger;
     private readonly Reader<T> reader;
     private readonly SimpleWriter writer;
-
-    public static ICrud<T> Create(DbConnectionManager connectionManager, DatabaseMapper databaseMapper, ILoggerFactory loggerFactory) {
-        return new Crud<T>(connectionManager, databaseMapper, loggerFactory);
-    }
 
     public Crud(DbConnectionManager connectionManager, DatabaseMapper databaseMapper, ILoggerFactory loggerFactory) {
         this.connectionManager = connectionManager;

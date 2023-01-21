@@ -1,8 +1,9 @@
 ﻿using Refit;
 
 namespace DataAccess.Shared;
+public interface ICrud {}
 
-public interface ICrud<T> {
+public interface ICrud<T> : ICrud {
     [Get("")]
     Task<Response<T>> GetAllAsync(Filter<T>? filter = null, object? args = null, int pageSize = 0, int pageNumber=1);
     
