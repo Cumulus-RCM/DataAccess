@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using DataAccess.Shared.DatabaseMapper;
 
 namespace DataAccess.Shared.DatabaseMapper.Models;
 

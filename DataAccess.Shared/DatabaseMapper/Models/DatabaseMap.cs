@@ -1,6 +1,4 @@
-﻿using DataAccess.Shared.DatabaseMapper;
-
-namespace DataAccess.Shared.DatabaseMapper.Models;
+﻿namespace DataAccess.Shared.DatabaseMapper.Models;
 
 public class DatabaseMap : IDatabaseMap
 {
