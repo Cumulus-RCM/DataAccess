@@ -27,10 +27,16 @@ public class FilterService {
         return new Filter<T>(fe);
     }
 
-    internal void Add<T>(Filter<T> filter, FilterExpression<T> filterExpression) {
+    public void Add<T>(Filter<T> filter, FilterExpression<T> filterExpression) {
         var mappedPropertyName = mapPropertyName<T>(filterExpression.PropertyName);
         var fe = new FilterExpression<T>(filterExpression.PropertyName, filterExpression.Operator, mappedPropertyName);
         filter.Add(fe);
+    }
+}
+
+public static class FilterExt {
+    public static void Add<T>(this Filter<T> filter, FilterExpression<T> filterExpression) {
+        filter.Add(filterExpression);
     }
 }
 
