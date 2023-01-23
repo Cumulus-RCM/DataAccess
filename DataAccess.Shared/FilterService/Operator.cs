@@ -1,4 +1,4 @@
-﻿namespace DataAccess.Shared; 
+﻿namespace DataAccess.Shared.FilterService; 
 
 public sealed class Operator : Enumeration {
     public static readonly Operator Equal = new Operator(1, "=");

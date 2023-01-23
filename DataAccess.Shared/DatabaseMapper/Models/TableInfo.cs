@@ -1,8 +1,10 @@
 ﻿using System.Reflection;
+using DataAccess.Shared.DatabaseMapper;
 
-namespace DataAccess.Models;
+namespace DataAccess.Shared.DatabaseMapper.Models;
 
-public sealed class TableInfo<T> : ITableInfo {
+public sealed class TableInfo<T> : ITableInfo
+{
     public string TableName { get; }
     public string PrimaryKeyName { get; }
     public string SequenceName { get; }
@@ -13,9 +15,10 @@ public sealed class TableInfo<T> : ITableInfo {
     private readonly MethodInfo? pkSetter;
     private readonly MethodInfo? pkGetter;
 
-    public TableInfo() : this(tableName:null) { }
+    public TableInfo() : this(tableName: null) { }
 
-    public TableInfo(string? tableName = null, string? primaryKeyName = null, string? sequence = null, bool isIdentity = false, IEnumerable<ColumnInfo>? mappedColumnsInfos = null) {
+    public TableInfo(string? tableName = null, string? primaryKeyName = null, string? sequence = null, bool isIdentity = false, IEnumerable<ColumnInfo>? mappedColumnsInfos = null)
+    {
         TableName = tableName ?? EntityType.Name;
         SequenceName = sequence ?? $"{TableName}_id_seq";
         PrimaryKeyName = primaryKeyName ?? "Id";
@@ -31,15 +34,15 @@ public sealed class TableInfo<T> : ITableInfo {
 
         ColumnsMap = properties
             .GroupJoin(mappedColumns.ToList(), prop => prop.Name, mappedColumn => mappedColumn.PropertyName,
-                (propInfo, columnInfo) => new { prop = propInfo, columnInfos = columnInfo}, StringComparer.InvariantCultureIgnoreCase)
-            .Select(t => new {propertyInfo = t.prop, mappedColumnInfo = t.columnInfos.SingleOrDefault()})
-            .Select(x => new ColumnInfo( x.mappedColumnInfo?.ColumnName ?? x.propertyInfo.Name, x.propertyInfo.Name,
+                (propInfo, columnInfo) => new { prop = propInfo, columnInfos = columnInfo }, StringComparer.InvariantCultureIgnoreCase)
+            .Select(t => new { propertyInfo = t.prop, mappedColumnInfo = t.columnInfos.SingleOrDefault() })
+            .Select(x => new ColumnInfo(x.mappedColumnInfo?.ColumnName ?? x.propertyInfo.Name, x.propertyInfo.Name,
                 x.mappedColumnInfo?.IsSkipByDefault, x.propertyInfo.CanWrite,
                 x.propertyInfo.Name.Equals(PrimaryKeyName, StringComparison.InvariantCultureIgnoreCase)))
             .ToList();
     }
 
-    public void SetPrimaryKeyValue(object entity,int value) => pkSetter?.Invoke(entity, new object[] { value });
+    public void SetPrimaryKeyValue(object entity, int value) => pkSetter?.Invoke(entity, new object[] { value });
     public object GetPrimaryKeyValue(object entity) => pkGetter?.Invoke(entity, null) ?? throw new InvalidDataException("PrimaryKeyName value is null");
 
 }

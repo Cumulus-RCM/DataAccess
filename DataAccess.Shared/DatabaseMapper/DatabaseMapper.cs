@@ -1,9 +1,9 @@
-﻿using DataAccess.Models;
+﻿using DataAccess.Shared.DatabaseMapper.Models;
 
-namespace DataAccess;
+namespace DataAccess.Shared.DatabaseMapper;
 
 public class DatabaseMapper {
-    private readonly Dictionary<Type, ITableInfo> tableInfos = new();
+    private readonly Dictionary<Type, ITableInfo> tableInfos = new ();
 
     public DatabaseMapper(IDatabaseMap? dbMap = null) {
         tableInfos.Clear();
@@ -18,12 +18,14 @@ public class DatabaseMapper {
         var type = typeof(T);
         if (tableInfos.TryGetValue(type, out var value)) return (TableInfo<T>)value;
         var newTableInfo = new TableInfo<T>();
-        tableInfos.Add(type,newTableInfo);
+        tableInfos.Add(type, newTableInfo);
         return newTableInfo;
     }
+
     public ITableInfo GetTableInfo(Type entityType) {
         if (tableInfos.TryGetValue(entityType, out var value)) return value;
-        var newTableInfo = Activator.CreateInstance(typeof(TableInfo<>).MakeGenericType(entityType)) ?? throw new InvalidOperationException($"Could not create TableInfo<{entityType}>");
+        var newTableInfo = Activator.CreateInstance(typeof(TableInfo<>).MakeGenericType(entityType)) ??
+                           throw new InvalidOperationException($"Could not create TableInfo<{entityType}>");
         tableInfos.Add(entityType, (ITableInfo)newTableInfo);
         return (ITableInfo)newTableInfo;
     }

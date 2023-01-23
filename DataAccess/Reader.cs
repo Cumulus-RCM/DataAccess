@@ -1,7 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using Dapper;
-using DataAccess.Models;
-using DataAccess.Shared;
+using DataAccess.Shared.DatabaseMapper;
+using DataAccess.Shared.FilterService;
 using Microsoft.Extensions.Logging;
 
 namespace DataAccess;
@@ -10,29 +10,17 @@ public class Reader<T> : IReader<T> where T : class {
     protected readonly DbConnectionManager dbConnectionService;
     private readonly ILogger logger;
     private readonly SqlBuilder sqlBuilder;
-    private readonly TableInfo<T> tableInfo;
 
     public Reader(DbConnectionManager dbConnectionService, DatabaseMapper databaseMapper, ILoggerFactory loggerFactory) {
         this.dbConnectionService = dbConnectionService;
         this.logger = loggerFactory.CreateLogger(typeof(T));
-        tableInfo = databaseMapper.GetTableInfo<T>();
+        var tableInfo = databaseMapper.GetTableInfo<T>();
         sqlBuilder = new SqlBuilder(tableInfo);
-    }
-
-    private Filter<T>? mapFilter(Filter<T>? inFilter) {
-        if (inFilter is null) return null;
-        var newFilter = new Filter<T>();
-        foreach (var expr in inFilter.Expressions) {
-            var mappedName = tableInfo.ColumnsMap.SingleOrDefault(x => x.PropertyName == expr.PropertyName)?.ColumnName;
-            newFilter.Add(new FilterExpression<T>(expr.PropertyName, expr.Operator, false){ ColumnName = mappedName});
-        }
-        return newFilter;
     }
 
     public virtual async Task<ReadOnlyCollection<T>> GetAllAsync(Filter<T>? filter = null, object? filterValues = null, int pageSize = 0, int pageNum = 0, string orderBy = "") {
         try {
-            var mappedFilter = mapFilter(filter)?.ToString() ?? "";
-            var sql = sqlBuilder.GetSelectSql(mappedFilter, pageSize, pageNum);
+            var sql = sqlBuilder.GetSelectSql(filter?.ToString() ?? "", pageSize, pageNum);
             using var conn = dbConnectionService.CreateConnection();
             var result = await conn.QueryAsync<T>(sql, filterValues).ConfigureAwait(false);
             return result.ToList().AsReadOnly();
@@ -51,30 +39,8 @@ public class Reader<T> : IReader<T> where T : class {
         return result;
     }
 
-    //public virtual async Task<T?> TryGetByIdAsync(int id) {
-    //    var rows = await GetAllAsync("Id=@id", new { id }).ConfigureAwait(false);
-    //    return rows.Count != 1 ? null : rows.Single();
-    //}
-
-    //public virtual async Task<T> GetOneAsync(string filter, object? values) {
-    //    var result = await GetAllAsync(filter, values).ConfigureAwait(false);
-    //    if (result.Count != 1) throw new InvalidDataException($"{result.Count} rows returned for {ObjectDumper.Dump(filter)}");
-    //    return result.Single();
-    //}
-
-    //public virtual async Task<T?> TryGetOneAsync(string filter, object? values) {
-    //    var rows = await GetAllAsync(filter, values).ConfigureAwait(false);
-    //    return rows.Count != 1 ? null : rows.Single();
-    //}
-
-    //public virtual async Task<int> GetCountAsync() {
-    //    using var conn = dbConnectionService.CreateConnection();
-    //    return await conn.ExecuteScalarAsync<int>(sqlBuilder.GetCountSql());
-    //}
-
     public virtual  async Task<int> GetCountAsync(Filter<T>? filter = null, object? args = null) {
-        var mappedFilter = mapFilter(filter)?.ToString() ?? "";
         using var conn = dbConnectionService.CreateConnection();
-        return await conn.ExecuteScalarAsync<int>(sqlBuilder.GetCountSql(mappedFilter), args );
+        return await conn.ExecuteScalarAsync<int>(sqlBuilder.GetCountSql(filter?.ToString() ?? ""), args);
     }
 }

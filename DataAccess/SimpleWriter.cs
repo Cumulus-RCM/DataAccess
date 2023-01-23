@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using DataAccess.Shared.DatabaseMapper;
+using Microsoft.Extensions.Logging;
 
 namespace DataAccess;
 

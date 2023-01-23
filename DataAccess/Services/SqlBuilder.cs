@@ -1,4 +1,6 @@
-﻿namespace DataAccess;
+﻿using DataAccess.Shared.DatabaseMapper;
+
+namespace DataAccess;
 
 public class SqlBuilder {
     private const string PREFIX_PARAMETER_NAME = "@";
