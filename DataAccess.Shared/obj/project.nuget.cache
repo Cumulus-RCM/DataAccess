@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "dgSpecHash": "I7BP6eSW91N0SBjckpIdN3QQK0qZFwtwy5pu90j/S4Zb1VuGvcH9kAOIJdZ0MEEFxstiOP4XiBiLZ69BZZylBQ==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\avist\\source\\repos\\DataAccess\\DataAccess.Shared\\DataAccess.Shared.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\avist\\.nuget\\packages\\refit\\6.3.2\\refit.6.3.2.nupkg.sha512",
+    "C:\\Users\\avist\\.nuget\\packages\\system.net.http.json\\6.0.0\\system.net.http.json.6.0.0.nupkg.sha512",
+    "C:\\Users\\avist\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\6.0.0\\system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512",
+    "C:\\Users\\avist\\.nuget\\packages\\system.text.encodings.web\\6.0.0\\system.text.encodings.web.6.0.0.nupkg.sha512",
+    "C:\\Users\\avist\\.nuget\\packages\\system.text.json\\6.0.0\\system.text.json.6.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
