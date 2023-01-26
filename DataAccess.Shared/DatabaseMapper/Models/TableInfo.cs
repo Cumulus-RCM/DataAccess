@@ -29,15 +29,16 @@ public sealed class TableInfo<T> : ITableInfo
         pkGetter = pkPropertyInfo.GetGetMethod(true);
 
         var mappedColumns = (mappedColumnsInfos ?? Enumerable.Empty<ColumnInfo>()).ToList();
-
-
+        
         ColumnsMap = properties
             .GroupJoin(mappedColumns.ToList(), prop => prop.Name, mappedColumn => mappedColumn.PropertyName,
                 (propInfo, columnInfo) => new { prop = propInfo, columnInfos = columnInfo }, StringComparer.InvariantCultureIgnoreCase)
             .Select(t => new { propertyInfo = t.prop, mappedColumnInfo = t.columnInfos.SingleOrDefault() })
             .Select(x => new ColumnInfo(x.mappedColumnInfo?.ColumnName ?? x.propertyInfo.Name, x.propertyInfo.Name,
                 x.mappedColumnInfo?.IsSkipByDefault, x.propertyInfo.CanWrite,
-                x.propertyInfo.Name.Equals(PrimaryKeyName, StringComparison.InvariantCultureIgnoreCase)))
+                x.propertyInfo.Name.Equals(PrimaryKeyName, StringComparison.InvariantCultureIgnoreCase), 
+                x.propertyInfo.PropertyType)
+                )
             .ToList();
     }
 
