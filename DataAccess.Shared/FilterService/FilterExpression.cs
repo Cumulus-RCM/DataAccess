@@ -35,7 +35,7 @@ public record FilterExpression<T> : FilterExpression {
         (string pre, string post) stringifyTemplates() {
             if (!IsString) return ("", "");
             var before = string.IsNullOrWhiteSpace(Operator.PreTemplate) ? "" : $"'{Operator.PreTemplate}' + ";
-            var after = string.IsNullOrWhiteSpace(Operator.PostTemplate) ? "" : $" + '{Operator.PreTemplate}'";
+            var after = string.IsNullOrWhiteSpace(Operator.PostTemplate) ? "" : $" + '{Operator.PostTemplate}'";
             return (before, after);
         }
     }
