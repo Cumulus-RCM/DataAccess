@@ -1,0 +1,9 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/DataAccess.Shared/obj/Debug/net7.0/DataAccess.Shared.assets.cache
+/DataAccess.Shared/obj/DataAccess.Shared.csproj.nuget.g.props
+/DataAccess.Shared/obj/project.nuget.cache
+/DataAccess.Shared/obj/project.assets.json
+/DataAccess.Shared/obj/DataAccess.Shared.csproj.nuget.dgspec.json
