@@ -1,4 +1,5 @@
-﻿using DataAccess.Shared;
+﻿using DataAccess.Services;
+using DataAccess.Shared;
 using DataAccess.Shared.DatabaseMapper;
 using DataAccess.Shared.FilterService;
 using Microsoft.Extensions.Logging;

@@ -1,8 +1,9 @@
 ﻿using DataAccess.Enums;
 
-namespace DataAccess;
+namespace DataAccess.Interfaces;
 
-public interface IDataChange {
+public interface IDataChange
+{
     object Entity { get; init; }
     DataChangeKind DataChangeKind { get; init; }
     bool IsCollection { get; init; }
