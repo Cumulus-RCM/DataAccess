@@ -1,5 +1,4 @@
 ﻿using DataAccess.Enums;
-using DataAccess.Interfaces;
 
 namespace DataAccess.Models;
 

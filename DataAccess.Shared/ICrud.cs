@@ -1,14 +1,11 @@
-﻿using DataAccess.Shared.FilterService;
-using Refit;
+﻿using Refit;
 
 namespace DataAccess.Shared;
-public interface ICrud {}
-
-public interface ICrud<T> : ICrud {
+public interface ICrud<T> {
     [Get("/")]
-    Task<Response<T>> GetAllAsync(Filter<T>? filter = null, object? args = null, int pageSize = 0, int pageNumber=1);
-    
-    [Get("/{pkValue")]
+    Task<Response<T>> GetAllAsync(string? filterJson = null, int pageSize = 0, int pageNumber = 1);
+
+    [Get("/{pkValue}")]
     Task<Response<T>> GetByPkAsync(object pkValue);
 
     [Get("/{id}")]

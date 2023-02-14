@@ -3,9 +3,7 @@ using System.Data;
 using System.Data.SqlClient;
 using Dapper;
 using DataAccess.Enums;
-using DataAccess.Interfaces;
 using DataAccess.Services;
-using DataAccess.Shared.DatabaseMapper;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -117,12 +115,12 @@ public class SimpleSingleEntitySaveStrategy : SaveStrategy {
         return dataTable.Rows.Count;
 
         DataTable? convertItemsToDataTable() {
-            var json = JsonConvert.SerializeObject(items, new JsonSerializerSettings {ContractResolver = new writablePropertiesOnlyResolver()});
+            var json = JsonConvert.SerializeObject(items, new JsonSerializerSettings {ContractResolver = new WritablePropertiesOnlyResolver()});
             return JsonConvert.DeserializeObject<DataTable>(json);
         }
     }
 
-    private class writablePropertiesOnlyResolver : DefaultContractResolver {
+    private class WritablePropertiesOnlyResolver : DefaultContractResolver {
         protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization) =>
             base.CreateProperties(type, memberSerialization).Where(p => p.Writable).ToList();
     }

@@ -1,7 +1,10 @@
 ﻿using System.ComponentModel;
 using System.Reflection;
+using System.Runtime.Serialization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
-namespace DataAccess.Shared; 
+namespace DataAccess.Shared.Enums;
 
 ////
 ////https://lostechies.com/jimmybogard/2008/08/12/enumeration-classes/
@@ -9,17 +12,19 @@ namespace DataAccess.Shared;
 ///
 /// 
 [DefaultProperty(nameof(Value))]
+[JsonConverter(typeof(EnumerationJsonConverter))]
 public abstract class Enumeration : IComparable {
-    public string Name { get; protected set; } = "";
-    public string DisplayName { get; } = "";
-    public int Value { get; }
+    [JsonIgnore] public string Name { get; protected set; } = "";
+    [JsonIgnore] public string DisplayName { get; } = "";
+    public int Value { get; set; }
 
     public override string ToString() => DisplayName;
 
     protected Enumeration() { }
+
     protected Enumeration(int value, string displayName) {
-        this.Value = value;
-        this.DisplayName = displayName;
+        Value = value;
+        DisplayName = displayName;
     }
 
     //TODO memoize
@@ -61,8 +66,8 @@ public abstract class Enumeration : IComparable {
         return matchingItem;
     }
 
-    public static bool ContainsValue<T>(int value) where T : Enumeration, new() => 
-        GetAll<T>().FirstOrDefault(x=>x.Value == value) is not null;
+    public static bool ContainsValue<T>(int value) where T : Enumeration, new() =>
+        GetAll<T>().FirstOrDefault(x => x.Value == value) is not null;
 
     private static T parse<T, K>(K value, string description, Func<T, bool> predicate) where T : Enumeration, new() {
         var matchingItem = GetAll<T>().FirstOrDefault(predicate);
@@ -71,12 +76,28 @@ public abstract class Enumeration : IComparable {
             var message = $"'{value}' is not a valid {description} in {typeof(T)}";
             throw new ApplicationException(message);
         }
+
         return matchingItem;
     }
-    
-    public int CompareTo(object? other) => other is null ? 1 : Value.CompareTo(((Enumeration)other).Value);
+
+    public int CompareTo(object? other) => other is null ? 1 : Value.CompareTo(((Enumeration) other).Value);
 
     public static bool operator ==(Enumeration? left, Enumeration? right) => left is null ? right is null : left.Value == right?.Value;
 
     public static bool operator !=(Enumeration left, Enumeration right) => !(left == right);
+}
+
+public class EnumerationJsonConverter : JsonConverter<Enumeration> {
+    public override Enumeration? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+        var methodInfo = typeof(Enumeration).GetMethod(
+            nameof(Enumeration.TryFromValue)
+            , BindingFlags.Static | BindingFlags.Public) ?? throw new SerializationException("Serialization is not supported");
+        var genericMethod = methodInfo.MakeGenericMethod(typeToConvert);
+        var args = new[] {reader.GetInt32(), new object()};
+        genericMethod.Invoke(null, args);
+        return args[1] as Enumeration;
+    }
+
+    public override void Write(Utf8JsonWriter writer, Enumeration enumeration, JsonSerializerOptions options) =>
+        writer.WriteNumberValue(enumeration.Value);
 }

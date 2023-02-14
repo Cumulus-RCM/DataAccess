@@ -1,20 +1,20 @@
-﻿using DataAccess.Shared.DatabaseMapper;
+﻿using System.Linq.Expressions;
+using System.Text;
+using DataAccess.Shared;
+using DataAccess.Shared.Enums;
 
-namespace DataAccess.Services;
+namespace DataAccess;
 
-public class SqlBuilder
-{
+public class SqlBuilder {
     private const string PREFIX_PARAMETER_NAME = "@";
     private readonly ITableInfo tableInfo;
 
-    public SqlBuilder(ITableInfo tableInfo)
-    {
+    public SqlBuilder(ITableInfo tableInfo) {
         this.tableInfo = tableInfo;
     }
 
-    public string GetSelectSql(string where = "", int pageSize = 0, int pageNum = 1, string orderBy = "")
-    {
-        var whereClause = readifyWhereClause(where);
+    public string GetSelectSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, string orderBy = "") {
+        var whereClause = generateWhereClause(filter);
         var orderByClause = orderBy == "" && pageSize > 0
             ? readifyOrderByClause(tableInfo.PrimaryKeyName)
             : readifyOrderByClause(orderBy);
@@ -26,9 +26,8 @@ public class SqlBuilder
         return result.Trim();
     }
 
-    public string GetCountSql(string where = "")
-    {
-        var whereClause = readifyWhereClause(where);
+    public string GetCountSql(Filter? filter = null) {
+        var whereClause = generateWhereClause(filter);
         return $"SELECT COUNT(*) FROM {tableInfo.TableName} {whereClause}";
     }
 
@@ -36,15 +35,13 @@ public class SqlBuilder
         ? $"NEXT VALUE FOR {tableInfo.SequenceName}"
         : throw new InvalidOperationException($"No SequenceName for Table:{tableInfo.TableName}, it uses Identity.");
 
-    public string GetInsertSql(bool shouldSetPk, bool shouldReturnNewId)
-    {
+    public string GetInsertSql(bool shouldSetPk, bool shouldReturnNewId) {
         if (tableInfo.IsIdentity && shouldSetPk) throw new InvalidOperationException("Can not set PK on Identity.");
         var returnNewId = "";
         var getNewIdFromSequence = "";
         var pkValue = "";
         var pkName = "";
-        if (shouldSetPk && !tableInfo.IsIdentity)
-        {
+        if (shouldSetPk && !tableInfo.IsIdentity) {
             pkValue = "@newID, ";
             pkName = $"{tableInfo.PrimaryKeyName},";
             getNewIdFromSequence = $"DECLARE @newID INT;SELECT @newID = {GetNextSequenceStatement()}";
@@ -53,36 +50,59 @@ public class SqlBuilder
         if (shouldReturnNewId)
             returnNewId = !tableInfo.IsIdentity ? "SELECT @newId as newID" : "SELECT SCOPE_IDENTITY() as newID";
 
-        var columnNames = string.Join(", ", tableInfo.ColumnsMap.Where(p => p is { CanWrite: true, IsPrimaryKey: false }).Select(x => x.ColumnName));
-        var parameterNames = string.Join(", ", tableInfo.ColumnsMap.Where(p => p is { CanWrite: true, IsPrimaryKey: false }).Select(x => $"@{x.PropertyName}"));
+        var columnNames = string.Join(", ", tableInfo.ColumnsMap.Where(p => p is {CanWrite: true, IsPrimaryKey: false}).Select(x => x.ColumnName));
+        var parameterNames = string.Join(", ", tableInfo.ColumnsMap.Where(p => p is {CanWrite: true, IsPrimaryKey: false}).Select(x => $"@{x.PropertyName}"));
         return @$"
 {getNewIdFromSequence};
 INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{parameterNames});
 {returnNewId};";
     }
 
-    public string GetUpdateSql(IEnumerable<string>? changedPropertyNames = null)
-    {
+    public string GetUpdateSql(IEnumerable<string>? changedPropertyNames = null) {
         var changedPropertiesList = changedPropertyNames is null ? new List<string>() : changedPropertyNames.ToList();
         var setStatements = tableInfo.ColumnsMap
             .Where(property => changedPropertyNames is null ||
                                changedPropertiesList.Contains(property.PropertyName, StringComparer.OrdinalIgnoreCase))
-            .Where(property => property is { IsPrimaryKey: false, IsSkipByDefault: false })
+            .Where(property => property is {IsPrimaryKey: false, IsSkipByDefault: false})
             .Select(col => $"[{col.ColumnName}] = {PREFIX_PARAMETER_NAME}{col.PropertyName}");
         return string.Format($"UPDATE {tableInfo.TableName} SET {string.Join(",", setStatements)} WHERE {tableInfo.PrimaryKeyName}={PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName}");
     }
 
     public string GetDeleteSql() => $"DELETE FROM {tableInfo.TableName} WHERE {tableInfo.PrimaryKeyName} IN (@{tableInfo.PrimaryKeyName})";
 
-    private static string readifyWhereClause(string? rawWhereClause) => readifyClause(rawWhereClause, "WHERE");
     private static string readifyOrderByClause(string? rawOrderByClause) => readifyClause(rawOrderByClause, "ORDER BY");
 
-    private static string readifyClause(string? rawClause, string op)
-    {
+    private static string readifyClause(string? rawClause, string op) {
         if (string.IsNullOrWhiteSpace(rawClause)) return "";
         var result = rawClause.Trim();
         return result.StartsWith(op, StringComparison.OrdinalIgnoreCase)
             ? $" {result}"
             : $" {op} {result}";
+    }
+
+    private string generateWhereClause(Filter? filter) {
+        if (filter == null) return "";
+        var x = filter.Segments.SelectMany(segment => segment.Expressions.Select(exp => toSql(exp.FilterExpression)));
+        var where =  "WHERE " + string.Join(AndOr.And.DisplayName, 
+            filter.Segments.SelectMany(segment => segment.Expressions.Select(exp => toSql(exp.FilterExpression))));
+        return where;
+    }
+
+    bool isString(string propertyName) => tableInfo.EntityType.GetProperty(propertyName)?.PropertyType == typeof(string);
+
+    string toSql(FilterExpression fe) {
+        var columnName = getMappedPropertyName(fe.PropertyName);
+        var (pre, post) = stringifyTemplates();
+        return $" {columnName} {fe.Operator.DisplayName} {pre}@{fe.PropertyName}{post} ";
+
+        (string pre, string post) stringifyTemplates() {
+            if (!isString(fe.PropertyName)) return ("", "");
+            var before = string.IsNullOrWhiteSpace(fe.Operator.PreTemplate) ? "" : $"'{fe.Operator.PreTemplate}' + ";
+            var after = string.IsNullOrWhiteSpace(fe.Operator.PostTemplate) ? "" : $" + '{fe.Operator.PostTemplate}'";
+            return (before, after);
+        }
+
+        string getMappedPropertyName(string propertyName) =>
+            tableInfo.ColumnsMap.SingleOrDefault(x => x.PropertyName == propertyName)?.ColumnName ?? propertyName;
     }
 }

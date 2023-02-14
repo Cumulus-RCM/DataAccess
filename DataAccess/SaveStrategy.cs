@@ -1,6 +1,4 @@
-﻿using DataAccess.Interfaces;
-using DataAccess.Services;
-using DataAccess.Shared.DatabaseMapper;
+﻿using DataAccess.Services;
 
 namespace DataAccess;
 

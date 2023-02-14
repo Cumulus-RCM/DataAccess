@@ -1,7 +1,6 @@
-﻿namespace DataAccess.Interfaces;
+﻿namespace DataAccess;
 
-public interface IWriter
-{
+public interface IWriter {
     void Reset();
     void AddForUpdate<T>(T entity) where T : class;
     void AddForUpdate<T>(IEnumerable<T> entity) where T : class;

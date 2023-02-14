@@ -1,4 +1,5 @@
-﻿namespace DataAccess.Shared.DatabaseMapper.Models;
+﻿// ReSharper disable once CheckNamespace
+namespace DataAccess;
 
 public class ColumnInfo {
     public string ColumnName { get; init; }

@@ -1,9 +1,7 @@
-﻿using DataAccess.Shared.DatabaseMapper.Models;
+﻿// ReSharper disable once CheckNamespace
+namespace DataAccess;
 
-namespace DataAccess.Shared.DatabaseMapper;
-
-public interface ITableInfo
-{
+public interface ITableInfo {
     Type EntityType { get; }
     string TableName { get; }
     string PrimaryKeyName { get; }
