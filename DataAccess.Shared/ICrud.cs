@@ -11,10 +11,10 @@ public interface ICrud<T> {
     [Get("/{id}")]
     Task<Response<T>> GetByIdAsync(int id);
 
-    [Post("")]
+    [Put("")]
     Task<Response> UpdateItemAsync([Body] T item);
 
-    [Put("")]
+    [Post("")]
     Task<Response<T>> CreateItemAsync([Body] T item);
 
     [Delete("")]
