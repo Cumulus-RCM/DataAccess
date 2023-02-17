@@ -2,8 +2,6 @@
 using System.Data;
 using System.Data.SqlClient;
 using Dapper;
-using DataAccess.Enums;
-using DataAccess.Services;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;

@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 
-namespace DataAccess.Shared.Extensions {
+namespace DataAccess.Shared {
    public static class DateTimeExtensions {
         public static int ToAge(this DateTime date) {
             if (date == DateTime.MinValue) return 0;

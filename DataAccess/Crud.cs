@@ -1,5 +1,4 @@
-﻿using DataAccess.Services;
-using DataAccess.Shared;
+﻿using DataAccess.Shared;
 using Microsoft.Extensions.Logging;
 
 namespace DataAccess;

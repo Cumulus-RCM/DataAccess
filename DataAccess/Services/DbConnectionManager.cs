@@ -5,7 +5,7 @@ using Polly;
 using Polly.Contrib.WaitAndRetry;
 using Polly.Retry;
 
-namespace DataAccess.Services;
+namespace DataAccess;
 
 public sealed class DbConnectionManager
 {

@@ -1,6 +1,4 @@
-﻿using DataAccess.Enums;
-
-namespace DataAccess.Models;
+﻿namespace DataAccess;
 
 public class DataChange<T> : IDataChange {
     public object Entity { get; init; }

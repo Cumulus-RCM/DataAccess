@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace DataAccess.Shared.Enums;
+namespace DataAccess.Shared;
 
 [JsonConverter(typeof(AndOrJsonConverter))]
 public sealed class AndOr : Enumeration {

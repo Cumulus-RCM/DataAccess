@@ -1,4 +1,4 @@
-﻿namespace DataAccess.Shared.Extensions; 
+﻿namespace DataAccess.Shared; 
 
 public class ReadOnlyCollection {
     

@@ -1,5 +1,4 @@
-﻿// ReSharper disable once CheckNamespace
-namespace DataAccess;
+﻿namespace DataAccess;
 
 public class DatabaseMapper {
     private readonly Dictionary<Type, ITableInfo> tableInfos = new();

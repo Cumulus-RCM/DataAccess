@@ -1,6 +1,4 @@
-﻿using DataAccess.Shared.Extensions;
-
-namespace DataAccess.Shared;
+﻿namespace DataAccess.Shared;
 
 public record Response(bool Success, string ErrorMessage = "");
 

@@ -1,6 +1,4 @@
-﻿using DataAccess.Services;
-
-namespace DataAccess;
+﻿namespace DataAccess;
 
 public abstract class SaveStrategy {
     public abstract Task<int> SaveAsync(IEnumerable<IDataChange> dataChanges);

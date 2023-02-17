@@ -1,8 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using Dapper;
-using DataAccess.Services;
 using DataAccess.Shared;
-using DataAccess.Shared.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace DataAccess;

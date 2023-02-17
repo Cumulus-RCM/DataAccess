@@ -1,4 +1,4 @@
-﻿namespace DataAccess.Enums;
+﻿namespace DataAccess;
 
 public enum DataChangeKind
 {

@@ -1,6 +1,4 @@
-﻿using DataAccess.Enums;
-
-namespace DataAccess;
+﻿namespace DataAccess;
 
 public interface IDataChange {
     object Entity { get; init; }

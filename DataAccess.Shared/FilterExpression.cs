@@ -2,20 +2,19 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Dapper;
-using DataAccess.Shared.Enums;
-using DataAccess.Shared.Helpers;
 
 namespace DataAccess.Shared;
 
 public record FilterExpression(string PropertyName, Operator Operator) {
     public string PropertyName { get; set; } = PropertyName;
     public Operator Operator { get; set; } = Operator;
+
     [JsonIgnore]
     public object Value {
         set => ValueString = value.ToString();
     }
     public string? ValueString { get; set; }
-    public string ValueType { get; set; }
+    public string ValueType { get; set; } = "object";
     protected FilterExpression() : this("", Operator.Contains) { }
 
    public static bool TryParse(string value, out FilterExpression? result) {
@@ -77,7 +76,11 @@ public class ParameterValue {
     public string Value { get; set; }
     public string TypeName { get; set; }
 
-    public ParameterValue() { }
+    public ParameterValue() {
+        Name = "";
+        Value = "";
+        TypeName = "object";
+    }
 
     public ParameterValue(string name, string value, string typeName) {
         Name = name;
@@ -115,7 +118,7 @@ public class ParameterValues  {
         var d = values.Select(v => new KeyValuePair<string, object>(v.Name, convert(v))).ToDictionary(x=>x.Key, x=>x.Value);
         return new DynamicParameters(d);
 
-        object convert(ParameterValue parameterValue) =>
+        static object convert(ParameterValue parameterValue) =>
             parameterValue.TypeName switch {
                 "string" => parameterValue.Value,
                 "Int32" => int.Parse(parameterValue.Value),
@@ -158,16 +161,7 @@ public class Filter {
             .Select(e => new KeyValuePair<string, object>(e.FilterExpression.PropertyName, e.FilterExpression.ValueString!))
             .ToDictionary(x => x.Key, x => x.Value);
 
-        //var d = values.Select(v => new KeyValuePair<string, object>(v.Name, convert(v))).ToDictionary(x=>x.Key, x=>x.ValueString);
         return new DynamicParameters(d);
-
-        object convert(ParameterValue parameterValue) =>
-            parameterValue.TypeName switch {
-                "string" => parameterValue.Value,
-                "Int32" => int.Parse(parameterValue.Value),
-                "decimal" => decimal.Parse(parameterValue.Value),
-                _ => throw new NotImplementedException()
-            };
     }
 
     public static bool TryParse(string json, out Filter? filter) {

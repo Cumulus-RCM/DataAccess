@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace DataAccess.Shared.Helpers;
+namespace DataAccess.Shared;
 
 internal class MemberHelpers {
     public const string EXPRESSION_CANNOT_BE_NULL_MESSAGE = "The expression cannot be null.";

@@ -1,7 +1,4 @@
-﻿using DataAccess.Enums;
-using DataAccess.Models;
-
-namespace DataAccess;
+﻿namespace DataAccess;
 
 public abstract class Writer : IWriter {
     private readonly SaveStrategy saveStrategy;

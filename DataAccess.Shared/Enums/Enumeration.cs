@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace DataAccess.Shared.Enums;
+namespace DataAccess.Shared;
 
 ////
 ////https://lostechies.com/jimmybogard/2008/08/12/enumeration-classes/

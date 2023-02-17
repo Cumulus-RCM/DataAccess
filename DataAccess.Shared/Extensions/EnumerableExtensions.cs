@@ -1,4 +1,4 @@
-﻿namespace DataAccess.Shared.Extensions; 
+﻿namespace DataAccess.Shared; 
 
 public static class EnumerableExtensions {
     public static IEnumerable<T> ItemAsEnumerable<T>(this T? item) => item is null ? Enumerable.Empty<T>() : new [] {item};
