@@ -7,15 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Entity.cs" />
-    <Compile Remove="EntityWriter.cs" />
-    <Compile Remove="Interfaces\IEntity.cs" />
-    <Compile Remove="Interfaces\IEntityWriter.cs" />
-    <Compile Remove="Interfaces\IRepository.cs" />
-    <Compile Remove="UnitOfWork.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Remove=".gitattributes" />
     <None Remove=".gitignore" />
     <None Remove="DataAccess.csproj.DotSettings" />

@@ -1,6 +1,7 @@
 ﻿using Refit;
 
 namespace DataAccess.Shared;
+
 public interface ICrud<T> {
     [Get("/")]
     Task<Response<T>> GetAllAsync(string? filterJson = null, int pageSize = 0, int pageNumber = 1);
