@@ -26,8 +26,9 @@ public abstract record Enumeration {
         Value = value;
         DisplayName = displayName;
     }
-
-    protected static IEnumerable<T> getAllValues<T>() where T : Enumeration, new() {
+ 
+    //TODO memoize
+    public static IEnumerable<T> GetAll<T>() where T : Enumeration, new()  {
         var type = typeof(T);
         var fields = type.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly);
 
@@ -58,7 +59,7 @@ public abstract record Enumeration {
         return matchingItem;
     }
 
-    public static T? TryFromValue<T>(int value) where T : Enumeration, new() => getAllValues<T>().FirstOrDefault(item => item.Value == value);
+    public static T? TryFromValue<T>(int value) where T : Enumeration, new() => GetAll<T>().FirstOrDefault(item => item.Value == value);
 
     public static T FromDisplayName<T>(string displayName) where T : Enumeration, new() {
         var matchingItem = parse<T, string>(displayName, "display name", item => item.DisplayName == displayName);
@@ -66,10 +67,10 @@ public abstract record Enumeration {
     }
 
     public static bool ContainsValue<T>(int value) where T : Enumeration, new() =>
-        getAllValues<T>().FirstOrDefault(x => x.Value == value) is not null;
+        GetAll<T>().FirstOrDefault(x => x.Value == value) is not null;
 
     private static T parse<T, K>(K value, string description, Func<T, bool> predicate) where T : Enumeration, new() {
-        var matchingItem = getAllValues<T>().FirstOrDefault(predicate);
+        var matchingItem = GetAll<T>().FirstOrDefault(predicate);
 
         if (matchingItem is null) {
             var message = $"'{value}' is not a valid {description} in {typeof(T)}";
