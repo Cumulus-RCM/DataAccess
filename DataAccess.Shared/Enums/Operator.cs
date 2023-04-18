@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace DataAccess.Shared;
 
 [JsonConverter(typeof(OperatorJsonConverter))]
-public sealed class Operator : Enumeration {
+public sealed record Operator : Enumeration {
     public static readonly Operator Equal = new(1, "=");
     public static readonly Operator NotEqual = new(2, "<>");
     public static readonly Operator LessThan = new(3, "<");

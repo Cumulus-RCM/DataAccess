@@ -66,10 +66,10 @@ public class SimpleSingleEntitySaveStrategy : SaveStrategy {
 
     private string getSql(IDataChange dataChange, ITableInfo tableInfo) {
         var sqlBuilder = new SqlBuilder(tableInfo);
-        return dataChange.DataChangeKind switch {
-            DataChangeKind.Insert => sqlBuilder.GetInsertSql(!dataChange.IsCollection, !dataChange.IsCollection),
-            DataChangeKind.Update => sqlBuilder.GetUpdateSql(),
-            DataChangeKind.Delete => sqlBuilder.GetDeleteSql(),
+        return dataChange.DataChangeKind.Value switch {
+            DataChangeKind.INSERT => sqlBuilder.GetInsertSql(!dataChange.IsCollection, !dataChange.IsCollection),
+            DataChangeKind.UPDATE => sqlBuilder.GetUpdateSql(),
+            DataChangeKind.DELETE => sqlBuilder.GetDeleteSql(),
             _ => throw new ArgumentOutOfRangeException()
         };
     }

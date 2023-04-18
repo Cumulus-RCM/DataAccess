@@ -13,10 +13,10 @@ namespace DataAccess.Shared;
 /// 
 [DefaultProperty(nameof(Value))]
 [JsonConverter(typeof(EnumerationJsonConverter))]
-public abstract class Enumeration : IComparable {
-    [JsonIgnore] public string Name { get; protected set; } = "";
-    [JsonIgnore] public string DisplayName { get; } = "";
-    public int Value { get; set; }
+public abstract record Enumeration {
+    [JsonIgnore] public string Name { get; protected init; } = "";
+    [JsonIgnore] public string DisplayName { get; protected init; } = "";
+    public int Value { get; protected init; }
 
     public override string ToString() => DisplayName;
 
@@ -27,8 +27,7 @@ public abstract class Enumeration : IComparable {
         DisplayName = displayName;
     }
 
-    //TODO memoize
-    public static IEnumerable<T> GetAll<T>() where T : Enumeration, new() {
+    protected static IEnumerable<T> getAllValues<T>() where T : Enumeration, new() {
         var type = typeof(T);
         var fields = type.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly);
 
@@ -38,14 +37,14 @@ public abstract class Enumeration : IComparable {
         }
     }
 
-    public override bool Equals(object? obj) {
-        if (obj is not Enumeration otherValue) return false;
+    //public override bool Equals(object? obj) {
+    //    if (obj is not Enumeration otherValue) return false;
 
-        var typeMatches = GetType() == obj.GetType();
-        var valueMatches = Value.Equals(otherValue.Value);
+    //    var typeMatches = GetType() == obj.GetType();
+    //    var valueMatches = Value.Equals(otherValue.Value);
 
-        return typeMatches && valueMatches;
-    }
+    //    return typeMatches && valueMatches;
+    //}
 
     public override int GetHashCode() => Value.GetHashCode();
 
@@ -59,7 +58,7 @@ public abstract class Enumeration : IComparable {
         return matchingItem;
     }
 
-    public static T? TryFromValue<T>(int value) where T : Enumeration, new() => GetAll<T>().FirstOrDefault(item => item.Value == value);
+    public static T? TryFromValue<T>(int value) where T : Enumeration, new() => getAllValues<T>().FirstOrDefault(item => item.Value == value);
 
     public static T FromDisplayName<T>(string displayName) where T : Enumeration, new() {
         var matchingItem = parse<T, string>(displayName, "display name", item => item.DisplayName == displayName);
@@ -67,10 +66,10 @@ public abstract class Enumeration : IComparable {
     }
 
     public static bool ContainsValue<T>(int value) where T : Enumeration, new() =>
-        GetAll<T>().FirstOrDefault(x => x.Value == value) is not null;
+        getAllValues<T>().FirstOrDefault(x => x.Value == value) is not null;
 
     private static T parse<T, K>(K value, string description, Func<T, bool> predicate) where T : Enumeration, new() {
-        var matchingItem = GetAll<T>().FirstOrDefault(predicate);
+        var matchingItem = getAllValues<T>().FirstOrDefault(predicate);
 
         if (matchingItem is null) {
             var message = $"'{value}' is not a valid {description} in {typeof(T)}";
@@ -80,11 +79,11 @@ public abstract class Enumeration : IComparable {
         return matchingItem;
     }
 
-    public int CompareTo(object? other) => other is null ? 1 : Value.CompareTo(((Enumeration) other).Value);
+    //public int CompareTo(object? other) => other is null ? 1 : Value.CompareTo(((Enumeration) other).Value);
 
-    public static bool operator ==(Enumeration? left, Enumeration? right) => left is null ? right is null : left.Value == right?.Value;
+    //public static bool operator ==(Enumeration? left, Enumeration? right) => left is null ? right is null : left.Value == right?.Value;
 
-    public static bool operator !=(Enumeration left, Enumeration right) => !(left == right);
+    //public static bool operator !=(Enumeration left, Enumeration right) => !(left == right);
 }
 
 public class EnumerationJsonConverter : JsonConverter<Enumeration> {
