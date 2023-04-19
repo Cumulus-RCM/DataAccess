@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel;
 using System.Reflection;
-using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -12,7 +11,6 @@ namespace DataAccess.Shared;
 ///
 /// 
 [DefaultProperty(nameof(Value))]
-[JsonConverter(typeof(EnumerationJsonConverter))]
 public abstract record Enumeration {
     [JsonIgnore] public string Name { get; protected init; } = "";
     [JsonIgnore] public string DisplayName { get; protected init; } = "";
@@ -20,7 +18,7 @@ public abstract record Enumeration {
 
     public override string ToString() => DisplayName;
 
-    private static Dictionary<Type, List<object>> enums = new();
+    private static Dictionary<Type, List<Enumeration>> enums = new();
 
     protected Enumeration() { }
     protected Enumeration(Type type, int value, string displayName) {
@@ -30,22 +28,13 @@ public abstract record Enumeration {
     }
 
     private static void addToEnumDictionary(Type type, Enumeration enumeration) {
-        if (!enums.ContainsKey(type)) enums.Add(type, new List<object>());
+        if (!enums.ContainsKey(type)) enums.Add(type, new List<Enumeration>());
         enums[type].Add(enumeration);
     }
 
     public static List<T> GetAll<T>() where T : Enumeration => enums[typeof(T)].Cast<T>().ToList();
 
-    //public override bool Equals(object? obj) {
-    //    if (obj is not Enumeration otherValue) return false;
-
-    //    var typeMatches = GetType() == obj.GetType();
-    //    var valueMatches = Value.Equals(otherValue.Value);
-
-    //    return typeMatches && valueMatches;
-    //}
-
-    public static int AbsoluteDifference(Enumeration firstValue, Enumeration secondValue) {
+     public static int AbsoluteDifference(Enumeration firstValue, Enumeration secondValue) {
         var absoluteDifference = Math.Abs(firstValue.Value - secondValue.Value);
         return absoluteDifference;
     }
@@ -67,33 +56,29 @@ public abstract record Enumeration {
 
     private static T parse<T, K>(K value, string description, Func<T, bool> predicate) where T : Enumeration, new() {
         var matchingItem = GetAll<T>().FirstOrDefault(predicate);
-
         if (matchingItem is null) {
             var message = $"'{value}' is not a valid {description} in {typeof(T)}";
             throw new ApplicationException(message);
         }
-
         return matchingItem;
     }
-
-    //public int CompareTo(object? other) => other is null ? 1 : Value.CompareTo(((Enumeration) other).Value);
-
-    //public static bool operator ==(Enumeration? left, Enumeration? right) => left is null ? right is null : left.Value == right?.Value;
-
-    //public static bool operator !=(Enumeration left, Enumeration right) => !(left == right);
 }
 
-public class EnumerationJsonConverter : JsonConverter<Enumeration> {
-    public override Enumeration? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-        var methodInfo = typeof(Enumeration).GetMethod(
-            nameof(Enumeration.TryFromValue)
-            , BindingFlags.Static | BindingFlags.Public) ?? throw new SerializationException("Serialization is not supported");
-        var genericMethod = methodInfo.MakeGenericMethod(typeToConvert);
-        var args = new[] {reader.GetInt32(), new object()};
-        genericMethod.Invoke(null, args);
-        return args[1] as Enumeration;
+public class EnumerationJsonConverter<T> : JsonConverter<T> where T : Enumeration {
+    private static MethodInfo methodInfo;
+
+    static EnumerationJsonConverter()     {
+        methodInfo = typeof(Enumeration).GetMethod(nameof(Enumeration.TryFromValue), BindingFlags.Static | BindingFlags.Public)!;
     }
 
-    public override void Write(Utf8JsonWriter writer, Enumeration enumeration, JsonSerializerOptions options) =>
+    public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+        var genericMethod = methodInfo.MakeGenericMethod(typeToConvert);
+        var args = new object?[] {reader.GetInt32()};
+        var result = genericMethod.Invoke(null, args);
+        return (T?)result;
+    }
+
+    public override void Write(Utf8JsonWriter writer, T enumeration, JsonSerializerOptions options) =>
         writer.WriteNumberValue(enumeration.Value);
+
 }
