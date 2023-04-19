@@ -20,7 +20,7 @@ public sealed record Operator : Enumeration {
     public string PostTemplate { get; init; }= "";
 
     public Operator() { }
-    public Operator(int value, string name) : base(value,name) { }
+    public Operator(int value, string name) : base(typeof(Operator),value,name) { }
 
     //public static bool TryParse(string value, out Operator? result) {
     //    if (int.TryParse(value, out var val)) {

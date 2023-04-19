@@ -20,23 +20,21 @@ public abstract record Enumeration {
 
     public override string ToString() => DisplayName;
 
-    protected Enumeration() { }
+    private static Dictionary<Type, List<object>> enums = new();
 
-    protected Enumeration(int value, string displayName) {
+    protected Enumeration() { }
+    protected Enumeration(Type type, int value, string displayName) {
         Value = value;
         DisplayName = displayName;
+        addToEnumDictionary(type, this);
     }
- 
-    //TODO memoize
-    public static IEnumerable<T> GetAll<T>() where T : Enumeration, new()  {
-        var type = typeof(T);
-        var fields = type.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly);
 
-        foreach (var info in fields) {
-            var instance = new T();
-            if (info.GetValue(instance) is T locatedValue) yield return locatedValue;
-        }
+    private static void addToEnumDictionary(Type type, Enumeration enumeration) {
+        if (!enums.ContainsKey(type)) enums.Add(type, new List<object>());
+        enums[type].Add(enumeration);
     }
+
+    public static List<T> GetAll<T>() where T : Enumeration => enums[typeof(T)].Cast<T>().ToList();
 
     //public override bool Equals(object? obj) {
     //    if (obj is not Enumeration otherValue) return false;
@@ -46,8 +44,6 @@ public abstract record Enumeration {
 
     //    return typeMatches && valueMatches;
     //}
-
-    public override int GetHashCode() => Value.GetHashCode();
 
     public static int AbsoluteDifference(Enumeration firstValue, Enumeration secondValue) {
         var absoluteDifference = Math.Abs(firstValue.Value - secondValue.Value);

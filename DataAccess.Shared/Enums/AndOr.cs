@@ -8,10 +8,9 @@ namespace DataAccess.Shared;
 public sealed record AndOr : Enumeration {
     public static readonly AndOr And = new AndOr(1, "AND");
     public static readonly AndOr Or = new AndOr(2, "OR");
-    public static IEnumerable<AndOr> All = getAllValues<AndOr>();
 
     public AndOr() { }
-    public AndOr(int value, string name) : base(value,name) { }
+    public AndOr(int value, string name) : base(typeof(AndOr), value,name) { }
 }
 
 public class AndOrJsonConverter : JsonConverter<AndOr> {

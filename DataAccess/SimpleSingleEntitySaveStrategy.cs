@@ -66,12 +66,10 @@ public class SimpleSingleEntitySaveStrategy : SaveStrategy {
 
     private string getSql(IDataChange dataChange, ITableInfo tableInfo) {
         var sqlBuilder = new SqlBuilder(tableInfo);
-        return dataChange.DataChangeKind.Value switch {
-            DataChangeKind.INSERT => sqlBuilder.GetInsertSql(!dataChange.IsCollection, !dataChange.IsCollection),
-            DataChangeKind.UPDATE => sqlBuilder.GetUpdateSql(),
-            DataChangeKind.DELETE => sqlBuilder.GetDeleteSql(),
-            _ => throw new ArgumentOutOfRangeException()
-        };
+        if (dataChange.DataChangeKind == DataChangeKind.Update) return sqlBuilder.GetUpdateSql();
+        if (dataChange.DataChangeKind == DataChangeKind.Insert) return sqlBuilder.GetInsertSql(!dataChange.IsCollection, !dataChange.IsCollection);
+        if (dataChange.DataChangeKind == DataChangeKind.Delete) return sqlBuilder.GetDeleteSql();
+        throw new ArgumentOutOfRangeException();
     }
 
     private async Task<int> getSequenceValuesAsync(IDbConnection conn, string sequenceName, int cnt) {

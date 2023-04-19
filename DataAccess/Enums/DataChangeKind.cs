@@ -13,5 +13,5 @@ public sealed record DataChangeKind : Enumeration {
 
     public DataChangeKind() { }
 
-    public DataChangeKind(int value, string name) : base(value, name) { }
+    public DataChangeKind(int value, string name) : base(typeof(DataChangeKind), value, name) { }
 }
