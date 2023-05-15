@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using BaseLib;
 using Dapper;
 using DataAccess.Shared;
 using Microsoft.Extensions.Logging;

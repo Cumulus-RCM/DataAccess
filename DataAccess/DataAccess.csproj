@@ -25,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\BaseLib\BaseLib.csproj" />
     <ProjectReference Include="..\DataAccess.Shared\DataAccess.Shared.csproj" />
   </ItemGroup>
 

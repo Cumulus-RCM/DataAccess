@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Data;
 using System.Data.SqlClient;
+using BaseLib;
 using Dapper;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
