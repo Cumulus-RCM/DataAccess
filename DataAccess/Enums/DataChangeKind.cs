@@ -1,8 +1,9 @@
-﻿using DataAccess.Shared;
+﻿using BaseLib;
+using DataAccess.Shared;
 
 namespace DataAccess;
 
-public sealed record DataChangeKind : Enumeration {
+public sealed class DataChangeKind : Enumeration {
     public const int INSERT = 1;
     public const int UPDATE = 2;
     public const int DELETE = 3;
@@ -13,5 +14,5 @@ public sealed record DataChangeKind : Enumeration {
 
     public DataChangeKind() { }
 
-    public DataChangeKind(int value, string name) : base(typeof(DataChangeKind), value, name) { }
+    public DataChangeKind(int value, string name) : base(value, name) { }
 }

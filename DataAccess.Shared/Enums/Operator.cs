@@ -1,10 +1,10 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using BaseLib;
 
 namespace DataAccess.Shared;
 
-[JsonConverter(typeof(EnumerationJsonConverter<Operator>))]
-public sealed record Operator : Enumeration {
+[JsonConverter(typeof(EnumerationJsonConverter))]
+public sealed class Operator : Enumeration {
     public static readonly Operator Equal = new(1, "=");
     public static readonly Operator NotEqual = new(2, "<>");
     public static readonly Operator LessThan = new(3, "<");
@@ -20,5 +20,5 @@ public sealed record Operator : Enumeration {
     public string PostTemplate { get; init; }= "";
 
     public Operator() { }
-    public Operator(int value, string name) : base(typeof(Operator),value,name) { }
+    public Operator(int value, string name) : base(value,name) { }
 }
