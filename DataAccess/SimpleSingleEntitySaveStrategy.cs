@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Data;
 using System.Data.SqlClient;
+using BaseLib;
 using Dapper;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -66,12 +67,10 @@ public class SimpleSingleEntitySaveStrategy : SaveStrategy {
 
     private string getSql(IDataChange dataChange, ITableInfo tableInfo) {
         var sqlBuilder = new SqlBuilder(tableInfo);
-        return dataChange.DataChangeKind switch {
-            DataChangeKind.Insert => sqlBuilder.GetInsertSql(!dataChange.IsCollection, !dataChange.IsCollection),
-            DataChangeKind.Update => sqlBuilder.GetUpdateSql(),
-            DataChangeKind.Delete => sqlBuilder.GetDeleteSql(),
-            _ => throw new ArgumentOutOfRangeException()
-        };
+        if (dataChange.DataChangeKind == DataChangeKind.Update) return sqlBuilder.GetUpdateSql();
+        if (dataChange.DataChangeKind == DataChangeKind.Insert) return sqlBuilder.GetInsertSql(!dataChange.IsCollection, !dataChange.IsCollection);
+        if (dataChange.DataChangeKind == DataChangeKind.Delete) return sqlBuilder.GetDeleteSql();
+        throw new ArgumentOutOfRangeException();
     }
 
     private async Task<int> getSequenceValuesAsync(IDbConnection conn, string sequenceName, int cnt) {

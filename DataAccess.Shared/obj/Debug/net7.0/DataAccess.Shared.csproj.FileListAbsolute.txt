@@ -10,3 +10,6 @@ C:\Users\avist\source\repos\DataAccess\DataAccess.Shared\obj\Debug\net7.0\DataAc
 C:\Users\avist\source\repos\DataAccess\DataAccess.Shared\obj\Debug\net7.0\refint\DataAccess.Shared.dll
 C:\Users\avist\source\repos\DataAccess\DataAccess.Shared\obj\Debug\net7.0\DataAccess.Shared.pdb
 C:\Users\avist\source\repos\DataAccess\DataAccess.Shared\obj\Debug\net7.0\ref\DataAccess.Shared.dll
+C:\Users\avist\source\repos\DataAccess\DataAccess.Shared\bin\Debug\net7.0\BaseLib.dll
+C:\Users\avist\source\repos\DataAccess\DataAccess.Shared\bin\Debug\net7.0\BaseLib.pdb
+C:\Users\avist\source\repos\DataAccess\DataAccess.Shared\obj\Debug\net7.0\DataAccess.Shared.csproj.CopyComplete

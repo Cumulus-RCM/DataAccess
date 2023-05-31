@@ -3,8 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace DataAccess.Shared;
 
-[JsonConverter(typeof(OperatorJsonConverter))]
-public sealed class Operator : Enumeration {
+[JsonConverter(typeof(EnumerationJsonConverter<Operator>))]
+public sealed record Operator : Enumeration {
     public static readonly Operator Equal = new(1, "=");
     public static readonly Operator NotEqual = new(2, "<>");
     public static readonly Operator LessThan = new(3, "<");
@@ -20,42 +20,5 @@ public sealed class Operator : Enumeration {
     public string PostTemplate { get; init; }= "";
 
     public Operator() { }
-    public Operator(int value, string name) : base(value,name) { }
-
-    //public static bool TryParse(string value, out Operator? result) {
-    //    if (int.TryParse(value, out var val)) {
-    //        result = TryFromValue<Operator>(val);
-    //        return result is not null;
-    //    }
-
-    //    result = null;
-    //    return false;
-    //}
-}
-
-//public class OperatorJsonConverter : Newtonsoft.Json.JsonConverter<Operator> {
-//    public override void WriteJson(JsonWriter writer, Operator? value, JsonSerializer serializer) {
-//        if (value is null) writer.WriteNull();
-//        else writer.WriteValue(value.DisplayName);
-//    }
-
-//    public override Operator? ReadJson(JsonReader reader, Type objectType, Operator? existingValue, bool hasExistingValue, JsonSerializer serializer) {
-//        var x = reader.ReadAsInt32();
-//        return Enumeration.TryFromValue<Operator>(x.Value);
-//        //return reader.TokenType switch
-//        //{
-//        //    JsonToken.Integer => Enumeration.FromValue<Operator>(reader.Value),
-//        //    JsonToken.String => GetEnumerationFromJson(reader.Value.ToString(), objectType),
-//        //    JsonToken.Null => null,
-//        //    _ => throw new JsonSerializationException($"Unexpected token {reader.TokenType} when parsing an enumeration")
-
-//    }
-//}
-
-public class OperatorJsonConverter : JsonConverter<Operator> {
-    public override Operator? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) => 
-        Enumeration.TryFromValue<Operator>(reader.GetInt32());
-
-    public override void Write(Utf8JsonWriter writer, Operator oper, JsonSerializerOptions options) =>
-            writer.WriteNumberValue(oper.Value);
+    public Operator(int value, string name) : base(typeof(Operator),value,name) { }
 }

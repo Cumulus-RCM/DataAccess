@@ -1,4 +1,6 @@
-﻿namespace DataAccess;
+﻿using BaseLib;
+
+namespace DataAccess;
 
 public abstract class SaveStrategy {
     public abstract Task<int> SaveAsync(IEnumerable<IDataChange> dataChanges);

@@ -1,6 +1,4 @@
-﻿using System.Linq.Expressions;
-using System.Text;
-using DataAccess.Shared;
+﻿using DataAccess.Shared;
 
 namespace DataAccess;
 
@@ -13,12 +11,13 @@ public class SqlBuilder {
     }
 
     public string GetSelectSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, string orderBy = "") {
+        if (pageNum <= 0) pageNum = 1;
         var whereClause = generateWhereClause(filter);
         var orderByClause = orderBy == "" && pageSize > 0
             ? readifyOrderByClause(tableInfo.PrimaryKeyName)
             : readifyOrderByClause(orderBy);
         var offsetFetchClause = pageSize > 0
-            ? $"OFFSET {pageSize * pageNum} ROWS FETCH NEXT {pageSize} ROW ONLY"
+            ? $"OFFSET {pageSize * (pageNum - 1)} ROWS FETCH NEXT {pageSize} ROW ONLY"
             : "";
         var columns = string.Join(",", tableInfo.ColumnsMap.Where(c => !c.IsSkipByDefault).Select(c => $"{c.ColumnName}{c.Alias}"));
         var result = $"SELECT {columns} FROM {tableInfo.TableName} {whereClause} {orderByClause} {offsetFetchClause}";
@@ -81,7 +80,7 @@ INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{para
 
     private string generateWhereClause(Filter? filter) {
         if (filter == null) return "";
-        var x = filter.Segments.SelectMany(segment => segment.Expressions.Select(exp => toSql(exp.FilterExpression)));
+        //var x = filter.Segments.SelectMany(segment => segment.Expressions.Select(exp => toSql(exp.FilterExpression)));
         var where =  "WHERE " + string.Join(AndOr.And.DisplayName, 
             filter.Segments.SelectMany(segment => segment.Expressions.Select(exp => toSql(exp.FilterExpression))));
         return where;
