@@ -37,3 +37,4 @@ packages/
 /DataAccess.Shared/bin/Debug/net7.0/DataAccess.Shared.pdb
 /DataAccess.Shared/obj/Debug/net7.0/ref/DataAccess.Shared.dll
 /DataAccess.Shared/obj/Debug/net7.0/refint/DataAccess.Shared.dll
+/DataAccess.Shared/obj/Debug/net7.0/DataAccess.Shared.csproj.AssemblyReference.cache
