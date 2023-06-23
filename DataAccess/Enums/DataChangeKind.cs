@@ -1,5 +1,4 @@
 ﻿using BaseLib;
-using DataAccess.Shared;
 
 namespace DataAccess;
 
@@ -14,5 +13,5 @@ public sealed class DataChangeKind : Enumeration {
 
     public DataChangeKind() { }
 
-    public DataChangeKind(int value, string name) : base(value, name) { }
+    public DataChangeKind(int value, string name) : base(typeof(DataChangeKind),value, name) { }
 }

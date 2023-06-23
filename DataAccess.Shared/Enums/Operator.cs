@@ -3,7 +3,7 @@ using BaseLib;
 
 namespace DataAccess.Shared;
 
-[JsonConverter(typeof(EnumerationJsonConverter))]
+[JsonConverter(typeof(EnumerationJsonConverter<Operator>))]
 public sealed class Operator : Enumeration {
     public static readonly Operator Equal = new(1, "=");
     public static readonly Operator NotEqual = new(2, "<>");
@@ -20,5 +20,5 @@ public sealed class Operator : Enumeration {
     public string PostTemplate { get; init; }= "";
 
     public Operator() { }
-    public Operator(int value, string name) : base(value,name) { }
+    public Operator(int value, string name) : base(typeof(Operator),value,name) { }
 }
