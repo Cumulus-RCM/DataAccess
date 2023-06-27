@@ -3,6 +3,7 @@ using System.Data;
 using System.Data.SqlClient;
 using BaseLib;
 using Dapper;
+using DataAccess.Interfaces;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -11,7 +12,7 @@ namespace DataAccess;
 
 public class SimpleSingleEntitySaveStrategy : SaveStrategy {
     private readonly ILogger<SimpleSingleEntitySaveStrategy> logger;
-    public SimpleSingleEntitySaveStrategy(DbConnectionManager dbConnection, DatabaseMapper databaseMapper, ILoggerFactory loggerFactory) : base(dbConnection, databaseMapper) {
+    public SimpleSingleEntitySaveStrategy(IDbConnectionManager dbConnection, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory) : base(dbConnection, databaseMapper) {
         this.logger = loggerFactory.CreateLogger<SimpleSingleEntitySaveStrategy>();
     }
 

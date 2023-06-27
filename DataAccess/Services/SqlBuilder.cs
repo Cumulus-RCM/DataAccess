@@ -1,4 +1,5 @@
-﻿using DataAccess.Shared;
+﻿using DataAccess.Interfaces;
+using DataAccess.Shared;
 
 namespace DataAccess;
 

@@ -1,6 +1,8 @@
 ﻿// ReSharper disable once CheckNamespace
-namespace DataAccess;
 
-public interface IDatabaseMap {
+namespace DataAccess.Interfaces;
+
+public interface IDatabaseMap
+{
     ITableInfo[] Map { get; }
 }

@@ -1,18 +1,19 @@
 ﻿using BaseLib;
+using DataAccess.Interfaces;
 using DataAccess.Shared;
 using Microsoft.Extensions.Logging;
 
 namespace DataAccess;
 
 public class Crud<T> : ICrud<T> where T : class {
-    protected readonly DbConnectionManager connectionManager;
-    protected readonly DatabaseMapper databaseMapper;
+    protected readonly IDbConnectionManager connectionManager;
+    protected readonly IDatabaseMapper databaseMapper;
     protected readonly ILoggerFactory loggerFactory;
     private readonly ILogger<Crud<T>> logger;
     private readonly Reader<T> reader;
     private readonly SimpleWriter writer;
 
-    public Crud(DbConnectionManager connectionManager, DatabaseMapper databaseMapper, ILoggerFactory loggerFactory) {
+    public Crud(IDbConnectionManager connectionManager, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory) {
         this.connectionManager = connectionManager;
         this.databaseMapper = databaseMapper;
         this.loggerFactory = loggerFactory;

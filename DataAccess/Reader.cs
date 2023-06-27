@@ -1,18 +1,20 @@
 ﻿using System.Collections.ObjectModel;
 using BaseLib;
 using Dapper;
+using DataAccess.Interfaces;
+using DataAccess.Models;
 using DataAccess.Shared;
 using Microsoft.Extensions.Logging;
 
 namespace DataAccess;
 
 public class Reader<T> : IReader<T> where T : class {
-    protected readonly DbConnectionManager dbConnectionService;
+    protected readonly IDbConnectionManager dbConnectionService;
     private readonly ILogger logger;
     private readonly SqlBuilder sqlBuilder;
     private readonly TableInfo<T> tableInfo;
 
-    public Reader(DbConnectionManager dbConnectionService, DatabaseMapper databaseMapper, ILoggerFactory loggerFactory) {
+    public Reader(IDbConnectionManager dbConnectionService, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory) {
         this.dbConnectionService = dbConnectionService;
         this.logger = loggerFactory.CreateLogger(typeof(T));
         tableInfo = databaseMapper.GetTableInfo<T>();
