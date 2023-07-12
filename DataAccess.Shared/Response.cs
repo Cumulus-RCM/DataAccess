@@ -3,6 +3,8 @@
 public record Response(bool Success, string ErrorMessage = "");
 
 public record Response<T>(bool Success, IReadOnlyCollection<T?> Items, int TotalCount = 0, string ErrorMessage = "") : Response(Success, ErrorMessage) {
+    public T? Item => Items.FirstOrDefault();
+
     // ReSharper disable once StaticMemberInGenericType
     private static readonly HashSet<Type?> numericTypes = new() {
         typeof(decimal), typeof(byte), typeof(sbyte),
