@@ -66,8 +66,8 @@ public class Crud<T> : ICrud<T> where T : class {
 
     public async Task<Response<T>> CreateItemAsync(T item) {
         writer.AddForInsert(item);
-        await writer.SaveAsync().ConfigureAwait(false);
-        return new Response<T>(item);
+        var updatedRowCount = await writer.SaveAsync().ConfigureAwait(false);
+        return new Response<T>(item, updatedRowCount == 1);
     }
 
     public async Task<Response> DeleteItemAsync(int id) {
