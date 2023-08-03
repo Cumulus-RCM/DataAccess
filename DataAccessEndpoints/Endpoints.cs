@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Routing;
 namespace DataAccessEndpoints; 
 
 public abstract class Endpoints {
-    public (IEndpointRouteBuilder group, ICrud<T> crud) MapCrudEndpoints<T>(IEndpointRouteBuilder routeBuilder, IDataService dataService) where T : class {
+    protected static (IEndpointRouteBuilder group, ICrud<T> crud) MapCrudEndpoints<T>(IEndpointRouteBuilder routeBuilder, IDataService dataService) where T : class {
         var typeName = typeof(T).Name;
         var crud = dataService.GetCrud<T>();
         var group = routeBuilder.MapGroup($"/{typeName}").WithTags(typeName);
