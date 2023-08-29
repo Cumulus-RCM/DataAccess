@@ -8,9 +8,9 @@ using System.Data;
 namespace DataAccess;
 
 public abstract class DataService : IDataService {
-    private readonly IDbConnectionManager connectionManager;
-    private readonly IDatabaseMapper databaseMapper;
-    private readonly ILoggerFactory loggerFactory;
+    protected readonly IDbConnectionManager connectionManager;
+    protected readonly IDatabaseMapper databaseMapper;
+    protected readonly ILoggerFactory loggerFactory;
 
     protected DataService(IDbConnectionManager connectionManager, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory) {
         this.connectionManager = connectionManager;
