@@ -1,25 +1,19 @@
-﻿using BaseLib;
-using DataAccess.Interfaces;
-using DataAccess.Shared;
+﻿using DataAccess.Shared;
 using Microsoft.Extensions.Logging;
 
 namespace DataAccess;
 
 public class Crud<T> : ICrud<T> where T : class {
-    protected readonly IDbConnectionManager connectionManager;
-    protected readonly IDatabaseMapper databaseMapper;
     protected readonly ILoggerFactory loggerFactory;
-    private readonly ILogger<Crud<T>> logger;
-    private readonly Reader<T> reader;
-    private readonly SimpleWriter writer;
+    protected readonly ILogger<Crud<T>> logger;
+    protected readonly Reader<T> reader;
+    protected readonly IWriter writer;
 
-    public Crud(IDbConnectionManager connectionManager, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory) {
-        this.connectionManager = connectionManager;
-        this.databaseMapper = databaseMapper;
+    public Crud(IReaderFactory readerFactory, IWriter writer, ILoggerFactory loggerFactory) {
         this.loggerFactory = loggerFactory;
         this.logger = loggerFactory.CreateLogger<Crud<T>>();
-        this.reader = new Reader<T>(connectionManager, databaseMapper, loggerFactory);
-        this.writer = new SimpleWriter(connectionManager, databaseMapper, loggerFactory);
+        this.reader = readerFactory.GetReader<T>();
+        this.writer = writer;
     }
 
     public Task<Response<T>> GetAllAsync(string? filterJson = "", int pageSize = 0, int pageNumber = 1) {

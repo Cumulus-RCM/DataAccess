@@ -1,6 +1,4 @@
-﻿using BaseLib;
-using Dapper;
-using DataAccess.Interfaces;
+﻿using Dapper;
 using DataAccess.Shared;
 using Microsoft.Extensions.Logging;
 using System.Data;
@@ -8,19 +6,19 @@ using System.Data;
 namespace DataAccess;
 
 public abstract class DataService : IDataService {
-    protected readonly IDbConnectionManager connectionManager;
-    protected readonly IDatabaseMapper databaseMapper;
+    protected readonly IReaderFactory readerFactory;
+    protected readonly IWriterFactory writerFactory;
     protected readonly ILoggerFactory loggerFactory;
 
-    protected DataService(IDbConnectionManager connectionManager, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory) {
-        this.connectionManager = connectionManager;
-        this.databaseMapper = databaseMapper;
+    protected DataService(IReaderFactory readerFactory, IWriterFactory writerFactory, ILoggerFactory loggerFactory) {
+        this.readerFactory = readerFactory;
+        this.writerFactory = writerFactory;
         this.loggerFactory = loggerFactory;
         SqlMapper.AddTypeHandler(new SqlTimeOnlyTypeHandler());
         SqlMapper.AddTypeHandler(new DapperSqlDateOnlyTypeHandler());
     }
 
-    public virtual ICrud<T> GetCrud<T>() where T : class => new Crud<T>(connectionManager, databaseMapper, loggerFactory);
+    public virtual ICrud<T> GetCrud<T>() where T : class => new Crud<T>(readerFactory, writerFactory.GetWriter(), loggerFactory);
 }
 
 public class SqlTimeOnlyTypeHandler : SqlMapper.TypeHandler<TimeOnly> {
