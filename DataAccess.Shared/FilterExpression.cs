@@ -168,4 +168,11 @@ public class Filter {
         filter = JsonSerializer.Deserialize<Filter>(json);
         return filter is not null;
     }
+
+    public Filter Merge(Filter filter) {
+        foreach (var filterSegment in filter.Segments) {
+            Segments.Add(filterSegment);
+        }
+        return this;
+    }
 }
