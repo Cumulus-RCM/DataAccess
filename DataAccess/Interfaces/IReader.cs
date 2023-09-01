@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using Dapper;
 using DataAccess.Shared;
 
 namespace DataAccess;
