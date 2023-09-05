@@ -16,8 +16,8 @@ public abstract class Endpoints {
             .WithName($"Get{typeName}")
             .WithOpenApi();
 
-        group.MapGet("/{id:int}", async Task<Response<T>>(int id) => await crud.GetByIdAsync(id).ConfigureAwait(false))
-            .WithName($"Get{typeName}ById")
+        group.MapGet("/{pk}", async Task<Response<T>>(object pk) => await crud.GetByPkAsync(pk).ConfigureAwait(false))
+            .WithName($"Get{typeName}ByPk")
             .WithOpenApi();
 
         group.MapPut("/", async Task<Response>(T item) => await crud.UpdateItemAsync(item).ConfigureAwait(false))
@@ -28,7 +28,7 @@ public abstract class Endpoints {
             .WithName($"Create{typeName}")
             .WithOpenApi();
 
-        group.MapDelete("/{id:int}", async Task<Response>(int id) => await crud.DeleteItemAsync(id).ConfigureAwait(false))
+        group.MapDelete("/", async Task<Response>(T item) => await crud.DeleteItemAsync(item).ConfigureAwait(false))
             .WithName($"Delete{typeName}")
             .WithOpenApi();
 

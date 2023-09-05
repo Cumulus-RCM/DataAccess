@@ -12,6 +12,8 @@ public sealed class TableInfo<T> : ITableInfo
     public bool IsIdentity { get; }
     public IReadOnlyCollection<ColumnInfo> ColumnsMap { get; }
     public Type EntityType { get; } = typeof(T);
+    public string? CustomUpdateSqlTemplate { get; init; } = null;
+    public string? CustomDeleteSqlTemplate { get; init; } = null;
 
     private readonly MethodInfo? pkSetter;
     private readonly MethodInfo? pkGetter;

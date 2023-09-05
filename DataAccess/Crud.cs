@@ -42,15 +42,13 @@ public class Crud<T> : ICrud<T> where T : class {
         }
     }
 
+    public Task<Response<T>> GetByModelAsync(T item) => GetAllAsync(Filter.FromEntity(item));
+
     public async Task<Response<T>> GetByPkAsync(object pkValue) {
         var result = await reader.GetByPkAsync(pkValue).ConfigureAwait(false);
         return new Response<T>(result);
     }
 
-    public async Task<Response<T>> GetByIdAsync(int id) {
-        var result = await reader.GetByIdAsync(id).ConfigureAwait(false);
-        return new Response<T>(result);
-    }
 
     public async Task<Response> UpdateItemAsync(T item) {
         writer.AddForUpdate(item);
@@ -64,8 +62,8 @@ public class Crud<T> : ICrud<T> where T : class {
         return new Response<T>(item, updatedRowCount == 1);
     }
 
-    public async Task<Response> DeleteItemAsync(int id) {
-        writer.AddForDelete<T>(id);
+    public async Task<Response> DeleteItemAsync(T item) {
+        writer.AddForDelete<T>(item);
         var updatedRowCount = await writer.SaveAsync().ConfigureAwait(false);
         return new Response(updatedRowCount == 1);
     }

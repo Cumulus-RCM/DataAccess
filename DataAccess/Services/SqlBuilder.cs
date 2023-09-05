@@ -67,7 +67,7 @@ INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{para
         return string.Format($"UPDATE {tableInfo.TableName} SET {string.Join(",", setStatements)} WHERE {tableInfo.PrimaryKeyName}={PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName}");
     }
 
-    public string GetDeleteSql() => $"DELETE FROM {tableInfo.TableName} WHERE {tableInfo.PrimaryKeyName} IN (@{tableInfo.PrimaryKeyName})";
+    public string GetDeleteSql() => tableInfo.CustomDeleteSqlTemplate ?? $"DELETE FROM {tableInfo.TableName} WHERE {tableInfo.PrimaryKeyName} IN ({PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName})";
 
     private static string readifyOrderByClause(string? rawOrderByClause) => readifyClause(rawOrderByClause, "ORDER BY");
 

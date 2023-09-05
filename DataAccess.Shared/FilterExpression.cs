@@ -1,4 +1,6 @@
-﻿using System.Linq.Expressions;
+﻿using System.ComponentModel;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Dapper;
@@ -45,9 +47,9 @@ public record ConnectedExpression {
     public FilterExpression FilterExpression { get; set; }
     public AndOr AndOr { get; init; } = AndOr.And;
 
-    public ConnectedExpression(FilterExpression filterExpression, AndOr? andOr = null) {
+    public ConnectedExpression(FilterExpression filterExpression, AndOr andOr ) {
         this.FilterExpression = filterExpression;
-        this.AndOr = andOr ?? AndOr.And;
+        this.AndOr = andOr;
     }
 
     public static bool TryParse(string json, out ConnectedExpression? filterSegment) {
@@ -61,8 +63,12 @@ public class FilterSegment {
 
     public FilterSegment() { }
 
-    public FilterSegment(FilterExpression filterExpression) {
-        Expressions.Add( new ConnectedExpression(filterExpression));
+    public FilterSegment(FilterExpression filterExpression,AndOr? andOr = null) {
+       AddExpression(filterExpression, andOr);
+    }
+
+    public void AddExpression(FilterExpression filterExpression, AndOr? andOr = null) {
+        Expressions.Add( new ConnectedExpression(filterExpression, andOr ?? AndOr.And));
     }
 
     public static bool TryParse(string json, out FilterSegment? filterSegment) {
@@ -144,9 +150,9 @@ public class Filter {
 
     public string AsJson() => JsonSerializer.Serialize(this);
 
-    public Filter(FilterExpression filterExpression) {
-        Segments.Add(new FilterSegment(filterExpression));
-    }
+    public Filter(FilterExpression filterExpression) => Segments.Add(new FilterSegment(filterExpression));
+
+    public Filter(FilterSegment filterSegment) => Segments.Add(filterSegment);
 
     public string PrimaryExpressionPropertyName() => Segments.First().Expressions.First().FilterExpression.PropertyName;
 
@@ -174,5 +180,18 @@ public class Filter {
             Segments.Add(filterSegment);
         }
         return this;
+    }
+
+    public static Filter FromEntity<T>(T item) where T : class {
+        var type = typeof(T);
+        var props = type.GetProperties();
+        var filterSegment = new FilterSegment();
+        foreach (var prop in props) {
+            var value = prop.GetValue(item);
+            if (value != null) {
+                filterSegment.AddExpression(new FilterExpression(prop.Name,Operator.Equal) {Value=value});
+            }
+        }
+        return new Filter(filterSegment);
     }
 }

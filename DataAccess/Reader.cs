@@ -35,14 +35,6 @@ public class Reader<T> : IReader<T> where T : class {
         }
     }
 
-    public virtual async Task<T?> GetByIdAsync(int id) {
-        var filter = new Filter(new FilterExpression("Id", Operator.Equal) {ValueType = nameof(Int32)});
-        var sql = sqlBuilder.GetSelectSql(filter);
-        using var conn = dbConnectionService.CreateConnection();
-        var result = await conn.QueryFirstAsync<T>(sql, new {Id = id}).ConfigureAwait(false);
-        return result;
-    }
-
     public virtual async Task<T?> GetByPkAsync(object pk) {
         var filter = new Filter(new FilterExpression(tableInfo.PrimaryKeyName, Operator.Equal));
         var sql = sqlBuilder.GetSelectSql(filter);

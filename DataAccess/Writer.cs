@@ -17,10 +17,10 @@ public abstract class Writer : IWriter {
     public void AddForUpdate<T>(IEnumerable<T> entities) where T : class =>
         queuedItems.Add(new DataChange<T>(DataChangeKind.Update, entities, true));
 
-    public void AddForDelete<T>(int id) where T : class => queuedItems.Add(new DataChange<T>(DataChangeKind.Delete, id, false));
+    public void AddForDelete<T>(T entity) where T : class => queuedItems.Add(new DataChange<T>(DataChangeKind.Delete, entity, false));
 
-    public void AddForDelete<T>(IEnumerable<int> ids) where T : class =>
-        queuedItems.Add(new DataChange<T>(DataChangeKind.Delete, ids, true));
+    public void AddForDelete<T>(IEnumerable<T> entities) where T : class =>
+        queuedItems.Add(new DataChange<T>(DataChangeKind.Delete, entities, true));
 
     public void AddForInsert<T>(T entity) where T : class => queuedItems.Add(new DataChange<T>(DataChangeKind.Insert, entity, false));
 

@@ -9,8 +9,8 @@ public interface ICrud<T> {
     [Get("/{pkValue}")]
     Task<Response<T>> GetByPkAsync(object pkValue);
 
-    [Get("/{id}")]
-    Task<Response<T>> GetByIdAsync(int id);
+    [Get("/")]
+    Task<Response<T>> GetByModelAsync([Body] T item);
 
     [Put("")]
     Task<Response> UpdateItemAsync([Body] T item);
@@ -19,5 +19,5 @@ public interface ICrud<T> {
     Task<Response<T>> CreateItemAsync([Body] T item);
 
     [Delete("")]
-    Task<Response> DeleteItemAsync(int id);
+    Task<Response> DeleteItemAsync(T item);
 }
