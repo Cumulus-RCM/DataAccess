@@ -12,7 +12,7 @@ public sealed class TableInfo<T> : ITableInfo
     public bool IsIdentity { get; }
     public IReadOnlyCollection<ColumnInfo> ColumnsMap { get; }
     public Type EntityType { get; } = typeof(T);
-    public bool IsCompoundPk { get; init; } = false;
+    public bool IsCompoundPk { get; }
     public string? CustomDeleteSqlTemplate { get; init; } = null;
 
     private readonly MethodInfo? pkSetter;
@@ -20,12 +20,13 @@ public sealed class TableInfo<T> : ITableInfo
 
     public TableInfo() : this(tableName: null) { }
 
-    public TableInfo(string? tableName = null, string? primaryKeyName = null, string? sequence = null, bool isIdentity = false, IEnumerable<ColumnInfo>? mappedColumnsInfos = null)
+    public TableInfo(string? tableName = null, string? primaryKeyName = null, string? sequence = null, bool isIdentity = false, IEnumerable<ColumnInfo>? mappedColumnsInfos = null, bool isCompoundPk = false)
     {
         TableName = tableName ?? EntityType.Name;
         SequenceName = sequence ?? $"{TableName}_id_seq";
         PrimaryKeyName = primaryKeyName ?? "Id";
         IsIdentity = isIdentity;
+        IsCompoundPk = isCompoundPk;
 
         var properties = typeof(T).GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public);
         if (!IsCompoundPk) {
