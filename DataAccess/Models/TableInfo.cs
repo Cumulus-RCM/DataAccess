@@ -12,7 +12,7 @@ public sealed class TableInfo<T> : ITableInfo
     public bool IsIdentity { get; }
     public IReadOnlyCollection<ColumnInfo> ColumnsMap { get; }
     public Type EntityType { get; } = typeof(T);
-    public string? CustomUpdateSqlTemplate { get; init; } = null;
+    public bool IsCompoundPk { get; init; } = false;
     public string? CustomDeleteSqlTemplate { get; init; } = null;
 
     private readonly MethodInfo? pkSetter;
@@ -28,9 +28,13 @@ public sealed class TableInfo<T> : ITableInfo
         IsIdentity = isIdentity;
 
         var properties = typeof(T).GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public);
-        var pkPropertyInfo = properties.SingleOrDefault(pi => pi.Name.Equals(PrimaryKeyName, StringComparison.InvariantCultureIgnoreCase)) ?? throw new InvalidDataException($"No PrimaryKeyName Defined for {TableName}.");
-        pkSetter = pkPropertyInfo.GetSetMethod(true);
-        pkGetter = pkPropertyInfo.GetGetMethod(true);
+        if (!IsCompoundPk) {
+            var pkPropertyInfo =
+                properties.SingleOrDefault(pi => pi.Name.Equals(PrimaryKeyName, StringComparison.InvariantCultureIgnoreCase)) ??
+                throw new InvalidDataException($"No PrimaryKeyName Defined for {TableName}.");
+            pkSetter = pkPropertyInfo.GetSetMethod(true);
+            pkGetter = pkPropertyInfo.GetGetMethod(true);
+        }
 
         var mappedColumns = (mappedColumnsInfos ?? Enumerable.Empty<ColumnInfo>()).ToList();
 
