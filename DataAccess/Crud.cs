@@ -6,7 +6,7 @@ namespace DataAccess;
 public class Crud<T> : ICrud<T> where T : class {
     protected readonly ILoggerFactory loggerFactory;
     protected readonly ILogger<Crud<T>> logger;
-    protected readonly Reader<T> reader;
+    protected readonly IReader<T> reader;
     protected readonly IWriter writer;
 
     public Crud(IReaderFactory readerFactory, IWriter writer, ILoggerFactory loggerFactory) {

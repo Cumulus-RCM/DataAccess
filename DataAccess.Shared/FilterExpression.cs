@@ -156,6 +156,8 @@ public class Filter {
 
     public string PrimaryExpressionPropertyName() => Segments.First().Expressions.First().FilterExpression.PropertyName;
 
+    public string? PrimaryExpressionStringValue() => Segments.First().Expressions.First().FilterExpression.ValueString;
+
     public void SetParameterValue(string propertyName, string value) {
         var exp = Segments.SelectMany(s => s.Expressions).FirstOrDefault(e => e.FilterExpression.PropertyName == propertyName);
         if (exp is not null) exp.FilterExpression.ValueString = value;

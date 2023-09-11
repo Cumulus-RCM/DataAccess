@@ -14,5 +14,5 @@ public class ReaderFactory : IReaderFactory {
         this.loggerFactory = loggerFactory;
 
     }
-    public virtual Reader<T> GetReader<T>() where T : class => new Reader<T>(connectionManager, databaseMapper, loggerFactory);
+    public virtual IReader<T> GetReader<T>() where T : class => new Reader<T>(connectionManager, databaseMapper, loggerFactory);
 }
