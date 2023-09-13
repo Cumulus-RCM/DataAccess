@@ -21,9 +21,9 @@ public class Reader<T> : IReader<T> where T : class {
         sqlBuilder = new SqlBuilder(tableInfo);
     }
 
-    public virtual async Task<ReadOnlyCollection<T>> GetAllAsync(Filter? filter = null, int pageSize = 0, int pageNum = 0, string orderBy = "") {
+    public virtual async Task<ReadOnlyCollection<T>> GetAllAsync(Filter? filter = null, int pageSize = 0, int pageNum = 0, IEnumerable<OrderByExpression>? orderBy = null) {
         try {
-            var sql = sqlBuilder.GetSelectSql(filter, pageSize, pageNum);
+            var sql = sqlBuilder.GetSelectSql(filter, pageSize, pageNum, orderBy);
             using var conn = dbConnectionService.CreateConnection();
             var parms = filter?.GetDynamicParameters();
             var result = await conn.QueryAsync<T>(sql,parms ).ConfigureAwait(false);

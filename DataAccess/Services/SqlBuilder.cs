@@ -11,18 +11,34 @@ public class SqlBuilder {
         this.tableInfo = tableInfo;
     }
 
-    public string GetSelectSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, string orderBy = "") {
+    public string GetSelectSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, IEnumerable<OrderByExpression>? orderBy = null ) {
         if (pageNum <= 0) pageNum = 1;
         var whereClause = generateWhereClause(filter);
-        var orderByClause = orderBy == "" && pageSize > 0
-            ? readifyOrderByClause(tableInfo.PrimaryKeyName)
-            : readifyOrderByClause(orderBy);
+        var orderByClause = generateOrderByClause(orderBy ?? new OrderByExpression(tableInfo.PrimaryKeyName).ItemAsEnumerable());
         var offsetFetchClause = pageSize > 0
             ? $"OFFSET {pageSize * (pageNum - 1)} ROWS FETCH NEXT {pageSize} ROW ONLY"
             : "";
-        var columns = string.Join(",", tableInfo.ColumnsMap.Where(c => !c.IsSkipByDefault).Select(c => $"{c.ColumnName}{c.Alias}"));
+        var columns = string.Join(",", tableInfo.ColumnsMap.Where(c => !c.IsSkipByDefault).Select(c => $"{c.ColumnName} {c.Alias}"));
         var result = $"SELECT {columns} FROM {tableInfo.TableName} {whereClause} {orderByClause} {offsetFetchClause}";
         return result.Trim();
+    }
+
+
+    private string generateOrderByClause(IEnumerable<OrderByExpression> orderByExpressions) {
+        var cols = string.Join(",", orderByExpressions.Select(expr => $"{getMappedColumnName(expr)} {expr.OrderDirection.DisplayName}" ));
+        return readifyOrderByClause(cols);
+
+        string getMappedColumnName(OrderByExpression orderByExpression) => tableInfo.ColumnsMap.Single(x=>x.PropertyName == orderByExpression.PropertyName ).ColumnName;
+    }
+
+    private static string readifyOrderByClause(string? rawOrderByClause) => readifyClause(rawOrderByClause, "ORDER BY");
+
+    private static string readifyClause(string? rawClause, string op) {
+        if (string.IsNullOrWhiteSpace(rawClause)) return "";
+        var result = rawClause.Trim();
+        return result.StartsWith(op, StringComparison.OrdinalIgnoreCase)
+            ? $" {result}"
+            : $" {op} {result}";
     }
 
     public string GetCountSql(Filter? filter = null) {
@@ -69,16 +85,6 @@ INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{para
     }
 
     public string GetDeleteSql() => tableInfo.CustomDeleteSqlTemplate ?? $"DELETE FROM {tableInfo.TableName} WHERE {tableInfo.PrimaryKeyName} IN ({PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName})";
-
-    private static string readifyOrderByClause(string? rawOrderByClause) => readifyClause(rawOrderByClause, "ORDER BY");
-
-    private static string readifyClause(string? rawClause, string op) {
-        if (string.IsNullOrWhiteSpace(rawClause)) return "";
-        var result = rawClause.Trim();
-        return result.StartsWith(op, StringComparison.OrdinalIgnoreCase)
-            ? $" {result}"
-            : $" {op} {result}";
-    }
 
     private string generateWhereClause(Filter? filter) {
         if (filter == null) return "";

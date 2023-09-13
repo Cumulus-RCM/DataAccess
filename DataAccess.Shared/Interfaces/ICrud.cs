@@ -4,7 +4,7 @@ namespace DataAccess.Shared;
 
 public interface ICrud<T> {
     [Get("/")]
-    Task<Response<T>> GetAllAsync(string? filterJson = null, int pageSize = 0, int pageNumber = 1);
+    Task<Response<T>> GetAllAsync(string? filterJson = null, int pageSize = 0, int pageNumber = 1, IEnumerable<OrderByExpression>? orderBy = null);
 
     [Get("/{pkValue}")]
     Task<Response<T>> GetByPkAsync(object pkValue);
