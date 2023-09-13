@@ -2,7 +2,7 @@
 
 namespace DataAccess;
 
-public sealed class DataChangeKind : Enumeration {
+public sealed record DataChangeKind : Enumeration {
     public const int INSERT = 1;
     public const int UPDATE = 2;
     public const int DELETE = 3;
