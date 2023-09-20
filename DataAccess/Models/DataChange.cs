@@ -11,5 +11,4 @@ public class DataChange<T> : IDataChange {
         Entity = entity;
         IsCollection = isCollection;
     }
-
  }

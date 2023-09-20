@@ -1,6 +1,4 @@
-﻿using DataAccess.Models;
-
-namespace DataAccess.Interfaces;
+﻿namespace DataAccess.Interfaces;
 
 public interface IDatabaseMapper
 {

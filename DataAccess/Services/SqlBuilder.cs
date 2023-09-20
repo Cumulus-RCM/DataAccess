@@ -74,7 +74,6 @@ INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{para
     }
 
     public string GetUpdateSql(IEnumerable<string>? changedPropertyNames = null) {
-        if (tableInfo.IsCompoundPk) throw new Exception("Can not get update sql for table with compound Pk.");
         var changedPropertiesList = changedPropertyNames is null ? new List<string>() : changedPropertyNames.ToList();
         var setStatements = tableInfo.ColumnsMap
             .Where(property => changedPropertyNames is null ||

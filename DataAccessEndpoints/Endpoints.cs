@@ -1,7 +1,9 @@
 ﻿using DataAccess.Shared;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Refit;
 
 namespace DataAccessEndpoints; 
 
@@ -16,19 +18,19 @@ public abstract class Endpoints {
             .WithName($"Get{typeName}")
             .WithOpenApi();
 
-        group.MapGet("/{pk}", async Task<Response<T>>(object pk) => await crud.GetByPkAsync(pk).ConfigureAwait(false))
+        group.MapGet("/{PrimaryKeyValue}", async Task<Response<T>> (string pkValue) => await crud.GetByPkAsync(pkValue).ConfigureAwait(false))
             .WithName($"Get{typeName}ByPk")
             .WithOpenApi();
 
-        group.MapPut("/", async Task<Response>(T item) => await crud.UpdateItemAsync(item).ConfigureAwait(false))
+        group.MapPut("/", async Task<Response> (T item) => await crud.UpdateItemAsync(item).ConfigureAwait(false))
             .WithName($"Update{typeName}")
             .WithOpenApi();
 
-        group.MapPost("/", async Task<Response<T>>(T item) => await crud.CreateItemAsync(item).ConfigureAwait(false))
+        group.MapPost("/", async Task<Response<T>> (T item) => await crud.CreateItemAsync(item).ConfigureAwait(false))
             .WithName($"Create{typeName}")
             .WithOpenApi();
 
-        group.MapDelete("/", async Task<Response>(T item) => await crud.DeleteItemAsync(item).ConfigureAwait(false))
+        group.MapDelete("/", async Task<Response> ([FromBody] T item) => await crud.DeleteItemAsync(item).ConfigureAwait(false))
             .WithName($"Delete{typeName}")
             .WithOpenApi();
 

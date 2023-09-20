@@ -1,41 +1,40 @@
 ﻿using System.Reflection;
 using DataAccess.Interfaces;
 
-// ReSharper disable once CheckNamespace
-namespace DataAccess.Models;
+namespace DataAccess;
 
-public sealed class TableInfo<T> : ITableInfo
-{
+public sealed class TableInfo<T> : ITableInfo {
     public string TableName { get; }
     public string PrimaryKeyName { get; }
     public string SequenceName { get; }
     public bool IsIdentity { get; }
     public IReadOnlyCollection<ColumnInfo> ColumnsMap { get; }
+
     public Type EntityType { get; } = typeof(T);
-    public bool IsCompoundPk { get; }
-    public string? CustomDeleteSqlTemplate { get; init; } = null;
+
+    public string? CustomDeleteSqlTemplate { get; init; }
 
     private readonly MethodInfo? pkSetter;
     private readonly MethodInfo? pkGetter;
 
     public TableInfo() : this(tableName: null) { }
 
-    public TableInfo(string? tableName = null, string? primaryKeyName = null, string? sequence = null, bool isIdentity = false, IEnumerable<ColumnInfo>? mappedColumnsInfos = null, bool isCompoundPk = false)
-    {
+    public TableInfo(string? tableName = null, string? primaryKeyName = null, string? sequence = null, bool isIdentity = false,
+        IEnumerable<ColumnInfo>? mappedColumnsInfos = null) {
         TableName = tableName ?? EntityType.Name;
         SequenceName = sequence ?? $"{TableName}_id_seq";
         PrimaryKeyName = primaryKeyName ?? "Id";
         IsIdentity = isIdentity;
-        IsCompoundPk = isCompoundPk;
+        //IsCompoundPk = isCompoundPk;
 
         var properties = typeof(T).GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public);
-        if (!IsCompoundPk) {
-            var pkPropertyInfo =
-                properties.SingleOrDefault(pi => pi.Name.Equals(PrimaryKeyName, StringComparison.InvariantCultureIgnoreCase)) ??
-                throw new InvalidDataException($"No PrimaryKeyName Defined for {TableName}.");
-            pkSetter = pkPropertyInfo.GetSetMethod(true);
-            pkGetter = pkPropertyInfo.GetGetMethod(true);
-        }
+        //if (!IsCompoundPk) {
+        var pkPropertyInfo =
+            properties.SingleOrDefault(pi => pi.Name.Equals(PrimaryKeyName, StringComparison.InvariantCultureIgnoreCase)) ??
+            throw new InvalidDataException($"No PrimaryKeyName Defined for {TableName}.");
+        pkSetter = pkPropertyInfo.GetSetMethod(true);
+        pkGetter = pkPropertyInfo.GetGetMethod(true);
+
 
         var mappedColumns = (mappedColumnsInfos ?? Enumerable.Empty<ColumnInfo>()).ToList();
 
@@ -52,5 +51,7 @@ public sealed class TableInfo<T> : ITableInfo
     }
 
     public void SetPrimaryKeyValue(object entity, int value) => pkSetter?.Invoke(entity, new object[] { value });
-    public object GetPrimaryKeyValue(object entity) => pkGetter?.Invoke(entity, null) ?? throw new InvalidDataException("PrimaryKeyName value is null");
+
+    public object GetPrimaryKeyValue(object entity) =>
+        pkGetter?.Invoke(entity, null) ?? throw new InvalidDataException("PrimaryKeyName value is null");
 }

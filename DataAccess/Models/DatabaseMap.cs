@@ -1,14 +1,11 @@
-﻿// ReSharper disable once CheckNamespace
-using DataAccess.Interfaces;
+﻿using DataAccess.Interfaces;
 
-namespace DataAccess.Models;
+namespace DataAccess;
 
-public class DatabaseMap : IDatabaseMap
-{
-    public ITableInfo[] Map { get; protected set; }
+public abstract class DatabaseMap : IDatabaseMap {
+    public ITableInfo[] Map { get; protected init; }
 
-    public DatabaseMap(ITableInfo[]? dbMap = null)
-    {
+    protected DatabaseMap(ITableInfo[]? dbMap = null) {
         Map = dbMap ?? Array.Empty<ITableInfo>();
     }
 }

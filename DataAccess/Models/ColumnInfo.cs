@@ -1,6 +1,4 @@
-﻿// ReSharper disable once CheckNamespace
-
-namespace DataAccess.Models;
+﻿namespace DataAccess;
 
 public class ColumnInfo {
     public string ColumnName { get; init; }

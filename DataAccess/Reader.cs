@@ -2,7 +2,6 @@
 using BaseLib;
 using Dapper;
 using DataAccess.Interfaces;
-using DataAccess.Models;
 using DataAccess.Shared;
 using Microsoft.Extensions.Logging;
 
@@ -35,15 +34,10 @@ public class Reader<T> : IReader<T> where T : class {
         }
     }
 
-    public virtual async Task<T?> GetByPkAsync(object pk) {
-        var filter = new Filter(new FilterExpression(tableInfo.PrimaryKeyName, Operator.Equal));
-        var sql = sqlBuilder.GetSelectSql(filter);
-        using var conn = dbConnectionService.CreateConnection();
-        var args = new Dictionary<string, object> {
-            {tableInfo.PrimaryKeyName, pk}
-        };
-        var result = await conn.QueryFirstAsync<T>(sql, args).ConfigureAwait(false);
-        return result;
+    public virtual async Task<T?> GetByPkAsync(string pkValue) {
+        var filter = new Filter(new FilterExpression(tableInfo.PrimaryKeyName, Operator.Equal) {ValueString = pkValue});
+        var result = await GetAllAsync(filter,pageSize:1, pageNum:1).ConfigureAwait(false);
+        return result.FirstOrDefault();
     }
 
     public virtual async Task<int> GetCountAsync(Filter? filter = null) {

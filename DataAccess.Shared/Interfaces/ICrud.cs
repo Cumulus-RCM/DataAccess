@@ -7,10 +7,10 @@ public interface ICrud<T> {
     Task<Response<T>> GetAllAsync(string? filterJson = null, int pageSize = 0, int pageNumber = 1, IEnumerable<OrderByExpression>? orderBy = null);
 
     [Get("/{pkValue}")]
-    Task<Response<T>> GetByPkAsync(object pkValue);
+    Task<Response<T>> GetByPkAsync(string pkValue);
 
-    [Get("/")]
-    Task<Response<T>> GetByModelAsync([Body] T item);
+    //[Get("/")]
+    //Task<Response<T>> GetByModelAsync([Body] T item);
 
     [Put("")]
     Task<Response> UpdateItemAsync([Body] T item);
@@ -19,5 +19,5 @@ public interface ICrud<T> {
     Task<Response<T>> CreateItemAsync([Body] T item);
 
     [Delete("")]
-    Task<Response> DeleteItemAsync(T item);
+    Task<Response> DeleteItemAsync([Body] T item);
 }

@@ -4,15 +4,11 @@ using Microsoft.Extensions.Logging;
 namespace DataAccess;
 
 public class Crud<T> : ICrud<T> where T : class {
-    // ReSharper disable InconsistentNaming
-    protected readonly ILoggerFactory loggerFactory;
     protected readonly ILogger<Crud<T>> logger;
     protected readonly IReader<T> reader;
     protected readonly IWriter writer;
-    // ReSharper restore InconsistentNaming
 
     public Crud(IReaderFactory readerFactory, IWriter writer, ILoggerFactory loggerFactory) {
-        this.loggerFactory = loggerFactory;
         this.logger = loggerFactory.CreateLogger<Crud<T>>();
         this.reader = readerFactory.GetReader<T>();
         this.writer = writer;
@@ -45,7 +41,7 @@ public class Crud<T> : ICrud<T> where T : class {
 
     public Task<Response<T>> GetByModelAsync(T item) => GetAllAsync(Filter.FromEntity(item));
 
-    public async Task<Response<T>> GetByPkAsync(object pkValue) {
+    public async Task<Response<T>> GetByPkAsync(string pkValue) {
         var result = await reader.GetByPkAsync(pkValue).ConfigureAwait(false);
         return new Response<T>(result);
     }
