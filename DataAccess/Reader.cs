@@ -35,7 +35,7 @@ public class Reader<T> : IReader<T> where T : class {
     }
 
     public virtual async Task<T?> GetByPkAsync(string pkValue) {
-        var filter = new Filter(new FilterExpression(tableInfo.PrimaryKeyName, Operator.Equal) {ValueString = pkValue});
+        var filter = Filter.CreateFilter( new FilterExpression<T>(tableInfo.PrimaryKeyName, Operator.Equal) {ValueString = pkValue});
         var result = await GetAllAsync(filter,pageSize: 1, pageNum: 1).ConfigureAwait(false);
         return result.FirstOrDefault();
     }

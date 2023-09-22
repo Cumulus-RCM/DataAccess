@@ -37,8 +37,8 @@ public record FilterExpression<T> : FilterExpression {
         return result is null;
     }
 
-    public FilterExpression(Expression<Func<T, object>> propertyNameExpression, Operator oper) : this(MemberHelpers.GetMemberName(propertyNameExpression), oper) {
-    }
+    public FilterExpression(Expression<Func<T, object>> propertyNameExpression, Operator oper) : 
+        this(MemberHelpers.GetMemberName(propertyNameExpression), oper) { }
  }
 
 public record ConnectedExpression {
@@ -149,26 +149,41 @@ public class Filter {
 
     //https://long2know.com/2016/10/building-linq-expressions-part-2/
     public Func<T, bool> ToLinqExpression<T>() {
-        var expressions = Segments.SelectMany(s => s.Expressions);
-        var firstExpression = expressions.First();
-        var parameter = Expression.Parameter(typeof(T), "x");
-        var property = Expression.Property(parameter, firstExpression.FilterExpression.PropertyName);
-        var filterValue = Expression.Constant(firstExpression.FilterExpression.ValueString);
-        var miTrim = typeof(string).GetMethod("Trim", Type.EmptyTypes);
-        var miLower = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
-        var miStartsWith = typeof(string).GetMethod("StartsWith", new[] { typeof(string) });
-        var trimmed = Expression.Call(property, miTrim!);
-        var lowered = Expression.Call(trimmed, miLower!);
-        var body = Expression.Call(lowered,miStartsWith!, filterValue);
-        var lambda = Expression.Lambda<Func<T, bool>>(body, parameter);
-        return lambda.Compile();
+        var firstExpression = Segments.SelectMany(s => s.Expressions).First();
+        if (firstExpression.FilterExpression.ValueType == "String") {
+            var parameter = Expression.Parameter(typeof(T), "x");
+            var property = Expression.Property(parameter, firstExpression.FilterExpression.PropertyName);
+            var filterValue = Expression.Constant(firstExpression.FilterExpression.ValueString);
+            var miTrim = typeof(string).GetMethod("Trim", Type.EmptyTypes);
+            var miLower = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
+            var miStartsWith = typeof(string).GetMethod("StartsWith", new[] { typeof(string) });
+            var trimmed = Expression.Call(property, miTrim!);
+            var lowered = Expression.Call(trimmed, miLower!);
+            var body = Expression.Call(lowered, miStartsWith!, filterValue);
+            var lambda = Expression.Lambda<Func<T, bool>>(body, parameter);
+            return lambda.Compile();
+        }
+        if (firstExpression.FilterExpression.ValueType == "Int64") {
+            var parameter = Expression.Parameter(typeof(T), "x");
+            var property = Expression.Property(parameter, firstExpression.FilterExpression.PropertyName);
+            var filterValue = Expression.Constant(long.Parse( firstExpression.FilterExpression.ValueString!));
+            var body =  Expression.Equal(property, filterValue);
+            var lambda = Expression.Lambda<Func<T, bool>>(body, parameter);
+            return lambda.Compile();
+        }
+        return _ => true;
     }
 
     public string AsJson() => JsonSerializer.Serialize(this);
 
-    public Filter(FilterExpression filterExpression) => Segments.Add(new FilterSegment(filterExpression));
 
-    public Filter(FilterSegment filterSegment) => Segments.Add(filterSegment);
+    public static Filter CreateFilter<T>(FilterExpression<T> filterExpression) where T : class {
+        var filter = new Filter();
+        filter.Segments.Add(new FilterSegment(filterExpression));
+        return filter;
+    }
+
+    private Filter(FilterSegment filterSegment) => Segments.Add(filterSegment);
 
     public string PrimaryExpressionPropertyName() => Segments.First().Expressions.First().FilterExpression.PropertyName;
 
