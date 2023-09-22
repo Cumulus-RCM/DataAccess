@@ -146,6 +146,24 @@ public class Filter {
             ? null
             : JsonSerializer.Deserialize<Filter>(json);
 
+
+    //https://long2know.com/2016/10/building-linq-expressions-part-2/
+    public Func<T, bool> ToLinqExpression<T>() {
+        var expressions = Segments.SelectMany(s => s.Expressions);
+        var firstExpression = expressions.First();
+        var parameter = Expression.Parameter(typeof(T), "x");
+        var property = Expression.Property(parameter, firstExpression.FilterExpression.PropertyName);
+        var filterValue = Expression.Constant(firstExpression.FilterExpression.ValueString);
+        var miTrim = typeof(string).GetMethod("Trim", Type.EmptyTypes);
+        var miLower = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
+        var miStartsWith = typeof(string).GetMethod("StartsWith", new[] { typeof(string) });
+        var trimmed = Expression.Call(property, miTrim!);
+        var lowered = Expression.Call(trimmed, miLower!);
+        var body = Expression.Call(lowered,miStartsWith!, filterValue);
+        var lambda = Expression.Lambda<Func<T, bool>>(body, parameter);
+        return lambda.Compile();
+    }
+
     public string AsJson() => JsonSerializer.Serialize(this);
 
     public Filter(FilterExpression filterExpression) => Segments.Add(new FilterSegment(filterExpression));

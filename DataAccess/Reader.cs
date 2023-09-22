@@ -20,7 +20,7 @@ public class Reader<T> : IReader<T> where T : class {
         sqlBuilder = new SqlBuilder(tableInfo);
     }
 
-    public virtual async Task<ReadOnlyCollection<T>> GetAllAsync(Filter? filter = null, int pageSize = 0, int pageNum = 0, IEnumerable<OrderByExpression>? orderBy = null) {
+    public virtual async Task<ReadOnlyCollection<T>> GetAllAsync(Filter? filter = null, int pageSize = 0, int pageNum = 0, OrderBy? orderBy = null) {
         try {
             var sql = sqlBuilder.GetSelectSql(filter, pageSize, pageNum, orderBy);
             using var conn = dbConnectionService.CreateConnection();
@@ -36,7 +36,7 @@ public class Reader<T> : IReader<T> where T : class {
 
     public virtual async Task<T?> GetByPkAsync(string pkValue) {
         var filter = new Filter(new FilterExpression(tableInfo.PrimaryKeyName, Operator.Equal) {ValueString = pkValue});
-        var result = await GetAllAsync(filter,pageSize:1, pageNum:1).ConfigureAwait(false);
+        var result = await GetAllAsync(filter,pageSize: 1, pageNum: 1).ConfigureAwait(false);
         return result.FirstOrDefault();
     }
 

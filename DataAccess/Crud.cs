@@ -14,15 +14,16 @@ public class Crud<T> : ICrud<T> where T : class {
         this.writer = writer;
     }
 
-    public Task<Response<T>> GetAllAsync(string? filterJson = null, int pageSize = 0, int pageNumber = 1, IEnumerable<OrderByExpression>? orderBy = null) {
+    public Task<Response<T>> GetAllAsync(string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null) {
         var filter = Filter.FromJson(filterJson);
+        var orderBy = OrderBy.FromJson(orderByJson);  
         return getAllAsync(filter, pageSize, pageNumber, orderBy);
     }
 
-    public Task<Response<T>> GetAllAsync(Filter? filter = null, int pageSize = 0, int pageNumber = 1, IEnumerable<OrderByExpression>? orderBy = null) => 
+    public Task<Response<T>> GetAllAsync(Filter? filter = null, int pageSize = 0, int pageNumber = 1, OrderBy? orderBy = null) => 
         getAllAsync(filter, pageSize, pageNumber, orderBy);
 
-    private async Task<Response<T>> getAllAsync(Filter? filter = null, int pageSize = 0, int pageNumber = 1, IEnumerable<OrderByExpression>? orderBy = null) {
+    private async Task<Response<T>> getAllAsync(Filter? filter = null, int pageSize = 0, int pageNumber = 1, OrderBy? orderBy = null) {
         try {
             var cnt = 0;
             if (pageNumber == 0) {

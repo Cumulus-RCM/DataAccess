@@ -11,10 +11,10 @@ public class SqlBuilder {
         this.tableInfo = tableInfo;
     }
 
-    public string GetSelectSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, IEnumerable<OrderByExpression>? orderBy = null ) {
+    public string GetSelectSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, OrderBy? orderBy = null ) {
         if (pageNum <= 0) pageNum = 1;
         var whereClause = generateWhereClause(filter);
-        var orderByClause = generateOrderByClause(orderBy ?? new OrderByExpression(tableInfo.PrimaryKeyName).ItemAsEnumerable());
+        var orderByClause = generateOrderByClause(orderBy ?? new OrderBy(tableInfo.PrimaryKeyName));
         var offsetFetchClause = pageSize > 0
             ? $"OFFSET {pageSize * (pageNum - 1)} ROWS FETCH NEXT {pageSize} ROW ONLY"
             : "";
@@ -24,8 +24,8 @@ public class SqlBuilder {
     }
 
 
-    private string generateOrderByClause(IEnumerable<OrderByExpression> orderByExpressions) {
-        var cols = string.Join(",", orderByExpressions.Select(expr => $"{getMappedColumnName(expr)} {expr.OrderDirection.DisplayName}" ));
+    private string generateOrderByClause(OrderBy orderBy) {
+        var cols = string.Join(",", orderBy.OrderByExpressions.Select(expr => $"{getMappedColumnName(expr)} {expr.OrderDirection.DisplayName}" ));
         return readifyOrderByClause(cols);
 
         string getMappedColumnName(OrderByExpression orderByExpression) => tableInfo.ColumnsMap.Single(x=>x.PropertyName == orderByExpression.PropertyName ).ColumnName;
