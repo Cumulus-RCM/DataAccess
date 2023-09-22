@@ -1,6 +1,8 @@
-﻿using System.Linq.Expressions;
+﻿using System.ComponentModel;
+using System.Linq.Expressions;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using BaseLib;
 using Dapper;
 
 namespace DataAccess.Shared;
@@ -14,7 +16,13 @@ public record FilterExpression(string PropertyName, Operator Operator) {
         set => ValueString = value.ToString();
     }
     public string? ValueString { get; set; }
-    public string ValueType { get; set; } = "object";
+
+    [JsonIgnore]
+    public Type ValueType => Type.GetType(ValueTypeName ?? typeof(object).FullName!)!;
+
+    public string? ValueTypeName { get; set; }
+    //NOTE: public setter is to get around the fact that the JsonSerializer does not deserialize non-public setters
+
     protected FilterExpression() : this("", Operator.Contains) { }
 
    public static bool TryParse(string value, out FilterExpression? result) {
@@ -27,7 +35,7 @@ public record FilterExpression<T> : FilterExpression {
     public FilterExpression(string propertyName, Operator oper) : base(propertyName, oper) {
         var propertyInfo = typeof(T).GetProperty(propertyName);
         if (propertyInfo is null) throw new ArgumentException($"Property: {propertyName} NOT found on {typeof(T).Name}");
-        ValueType = propertyInfo.PropertyType.Name;
+        ValueTypeName = propertyInfo.PropertyType.FullName;
     }
 
     public FilterExpression() {}
@@ -150,7 +158,7 @@ public class Filter {
     //https://long2know.com/2016/10/building-linq-expressions-part-2/
     public Func<T, bool> ToLinqExpression<T>() {
         var firstExpression = Segments.SelectMany(s => s.Expressions).First();
-        if (firstExpression.FilterExpression.ValueType == "String") {
+        if (firstExpression.FilterExpression.ValueType == typeof(string)) {
             var parameter = Expression.Parameter(typeof(T), "x");
             var property = Expression.Property(parameter, firstExpression.FilterExpression.PropertyName);
             var filterValue = Expression.Constant(firstExpression.FilterExpression.ValueString);
@@ -163,10 +171,12 @@ public class Filter {
             var lambda = Expression.Lambda<Func<T, bool>>(body, parameter);
             return lambda.Compile();
         }
-        if (firstExpression.FilterExpression.ValueType == "Int64") {
+        if (firstExpression.FilterExpression.ValueType.IsNumeric()) {
             var parameter = Expression.Parameter(typeof(T), "x");
             var property = Expression.Property(parameter, firstExpression.FilterExpression.PropertyName);
-            var filterValue = Expression.Constant(long.Parse( firstExpression.FilterExpression.ValueString!));
+            var converter = TypeDescriptor.GetConverter(firstExpression.FilterExpression.ValueType);
+            var numeric = converter.ConvertFrom(firstExpression.FilterExpression.ValueString!);
+            var filterValue = Expression.Constant(numeric);
             var body =  Expression.Equal(property, filterValue);
             var lambda = Expression.Lambda<Func<T, bool>>(body, parameter);
             return lambda.Compile();
@@ -174,7 +184,15 @@ public class Filter {
         return _ => true;
     }
 
-    public string AsJson() => JsonSerializer.Serialize(this);
+    public string AsJson() {
+        try {
+            return JsonSerializer.Serialize(this);
+        }
+        catch (Exception e) {
+            Console.WriteLine(e);
+            throw;
+        }
+    }
 
 
     public static Filter CreateFilter<T>(FilterExpression<T> filterExpression) where T : class {
