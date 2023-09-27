@@ -30,13 +30,15 @@ public class OrderBy {
 }
 
 public record OrderByExpression {
-    public string PropertyName { get; }
-    public OrderDirection OrderDirection { get; }
+    public string PropertyName { get; set; }
+    public OrderDirection OrderDirection { get; set; }
 
     public OrderByExpression(string propertyName, OrderDirection? orderDirection = null) {
         PropertyName = propertyName;
         OrderDirection = orderDirection ?? OrderDirection.Ascending;
     }
+
+    public string AsJson() => JsonSerializer.Serialize(this);
 
     public Func<T, object> ToLinqExpression<T>() {
         var param = Expression.Parameter(typeof(T), "x");
@@ -44,6 +46,7 @@ public record OrderByExpression {
         var lambda = Expression.Lambda<Func<T, object>>(Expression.Convert(body, typeof(object)), param);
         return lambda.Compile();
     }
+
 
     public static bool TryParse(string json, out OrderByExpression? orderByExpression) {
         orderByExpression = JsonSerializer.Deserialize<OrderByExpression>(json);
