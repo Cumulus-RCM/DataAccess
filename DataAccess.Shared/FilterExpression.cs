@@ -27,7 +27,7 @@ public record FilterExpression(string PropertyName, Operator Operator) {
 
    public static bool TryParse(string value, out FilterExpression? result) {
         result = JsonSerializer.Deserialize<FilterExpression>(value);
-        return result is null;
+        return result is not null;
     }
 }
 
