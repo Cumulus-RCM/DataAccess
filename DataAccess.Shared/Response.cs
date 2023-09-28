@@ -1,6 +1,4 @@
-﻿using System.Reflection.Metadata.Ecma335;
-
-namespace DataAccess.Shared;
+﻿namespace DataAccess.Shared;
 
 public record Response(bool Success, string ErrorMessage = "");
 
