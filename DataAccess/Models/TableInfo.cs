@@ -11,8 +11,11 @@ public sealed class TableInfo<T> : ITableInfo {
     public IReadOnlyCollection<ColumnInfo> ColumnsMap { get; }
 
     public Type EntityType { get; } = typeof(T);
-
+    
+    public string? CustomSelectSqlTemplate { get; init; }
     public string? CustomDeleteSqlTemplate { get; init; }
+    public string? CustomInsertSqlTemplate { get; init; }
+    public string? CustomUpdateSqlTemplate { get; init; }
 
     private readonly MethodInfo? pkSetter;
     private readonly MethodInfo? pkGetter;
@@ -54,4 +57,5 @@ public sealed class TableInfo<T> : ITableInfo {
 
     public object GetPrimaryKeyValue(object entity) =>
         pkGetter?.Invoke(entity, null) ?? throw new InvalidDataException("PrimaryKeyName value is null");
+
 }

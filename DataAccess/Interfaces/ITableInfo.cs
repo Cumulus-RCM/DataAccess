@@ -11,5 +11,9 @@ public interface ITableInfo {
     IReadOnlyCollection<ColumnInfo> ColumnsMap { get; }
     void SetPrimaryKeyValue(object entity, int value);
     object GetPrimaryKeyValue(object entity);
+    string? CustomSelectSqlTemplate { get; }
     string? CustomDeleteSqlTemplate { get; }
+    string? CustomInsertSqlTemplate { get; }
+    string? CustomUpdateSqlTemplate { get; }
+
 }
