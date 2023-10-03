@@ -15,17 +15,16 @@ public record FilterExpression(string PropertyName, Operator Operator) {
     public object Value {
         set => ValueString = value.ToString();
     }
+
     public string? ValueString { get; set; }
 
-    [JsonIgnore]
-    public Type ValueType => Type.GetType(ValueTypeName ?? typeof(object).FullName!)!;
+    [JsonIgnore] public Type ValueType => Type.GetType(ValueTypeName ?? typeof(object).FullName!)!;
 
     public string? ValueTypeName { get; set; }
-    //NOTE: public setter is to get around the fact that the JsonSerializer does not deserialize non-public setters
 
     protected FilterExpression() : this("", Operator.Contains) { }
 
-   public static bool TryParse(string value, out FilterExpression? result) {
+    public static bool TryParse(string value, out FilterExpression? result) {
         result = JsonSerializer.Deserialize<FilterExpression>(value);
         return result is not null;
     }
@@ -33,27 +32,33 @@ public record FilterExpression(string PropertyName, Operator Operator) {
 
 public record FilterExpression<T> : FilterExpression {
     public FilterExpression(string propertyName, Operator oper) : base(propertyName, oper) {
+        //ensure property exists on T
         var propertyInfo = typeof(T).GetProperty(propertyName);
         if (propertyInfo is null) throw new ArgumentException($"Property: {propertyName} NOT found on {typeof(T).Name}");
+
+        PropertyName = propertyName;
+        Operator = oper;
         ValueTypeName = propertyInfo.PropertyType.FullName;
     }
 
-    public FilterExpression() {}
+    public FilterExpression() { }
 
     public static bool TryParse(string value, out FilterExpression<T>? result) {
         result = JsonSerializer.Deserialize<FilterExpression<T>>(value);
-        return result is null;
+        return result is not null;
     }
 
-    public FilterExpression(Expression<Func<T, object>> propertyNameExpression, Operator oper) : 
-        this(MemberHelpers.GetMemberName(propertyNameExpression), oper) { }
- }
+    public FilterExpression(Expression<Func<T, object>> propertyNameExpression, Operator oper, object? value = null) :
+        this(MemberHelpers.GetMemberName(propertyNameExpression), oper) {
+        if (value is not null) Value = value;
+    }
+}
 
 public record ConnectedExpression {
     public FilterExpression FilterExpression { get; set; }
     public AndOr AndOr { get; init; } = AndOr.And;
 
-    public ConnectedExpression(FilterExpression filterExpression, AndOr andOr ) {
+    public ConnectedExpression(FilterExpression filterExpression, AndOr andOr) {
         this.FilterExpression = filterExpression;
         this.AndOr = andOr;
     }
@@ -64,21 +69,40 @@ public record ConnectedExpression {
     }
 }
 
-public class FilterSegment {
+public record ConnectedExpression<T> : ConnectedExpression {
+    public ConnectedExpression(FilterExpression<T> filterExpression, AndOr andOr) : base(filterExpression, andOr) { }
+}
+
+public record FilterSegment {
     public List<ConnectedExpression> Expressions { get; set; } = new();
 
     public FilterSegment() { }
 
-    public FilterSegment(FilterExpression filterExpression,AndOr? andOr = null) {
-       AddExpression(filterExpression, andOr);
+    public FilterSegment(FilterExpression filterExpression, AndOr? andOr = null) {
+        AddExpression(filterExpression, andOr);
     }
 
     public void AddExpression(FilterExpression filterExpression, AndOr? andOr = null) {
-        Expressions.Add( new ConnectedExpression(filterExpression, andOr ?? AndOr.And));
+        Expressions.Add(new ConnectedExpression(filterExpression, andOr ?? AndOr.And));
     }
 
     public static bool TryParse(string json, out FilterSegment? filterSegment) {
         filterSegment = JsonSerializer.Deserialize<FilterSegment>(json);
+        return filterSegment is not null;
+    }
+}
+
+public record FilterSegment<T> : FilterSegment {
+    public FilterSegment() { }
+
+    public FilterSegment(FilterExpression<T> filterExpression, AndOr? andOr = null) => AddExpression(filterExpression, andOr);
+
+    public FilterSegment(IEnumerable<ConnectedExpression<T>> filterExpressions) => Expressions.AddRange(filterExpressions);
+
+    public void AddExpression(FilterExpression<T> filterExpression, AndOr? andOr = null) => Expressions.Add(new ConnectedExpression<T>(filterExpression, andOr ?? AndOr.And));
+
+    public static bool TryParse(string json, out FilterSegment<T>? filterSegment) {
+        filterSegment = JsonSerializer.Deserialize<FilterSegment<T>>(json);
         return filterSegment is not null;
     }
 }
@@ -106,11 +130,12 @@ public class ParameterValue {
     }
 }
 
-public class ParameterValues  {
+public class ParameterValues {
     private readonly List<ParameterValue> values = new();
     public IEnumerable<ParameterValue> Values => values;
 
-    public ParameterValues() { }
+    public ParameterValues() {
+    }
 
     public ParameterValues(IEnumerable<ParameterValue> parameterValues) {
         values.AddRange(parameterValues);
@@ -120,14 +145,16 @@ public class ParameterValues  {
         values.Add(parameterValue);
     }
 
-    public void Add(ParameterValue parameterValue) {values.Add(parameterValue);}
+    public void Add(ParameterValue parameterValue) {
+        values.Add(parameterValue);
+    }
 
     public void AddRange(IEnumerable<ParameterValue> parameterValues) {
         values.AddRange(parameterValues);
     }
 
     public DynamicParameters ToDynamicParameters() {
-        var d = values.Select(v => new KeyValuePair<string, object>(v.Name, convert(v))).ToDictionary(x=>x.Key, x=>x.Value);
+        var d = values.Select(v => new KeyValuePair<string, object>(v.Name, convert(v))).ToDictionary(x => x.Key, x => x.Value);
         return new DynamicParameters(d);
 
         static object convert(ParameterValue parameterValue) =>
@@ -138,21 +165,21 @@ public class ParameterValues  {
                 _ => throw new NotImplementedException()
             };
     }
+
     public static bool TryParse(string json, out ParameterValues? parameterValues) {
         parameterValues = JsonSerializer.Deserialize<ParameterValues>(json);
         return parameterValues is not null;
     }
-   
 }
 
 public class Filter {
     public List<FilterSegment> Segments { get; set; } = new();
-   
+
     public Filter() { }
 
     public static Filter? FromJson(string? json) => string.IsNullOrWhiteSpace(json)
-            ? null
-            : JsonSerializer.Deserialize<Filter>(json);
+        ? null
+        : JsonSerializer.Deserialize<Filter>(json);
 
 
     //https://long2know.com/2016/10/building-linq-expressions-part-2/
@@ -171,16 +198,18 @@ public class Filter {
             var lambda = Expression.Lambda<Func<T, bool>>(body, parameter);
             return lambda.Compile();
         }
+
         if (firstExpression.FilterExpression.ValueType.IsNumeric()) {
             var parameter = Expression.Parameter(typeof(T), "x");
             var property = Expression.Property(parameter, firstExpression.FilterExpression.PropertyName);
             var converter = TypeDescriptor.GetConverter(firstExpression.FilterExpression.ValueType);
             var numeric = converter.ConvertFrom(firstExpression.FilterExpression.ValueString!);
             var filterValue = Expression.Constant(numeric);
-            var body =  Expression.Equal(property, filterValue);
+            var body = Expression.Equal(property, filterValue);
             var lambda = Expression.Lambda<Func<T, bool>>(body, parameter);
             return lambda.Compile();
         }
+
         return _ => true;
     }
 
@@ -194,12 +223,11 @@ public class Filter {
         }
     }
 
+    public static Filter CreateFilter<T>(IEnumerable<ConnectedExpression<T>> filterExpressions) =>
+        new Filter(new FilterSegment<T>(filterExpressions));
 
-    public static Filter CreateFilter<T>(FilterExpression<T> filterExpression) where T : class {
-        var filter = new Filter();
-        filter.Segments.Add(new FilterSegment(filterExpression));
-        return filter;
-    }
+    public static Filter CreateFilter<T>(FilterExpression<T> filterExpression, AndOr? andOr = null) where T : class =>
+        new Filter(new FilterSegment<T>(filterExpression, andOr));
 
     private Filter(FilterSegment filterSegment) => Segments.Add(filterSegment);
 
@@ -230,6 +258,7 @@ public class Filter {
         foreach (var filterSegment in filter.Segments) {
             Segments.Add(filterSegment);
         }
+
         return this;
     }
 
@@ -240,9 +269,10 @@ public class Filter {
         foreach (var prop in props) {
             var value = prop.GetValue(item);
             if (value != null) {
-                filterSegment.AddExpression(new FilterExpression(prop.Name,Operator.Equal) {Value=value});
+                filterSegment.AddExpression(new FilterExpression(prop.Name, Operator.Equal) { Value = value });
             }
         }
+
         return new Filter(filterSegment);
     }
 }
