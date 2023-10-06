@@ -188,7 +188,8 @@ public class Filter {
         if (firstExpression.FilterExpression.ValueType == typeof(string)) {
             var parameter = Expression.Parameter(typeof(T), "x");
             var property = Expression.Property(parameter, firstExpression.FilterExpression.PropertyName);
-            var filterValue = Expression.Constant(firstExpression.FilterExpression.ValueString);
+            var value = firstExpression.FilterExpression.ValueString?.ToLower().Trim();
+            var filterValue = Expression.Constant(value);
             var miTrim = typeof(string).GetMethod("Trim", Type.EmptyTypes);
             var miLower = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
             var miStartsWith = typeof(string).GetMethod("StartsWith", new[] { typeof(string) });
