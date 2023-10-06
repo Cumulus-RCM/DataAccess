@@ -224,10 +224,10 @@ public class Filter {
         }
     }
 
-    public static Filter CreateFilter<T>(IEnumerable<ConnectedExpression<T>> filterExpressions) =>
+    public static Filter Create<T>(IEnumerable<ConnectedExpression<T>> filterExpressions) =>
         new Filter(new FilterSegment<T>(filterExpressions));
 
-    public static Filter CreateFilter<T>(FilterExpression<T> filterExpression, AndOr? andOr = null) where T : class =>
+    public static Filter Create<T>(FilterExpression<T> filterExpression, AndOr? andOr = null) where T : class =>
         new Filter(new FilterSegment<T>(filterExpression, andOr));
 
     private Filter(FilterSegment filterSegment) => Segments.Add(filterSegment);
