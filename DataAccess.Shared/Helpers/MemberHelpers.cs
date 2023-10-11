@@ -2,7 +2,7 @@
 
 namespace DataAccess.Shared;
 
-internal class MemberHelpers {
+internal static class MemberHelpers {
     public const string EXPRESSION_CANNOT_BE_NULL_MESSAGE = "The expression cannot be null.";
     public const string INVALID_EXPRESSION_MESSAGE = "Invalid expression.";
 
@@ -20,11 +20,11 @@ internal class MemberHelpers {
 
     private static Type getMemberType(Expression expression) {
         return expression switch {
-            null => throw new ArgumentException(MemberHelpers.EXPRESSION_CANNOT_BE_NULL_MESSAGE),
+            null => throw new ArgumentException(EXPRESSION_CANNOT_BE_NULL_MESSAGE),
             MemberExpression memberExpression => memberExpression.Member.GetType(),
             MethodCallExpression methodCallExpression => methodCallExpression.Method.GetType(),
             UnaryExpression unaryExpression => getMemberName(unaryExpression).GetType(),
-            _ => throw new ArgumentException(MemberHelpers.INVALID_EXPRESSION_MESSAGE)
+            _ => throw new ArgumentException(INVALID_EXPRESSION_MESSAGE)
         };
     }
 
@@ -46,7 +46,6 @@ public static class NameReaderExtensions {
     public static List<Type> GetMemberTypes<T>(this T instance, params Expression<Func<T, object>>[] expressions) => expressions.Select(cExpression => getMemberType(cExpression.Body)).ToList();
 
     public static Type GetMemberType<T>(this T instance, Expression<Action<T>> expression) => getMemberType(expression.Body);
-
 
     private static string getMemberName(Expression expression) {
         return expression switch {
