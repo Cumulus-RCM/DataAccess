@@ -1,4 +1,5 @@
-﻿using Refit;
+﻿using BaseLib;
+using Refit;
 
 namespace DataAccess.Shared;
 
@@ -11,6 +12,8 @@ public interface ICrud<T> {
 
     [Get("/{pkValue}")]
     Task<Response<T>> GetByPkAsync(string pkValue);
+
+    Task<Response<T>> GetByPkAsync(IdPk id) => GetByPkAsync(id.ToString());
 
     //[Get("/")]
     //Task<Response<T>> GetByModelAsync([Body] T item);
