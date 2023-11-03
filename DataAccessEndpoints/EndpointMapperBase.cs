@@ -4,14 +4,13 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using Refit;
 
-namespace DataAccessEndpoints; 
+namespace EndpointMapper; 
 
-public abstract class Endpoints {
-    protected static (IEndpointRouteBuilder group, ICrud<T> crud) MapCrudEndpoints<T>(IEndpointRouteBuilder routeBuilder, IDataService dataService) where T : class {
+public abstract class EndpointMapperBase {
+    protected static (IEndpointRouteBuilder group, ICrud<T> crud) MapCrudEndpoint<T>(IEndpointRouteBuilder routeBuilder, IDataService dataService, ICrud<T>? crud = null) where T : class {
         var typeName = typeof(T).Name;
-        var crud = dataService.GetCrud<T>();
+        crud ??= dataService.GetCrud<T>();
         var group = routeBuilder.MapGroup($"/{typeName}").WithTags(typeName);
         group.MapGet("/",
                 async Task<Response<T>> (string? filterJson, int? pageSize, int? pageNumber) =>
@@ -34,6 +33,14 @@ public abstract class Endpoints {
         group.MapDelete("/", async Task<Response> ([FromBody] T item) => await crud.DeleteItemAsync(item).ConfigureAwait(false))
             .WithName($"Delete{typeName}")
             .WithOpenApi();
+
+        if (typeof(T).IsAssignableTo(typeof(ISpecializedCrud))) {
+            foreach (var (endPoint, handler, name) in ((ISpecializedCrud) crud).GetEndPoints()) {
+                group.MapGet(endPoint, handler)
+                    .WithName(name)
+                    .WithOpenApi();
+            }
+        }
 
         return (group, crud);
     }
