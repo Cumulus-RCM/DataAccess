@@ -5,12 +5,12 @@ using Microsoft.Extensions.Logging;
 namespace DataAccess;
 
 public class Crud<T> : ICrud<T> where T : class {
-    protected readonly ILogger<Crud<T>> logger;
+    protected readonly ILogger logger;
     protected readonly IReader<T> reader;
     protected readonly IWriter writer;
 
-    public Crud(IReaderFactory readerFactory, IWriter writer, ILoggerFactory loggerFactory) {
-        this.logger = loggerFactory.CreateLogger<Crud<T>>();
+    public Crud(IReaderFactory readerFactory, IWriter writer, ILogger logger) {
+        this.logger = logger;
         this.reader = readerFactory.GetReader<T>();
         this.writer = writer;
     }
@@ -45,7 +45,9 @@ public class Crud<T> : ICrud<T> where T : class {
 
     public async Task<Response<T>> GetByPkAsync(string pkValue) {
         var result = await reader.GetByPkAsync(pkValue).ConfigureAwait(false);
-        return new Response<T>(result);
+        return result == null
+            ? Response<T>.Fail($"No Entity with Primary Key Value:{pkValue}")
+            : new Response<T>(result);
     }
 
 

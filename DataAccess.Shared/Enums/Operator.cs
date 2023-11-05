@@ -11,7 +11,7 @@ public sealed record Operator : Enumeration {
     public static readonly Operator GreatThan = new(4, ">");
     public static readonly Operator LessThanOrEqual = new(5, "<=");
     public static readonly Operator GreaterThanOrEqual = new(6, ">=");
-    public static readonly Operator StartsWith = new(7, "like") {PostTemplate = "%"};
+    public static readonly Operator StartsWith = new(7, " like ") {PostTemplate = "%"}; //spaces to allow 2 Operators to have the same value: like
     public static readonly Operator Contains = new(8, "like") {PreTemplate = "%", PostTemplate = "%"};
 
     [JsonIgnore]
