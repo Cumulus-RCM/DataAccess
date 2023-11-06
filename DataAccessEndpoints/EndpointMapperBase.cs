@@ -14,7 +14,7 @@ public abstract class EndpointMapperBase {
         var group = routeBuilder.MapGroup($"/{typeName}").WithTags(typeName);
         group.MapGet("/",
                 async Task<Response<T>> (string? filterJson, int? pageSize, int? pageNumber) =>
-                    await crud.GetAllAsync(filterJson, pageSize ?? 0, pageNumber ?? 1).ConfigureAwait(false))
+                    await crud.GetAllAsync(filterJson, pageSize ?? 0, pageNumber ?? 0).ConfigureAwait(false))
             .WithName($"Get{typeName}")
             .WithOpenApi();
 
