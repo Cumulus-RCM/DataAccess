@@ -2,6 +2,7 @@
 using DataAccess.Shared;
 using Microsoft.Extensions.Logging;
 using System.Data;
+using DataAccess.Interfaces;
 
 namespace DataAccess;
 

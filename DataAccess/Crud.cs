@@ -1,4 +1,5 @@
 ﻿using BaseLib;
+using DataAccess.Interfaces;
 using DataAccess.Shared;
 using Microsoft.Extensions.Logging;
 

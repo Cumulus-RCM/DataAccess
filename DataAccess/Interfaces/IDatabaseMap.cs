@@ -1,6 +1,5 @@
 ﻿namespace DataAccess.Interfaces;
 
-public interface IDatabaseMap
-{
+public interface IDatabaseMap {
     ITableInfo[] Map { get; }
 }

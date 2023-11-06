@@ -1,4 +1,6 @@
-﻿namespace DataAccess;
+﻿using DataAccess.Interfaces;
+
+namespace DataAccess;
 
 public class DataChange<T> : IDataChange {
     public object Entity { get; init; }

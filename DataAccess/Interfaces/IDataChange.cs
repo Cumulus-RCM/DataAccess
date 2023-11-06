@@ -1,4 +1,4 @@
-﻿namespace DataAccess;
+﻿namespace DataAccess.Interfaces;
 
 public interface IDataChange {
     object Entity { get; init; }

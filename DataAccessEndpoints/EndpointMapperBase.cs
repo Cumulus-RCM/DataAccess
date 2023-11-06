@@ -34,8 +34,8 @@ public abstract class EndpointMapperBase {
             .WithName($"Delete{typeName}")
             .WithOpenApi();
 
-        if (typeof(T).IsAssignableTo(typeof(ISpecializedCrud))) {
-            foreach (var (endPoint, handler, name) in ((ISpecializedCrud) crud).GetEndPoints()) {
+        if (typeof(T).IsAssignableTo(typeof(ICustomCrud))) {
+            foreach (var (endPoint, handler, name) in ((ICustomCrud) crud).GetEndPoints()) {
                 group.MapGet(endPoint, handler)
                     .WithName(name)
                     .WithOpenApi();

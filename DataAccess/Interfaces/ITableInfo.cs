@@ -1,6 +1,4 @@
-﻿// ReSharper disable once CheckNamespace
-
-namespace DataAccess.Interfaces;
+﻿namespace DataAccess.Interfaces;
 
 public interface ITableInfo {
     Type EntityType { get; }

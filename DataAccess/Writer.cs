@@ -1,4 +1,6 @@
-﻿namespace DataAccess;
+﻿using DataAccess.Interfaces;
+
+namespace DataAccess;
 
 public abstract class Writer : IWriter {
     private readonly SaveStrategy saveStrategy;
