@@ -7,6 +7,5 @@ public interface IWriter {
     void AddForDelete<T>(T entity) where T : class;
     void AddForDelete<T>(IEnumerable<T> entities) where T : class;
     void AddForInsert<T>(T entity) where T : class;
-    void AddForInsert<T>(IEnumerable<T> entities) where T : class;
     Task<int> SaveAsync();
 }

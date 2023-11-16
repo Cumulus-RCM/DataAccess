@@ -10,7 +10,7 @@ using Newtonsoft.Json.Serialization;
 
 namespace DataAccess;
 
-public class SimpleSingleEntitySaveStrategy : SaveStrategy {
+public class SimpleSingleEntitySaveStrategy : DatabaseSaveStrategy {
     private readonly ILogger<SimpleSingleEntitySaveStrategy> logger;
     public SimpleSingleEntitySaveStrategy(IDbConnectionManager dbConnection, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory) : base(dbConnection, databaseMapper) {
         this.logger = loggerFactory.CreateLogger<SimpleSingleEntitySaveStrategy>();
