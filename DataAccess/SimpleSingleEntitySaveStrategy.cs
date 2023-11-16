@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
 using BaseLib;
@@ -66,12 +67,12 @@ public class SimpleSingleEntitySaveStrategy : DatabaseSaveStrategy {
         }
     }
 
-    private string getSql(IDataChange dataChange, ITableInfo tableInfo) {
+    private static string getSql(IDataChange dataChange, ITableInfo tableInfo) {
         var sqlBuilder = new SqlBuilder(tableInfo);
         if (dataChange.DataChangeKind == DataChangeKind.Update) return sqlBuilder.GetUpdateSql();
         if (dataChange.DataChangeKind == DataChangeKind.Insert) return sqlBuilder.GetInsertSql(!dataChange.IsCollection, !dataChange.IsCollection);
         if (dataChange.DataChangeKind == DataChangeKind.Delete) return sqlBuilder.GetDeleteSql();
-        throw new ArgumentOutOfRangeException();
+        throw new InvalidEnumArgumentException(nameof(IDataChange.DataChangeKind));
     }
 
     private async Task<int> getSequenceValuesAsync(IDbConnection conn, string sequenceName, int cnt) {
