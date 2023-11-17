@@ -1,13 +1,7 @@
 ﻿using Refit;
 
 namespace DataAccess.Shared; 
-public abstract class ClientDataServiceBase : IDataService {
-    private readonly string baseAddress;
-
-    protected ClientDataServiceBase(string baseAddress) {
-        this.baseAddress = baseAddress;
-    }
-
+public abstract class ClientDataServiceBase(string baseAddress) : IDataService {
     public virtual ICrud<T> GetCrud<T>() where T : class => 
         RestService.For<ICrud<T>>($"{baseAddress}/{typeof(T).Name}");
 }
