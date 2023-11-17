@@ -6,23 +6,13 @@ using DataAccess.Interfaces;
 
 namespace DataAccess;
 
-public abstract class DataService : IDataService {
-    protected readonly IReaderFactory readerFactory;
-    protected readonly IWriterFactory writerFactory;
-    protected readonly ILoggerFactory loggerFactory;
-
+public abstract class DataService(IReaderFactory readerFactory, IWriterFactory writerFactory, ILoggerFactory loggerFactory) : IDataService {
     static DataService() {
         SqlMapper.AddTypeHandler(new SqlTimeOnlyTypeHandler());
         SqlMapper.AddTypeHandler(new DapperSqlDateOnlyTypeHandler());
     }
-    
-    protected DataService(IReaderFactory readerFactory, IWriterFactory writerFactory, ILoggerFactory loggerFactory) {
-        this.readerFactory = readerFactory;
-        this.writerFactory = writerFactory;
-        this.loggerFactory = loggerFactory;
-    }
 
-    public virtual ICrud<T> GetCrud<T>() where T : class => new Crud<T>(readerFactory, writerFactory.GetWriter(), loggerFactory.CreateLogger<Crud<T>>());
+    public virtual ICrud<T> GetCrud<T>() where T : class => new Crud<T>(readerFactory.GetReader<T>(), writerFactory.GetWriter(), loggerFactory.CreateLogger<Crud<T>>());
 }
 
 public class SqlTimeOnlyTypeHandler : SqlMapper.TypeHandler<TimeOnly> {

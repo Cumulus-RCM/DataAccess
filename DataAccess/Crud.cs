@@ -5,17 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace DataAccess;
 
-public class Crud<T> : ICrud<T> where T : class {
-    protected readonly ILogger logger;
-    protected readonly IReader<T> reader;
-    protected readonly IWriter writer;
-
-    public Crud(IReaderFactory readerFactory, IWriter writer, ILogger logger) {
-        this.logger = logger;
-        this.reader = readerFactory.GetReader<T>();
-        this.writer = writer;
-    }
-
+public class Crud<T>(IReader<T> reader, IWriter writer, ILogger logger) : ICrud<T> where T : class {
     public Task<Response<T>> GetAllAsync(string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null) {
         var filter = Filter.FromJson(filterJson);
         var orderBy = OrderBy.FromJson(orderByJson);  
