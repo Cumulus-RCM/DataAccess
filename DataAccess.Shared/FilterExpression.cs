@@ -33,9 +33,7 @@ public record FilterExpression(string PropertyName, Operator Operator) {
 public record FilterExpression<T> : FilterExpression {
     public FilterExpression(string propertyName, Operator oper) : base(propertyName, oper) {
         //ensure property exists on T
-        var propertyInfo = typeof(T).GetProperty(propertyName);
-        if (propertyInfo is null) throw new ArgumentException($"Property: {propertyName} NOT found on {typeof(T).Name}");
-
+        var propertyInfo = typeof(T).GetProperty(propertyName) ?? throw new ArgumentException($"Property: {propertyName} NOT found on {typeof(T).Name}");
         PropertyName = propertyName;
         Operator = oper;
         ValueTypeName = propertyInfo.PropertyType.FullName;
@@ -74,7 +72,7 @@ public record ConnectedExpression<T> : ConnectedExpression {
 }
 
 public record FilterSegment {
-    public List<ConnectedExpression> Expressions { get; set; } = new();
+    public List<ConnectedExpression> Expressions { get; set; } = [];
 
     public FilterSegment() { }
 
@@ -131,11 +129,10 @@ public class ParameterValue {
 }
 
 public class ParameterValues {
-    private readonly List<ParameterValue> values = new();
+    private readonly List<ParameterValue> values = [];
     public IEnumerable<ParameterValue> Values => values;
 
-    public ParameterValues() {
-    }
+    public ParameterValues() { }
 
     public ParameterValues(IEnumerable<ParameterValue> parameterValues) {
         values.AddRange(parameterValues);
@@ -173,7 +170,7 @@ public class ParameterValues {
 }
 
 public class Filter {
-    public List<FilterSegment> Segments { get; set; } = new();
+    public List<FilterSegment> Segments { get; set; } = [];
 
     public Filter() { }
 

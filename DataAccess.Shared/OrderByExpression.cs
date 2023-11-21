@@ -8,7 +8,7 @@ public class OrderBy {
 
      public OrderBy() { }
 
-     public OrderBy(OrderByExpression orderByExpression, OrderDirection? orderDirection = null) {
+     public OrderBy(OrderByExpression orderByExpression) {
          OrderByExpressions.Add(orderByExpression);
      }
 
