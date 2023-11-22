@@ -1,17 +1,14 @@
-﻿using DataAccess.Interfaces;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using DataAccess.Interfaces;
 
 namespace DataAccess;
 
-public class Writer : IWriter {
-    private readonly ISaveStrategy saveStrategy;
-    private readonly List<IDataChange> queuedItems = new();
-
-    public Writer(ISaveStrategy saveStrategy) {
-        this.saveStrategy = saveStrategy;
-    }
+public class Writer(ISaveStrategy strategy) : IWriter {
+    private readonly List<IDataChange> queuedItems = [];
 
     public Task<int> SaveAsync() {
-        var count = saveStrategy.SaveAsync(queuedItems);
+        var count = strategy.SaveAsync(queuedItems);
         queuedItems.Clear();
         return count;
     }

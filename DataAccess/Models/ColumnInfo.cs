@@ -1,4 +1,6 @@
-﻿namespace DataAccess;
+﻿using System;
+
+namespace DataAccess;
 
 public class ColumnInfo {
     public string ColumnName { get; init; }

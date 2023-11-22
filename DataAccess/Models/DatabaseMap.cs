@@ -1,11 +1,8 @@
-﻿using DataAccess.Interfaces;
+﻿using System;
+using DataAccess.Interfaces;
 
 namespace DataAccess;
 
-public abstract class DatabaseMap : IDatabaseMap {
-    public ITableInfo[] Map { get; protected init; }
-
-    protected DatabaseMap(ITableInfo[]? dbMap = null) {
-        Map = dbMap ?? Array.Empty<ITableInfo>();
-    }
+public abstract class DatabaseMap(ITableInfo[]? dbMap = null) : IDatabaseMap {
+    public ITableInfo[] Map { get; protected init; } = dbMap ?? Array.Empty<ITableInfo>();
 }

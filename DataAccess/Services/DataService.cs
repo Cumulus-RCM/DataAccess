@@ -1,4 +1,5 @@
-﻿using Dapper;
+﻿using System;
+using Dapper;
 using DataAccess.Shared;
 using Microsoft.Extensions.Logging;
 using System.Data;
