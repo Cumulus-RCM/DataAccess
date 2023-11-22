@@ -1,10 +1,12 @@
-﻿using System.Linq.Expressions;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Text.Json;
 
 namespace DataAccess.Shared;
 
 public class OrderBy {
-     public List<OrderByExpression> OrderByExpressions { get; set; } = new();
+     public List<OrderByExpression> OrderByExpressions { get; set; } = [];
 
      public OrderBy() { }
 
