@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using BaseLib;
 using Dapper;
+// ReSharper disable ArrangeObjectCreationWhenTypeEvident
 
 namespace DataAccess.Shared;
 
