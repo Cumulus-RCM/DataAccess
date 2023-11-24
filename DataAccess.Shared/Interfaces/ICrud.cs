@@ -10,11 +10,11 @@ public interface ICrud<T> {
     [Get("/")]
     Task<Response<T>> GetAllAsync(string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null);
 
-    IObservable<Response<T>> GetAll(string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null) =>
-        Observable.FromAsync(() => GetAllAsync(filterJson, pageSize, pageNumber, orderByJson));
+    IObservable<Response<T>> GetAll(Filter filterJson = null, int pageSize = 0, int pageNumber = 1, OrderBy? orderBy = null) =>
+        Observable.FromAsync(() => GetAllAsync(filterJson, pageSize, pageNumber, orderBy));
 
-    Task<Response<T>> GetAllAsync(Filter filter, int pageSize = 0, int pageNumber = 1, string? orderByJson = null) =>
-        GetAllAsync(filter.AsJson(), pageSize, pageNumber, orderByJson);
+    Task<Response<T>> GetAllAsync(Filter filter, int pageSize = 0, int pageNumber = 1, OrderBy? orderBy = null) =>
+        GetAllAsync(filter.AsJson(), pageSize, pageNumber, orderBy?.AsJson());
 
     [Get("/{pkValue}")]
     Task<Response<T>> GetByPkAsync(string pkValue);

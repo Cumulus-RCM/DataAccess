@@ -14,9 +14,6 @@ public class Crud<T>(IReader<T> reader, IWriter writer, ILogger logger) : ICrud<
         return getAllAsync(filter, pageSize, pageNumber, orderBy);
     }
 
-    public Task<Response<T>> GetAllAsync(Filter? filter = null, int pageSize = 0, int pageNumber = 1, OrderBy? orderBy = null) => 
-        getAllAsync(filter, pageSize, pageNumber, orderBy);
-
     private async Task<Response<T>> getAllAsync(Filter? filter = null, int pageSize = 0, int pageNumber = 1, OrderBy? orderBy = null) {
         try {
             var cnt = 0;
@@ -34,7 +31,7 @@ public class Crud<T>(IReader<T> reader, IWriter writer, ILogger logger) : ICrud<
         }
     }
 
-    public Task<Response<T>> GetByModelAsync(T item) => GetAllAsync(Filter.FromEntity(item));
+    public Task<Response<T>> GetByModelAsync(T item) => getAllAsync(Filter.FromEntity(item));
 
     public async Task<Response<T>> GetByPkAsync(string pkValue) {
         var result = await reader.GetByPkAsync(pkValue).ConfigureAwait(false);
