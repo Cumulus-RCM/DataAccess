@@ -23,6 +23,7 @@ public class Filter {
     //https://long2know.com/2016/10/building-linq-expressions-part-2/
     public Func<T, bool> ToLinqExpression<T>() {
         var firstExpression = Segments.SelectMany(s => s.Expressions).First();
+        if (firstExpression.FilterExpression.Operator == Operator.In) return _ => true;
         if (firstExpression.FilterExpression.ValueType == typeof(string)) {
             var parameter = Expression.Parameter(typeof(T), "x");
             var property = Expression.Property(parameter, firstExpression.FilterExpression.PropertyName);
