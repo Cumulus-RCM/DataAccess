@@ -16,7 +16,7 @@ public class SqlBuilder {
 
     public string GetSelectSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, OrderBy? orderBy = null ) {
         if (pageNum <= 0) pageNum = 1;
-        var whereClause = generateWhereClause(filter);
+        var whereClause = GetWhereClause(filter);
         var orderByClause = generateOrderByClause(orderBy ?? new OrderBy(tableInfo.PrimaryKeyName));
         var offsetFetchClause = pageSize > 0
             ? $"OFFSET {pageSize * (pageNum - 1)} ROWS FETCH NEXT {pageSize} ROW ONLY"
@@ -45,7 +45,7 @@ public class SqlBuilder {
     }
 
     public string GetCountSql(Filter? filter = null) {
-        var whereClause = generateWhereClause(filter);
+        var whereClause = GetWhereClause(filter);
         return $"SELECT COUNT(*) FROM {tableInfo.TableName} {whereClause}";
     }
 
@@ -88,7 +88,7 @@ INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{para
 
     public string GetDeleteSql() => tableInfo.CustomDeleteSqlTemplate ?? $"DELETE FROM {tableInfo.TableName} WHERE {tableInfo.PrimaryKeyName} IN ({PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName})";
 
-    private string generateWhereClause(Filter? filter) {
+    public string GetWhereClause(Filter? filter) {
         if (filter == null) return "";
         //var x = filter.Segments.SelectMany(segment => segment.Expressions.Select(exp => toSql(exp.FilterExpression)));
         var where =  "WHERE " + string.Join(AndOr.And.DisplayName, 
