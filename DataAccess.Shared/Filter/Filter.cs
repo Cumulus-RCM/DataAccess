@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text.Json;
 using BaseLib;
 using Dapper;
+
 // ReSharper disable ArrangeObjectCreationWhenTypeEvident
 
 namespace DataAccess.Shared;
@@ -23,7 +25,7 @@ public class Filter {
     //https://long2know.com/2016/10/building-linq-expressions-part-2/
     public Func<T, bool> ToLinqExpression<T>() {
         var firstExpression = Segments.SelectMany(s => s.Expressions).First();
-        if (firstExpression.FilterExpression.Operator == Operator.In) return _ => true;
+
         if (firstExpression.FilterExpression.ValueType == typeof(string)) {
             var parameter = Expression.Parameter(typeof(T), "x");
             var property = Expression.Property(parameter, firstExpression.FilterExpression.PropertyName);
@@ -31,10 +33,19 @@ public class Filter {
             var filterValue = Expression.Constant(value);
             var miTrim = typeof(string).GetMethod("Trim", Type.EmptyTypes);
             var miLower = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
-            var miStartsWith = typeof(string).GetMethod("StartsWith", new[] { typeof(string) });
+
             var trimmed = Expression.Call(property, miTrim!);
             var lowered = Expression.Call(trimmed, miLower!);
-            var body = Expression.Call(lowered, miStartsWith!, filterValue);
+            MethodInfo methodInfo;
+            MethodCallExpression body;
+            if (firstExpression.FilterExpression.Operator == Operator.In) {
+                methodInfo = typeof(string).GetMethod("Contains", new[] {typeof(string)});
+                body = Expression.Call(filterValue,methodInfo!, lowered);
+            }
+            else {
+                methodInfo = typeof(string).GetMethod("StartsWith", new[] {typeof(string)});
+                body = Expression.Call(lowered, methodInfo!, filterValue);
+            }
             var lambda = Expression.Lambda<Func<T, bool>>(body, parameter);
             return lambda.Compile();
         }
@@ -109,7 +120,7 @@ public class Filter {
         foreach (var prop in props) {
             var value = prop.GetValue(item);
             if (value != null) {
-                filterSegment.AddExpression(new FilterExpression(prop.Name, Operator.Equal) { Value = value });
+                filterSegment.AddExpression(new FilterExpression(prop.Name, Operator.Equal) {Value = value});
             }
         }
 
