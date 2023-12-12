@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 using BaseLib;
@@ -19,7 +20,7 @@ public interface ICrud<T> {
     [Get("/{pkValue}")]
     Task<Response<T>> GetByPkAsync(string pkValue);
 
-    Task<Response<T>> GetByPkAsync(IdPk id) => GetByPkAsync(id.ToString());
+    Task<Response<T>> GetByPkAsync<TKey>(TKey id) where TKey : notnull => GetByPkAsync(id.ToString() ?? throw new InvalidDataException("Key must be have valid ToString() method."));
 
     //[Get("/")]
     //Task<Response<T>> GetByModelAsync([Body] T item);
