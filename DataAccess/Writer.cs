@@ -4,7 +4,7 @@ using DataAccess.Interfaces;
 
 namespace DataAccess;
 
-public class Writer(ISaveStrategy strategy) : IWriter {
+public class Writer<T>(ISaveStrategy strategy) : IWriter<T> where T : class {
     private readonly List<IDataChange> queuedItems = [];
 
     public Task<int> SaveAsync() {
@@ -15,15 +15,19 @@ public class Writer(ISaveStrategy strategy) : IWriter {
 
     public void Reset() => queuedItems.Clear();
 
-    public void AddForUpdate<T>(T entity) where T : class => queuedItems.Add(new DataChange<T>(DataChangeKind.Update, entity));
+    public void AddForUpdate(T entity) => queuedItems.Add(new DataChange<T>(DataChangeKind.Update, entity));
 
-    public void AddForUpdate<T>(IEnumerable<T> entities) where T : class =>
+    public void AddForUpdate(IEnumerable<T> entities) =>
         queuedItems.Add(new DataChange<T>(DataChangeKind.Update, entities));
 
-    public void AddForDelete<T>(T entity) where T : class => queuedItems.Add(new DataChange<T>(DataChangeKind.Delete, entity));
+    public void AddForDelete(T entity) => queuedItems.Add(new DataChange<T>(DataChangeKind.Delete, entity));
 
-    public void AddForDelete<T>(IEnumerable<T> entities) where T : class =>
+    public void AddForDelete(IEnumerable<T> entities) =>
         queuedItems.Add(new DataChange<T>(DataChangeKind.Delete, entities));
 
-    public void AddForInsert<T>(T entity) where T : class => queuedItems.Add(new DataChange<T>(DataChangeKind.Insert, entity));
+    public void AddForInsert(T entity) => 
+        queuedItems.Add(new DataChange<T>(DataChangeKind.Insert, entity));
+    
+    public void AddForInsert(IEnumerable<T> entities) => 
+        queuedItems.Add(new DataChange<T>(DataChangeKind.Insert, entities));
 }

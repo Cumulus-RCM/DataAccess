@@ -12,6 +12,7 @@ public sealed class TableInfo<T> : ITableInfo {
     public string PrimaryKeyName { get; }
     public string SequenceName { get; }
     public bool IsIdentity { get; }
+    public bool IsSequencePk { get;}
     public IReadOnlyCollection<ColumnInfo> ColumnsMap { get; }
 
     public Type EntityType { get; } = typeof(T);
@@ -26,10 +27,9 @@ public sealed class TableInfo<T> : ITableInfo {
 
     public TableInfo() : this(tableName: null) { }
 
-    public TableInfo(string? tableName = null, string? primaryKeyName = null, string? sequence = null, bool isIdentity = false,
+    public TableInfo(string? tableName = null, string? primaryKeyName = null,  string? sequence = null, bool isIdentity = false,
         IEnumerable<ColumnInfo>? mappedColumnsInfos = null) {
         TableName = tableName ?? EntityType.Name;
-        SequenceName = sequence ?? $"{TableName}_id_seq";
         PrimaryKeyName = primaryKeyName ?? "Id";
         IsIdentity = isIdentity;
         //IsCompoundPk = isCompoundPk;
@@ -39,6 +39,10 @@ public sealed class TableInfo<T> : ITableInfo {
         var pkPropertyInfo =
             properties.SingleOrDefault(pi => pi.Name.Equals(PrimaryKeyName, StringComparison.InvariantCultureIgnoreCase)) ??
             throw new InvalidDataException($"No PrimaryKeyName Defined for {TableName}.");
+        IsSequencePk = !isIdentity
+                       && (pkPropertyInfo.PropertyType == typeof(int) || pkPropertyInfo.PropertyType == typeof(long));
+        SequenceName = IsSequencePk ? sequence ?? $"{TableName}_id_seq" : "";
+
         pkSetter = pkPropertyInfo.GetSetMethod(true);
         pkGetter = pkPropertyInfo.GetGetMethod(true);
 

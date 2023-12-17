@@ -15,18 +15,16 @@ using Newtonsoft.Json.Serialization;
 
 namespace DataAccess;
 
-public class SimpleSingleEntitySaveStrategy : DatabaseSaveStrategy {
-    private readonly ILogger<SimpleSingleEntitySaveStrategy> logger;
-    public SimpleSingleEntitySaveStrategy(IDbConnectionManager dbConnection, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory) : base(dbConnection, databaseMapper) {
-        this.logger = loggerFactory.CreateLogger<SimpleSingleEntitySaveStrategy>();
-    }
+public class SimpleSingleEntitySaveStrategy(IDbConnectionManager dbConnection, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory)
+    : DatabaseSaveStrategy(dbConnection, databaseMapper) {
+    private readonly ILogger<SimpleSingleEntitySaveStrategy> logger = loggerFactory.CreateLogger<SimpleSingleEntitySaveStrategy>();
 
     public override async Task<int> SaveAsync(IEnumerable<IDataChange> dataChanges) {
         var conn = dbConnection.CreateConnection();
         var dbTransaction = conn.BeginTransaction();
         try {
             var totalRowsEffected = 0;
-            foreach (var dataChange in dataChanges) {
+            foreach (var dataChange in dataChanges.ToList()) {
                 var tableInfo = databaseMapper.GetTableInfo(dataChange.EntityType);
                 var sql = getSql(dataChange, tableInfo);
                 int rowsEffected = 0;

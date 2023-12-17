@@ -9,6 +9,7 @@ public interface ITableInfo {
     string PrimaryKeyName { get; }
     string SequenceName { get; }
     bool IsIdentity { get; }
+    bool IsSequencePk { get;}
     IReadOnlyCollection<ColumnInfo> ColumnsMap { get; }
     void SetPrimaryKeyValue(object entity, int value);
     object GetPrimaryKeyValue(object entity);

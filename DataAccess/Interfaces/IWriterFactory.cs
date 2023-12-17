@@ -1,5 +1,5 @@
 ﻿namespace DataAccess.Interfaces; 
 
 public interface IWriterFactory {
-    IWriter GetWriter();
+    IWriter<T> GetWriter<T>() where T : class;
 }

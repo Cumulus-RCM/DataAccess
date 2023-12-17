@@ -13,7 +13,7 @@ public abstract class DataService(IReaderFactory readerFactory, IWriterFactory w
         SqlMapper.AddTypeHandler(new DapperSqlDateOnlyTypeHandler());
     }
 
-    public virtual ICrud<T> GetCrud<T>() where T : class => new Crud<T>(readerFactory.GetReader<T>(), writerFactory.GetWriter(), loggerFactory.CreateLogger<Crud<T>>());
+    public virtual ICrud<T> GetCrud<T>() where T : class => new Crud<T>(readerFactory.GetReader<T>(), writerFactory.GetWriter<T>(), loggerFactory.CreateLogger<Crud<T>>());
 }
 
 public class SqlTimeOnlyTypeHandler : SqlMapper.TypeHandler<TimeOnly> {

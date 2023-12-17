@@ -26,7 +26,6 @@ public class SqlBuilder {
         return result.Trim();
     }
 
-
     private string generateOrderByClause(OrderBy orderBy) {
         var cols = string.Join(",", orderBy.OrderByExpressions.Select(expr => $"{getMappedColumnName(expr)} {expr.OrderDirection.DisplayName}" ));
         return readifyOrderByClause(cols);
@@ -59,7 +58,7 @@ public class SqlBuilder {
         var getNewIdFromSequence = "";
         var pkValue = "";
         var pkName = "";
-        if (shouldSetPk && !tableInfo.IsIdentity) {
+        if (shouldSetPk && tableInfo.IsSequencePk) {
             pkValue = "@newID, ";
             pkName = $"{tableInfo.PrimaryKeyName},";
             getNewIdFromSequence = $"DECLARE @newID INT;SELECT @newID = {GetNextSequenceStatement()}";

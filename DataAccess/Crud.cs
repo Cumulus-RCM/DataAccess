@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace DataAccess;
 
-public class Crud<T>(IReader<T> reader, IWriter writer, ILogger logger) : ICrud<T> where T : class {
+public class Crud<T>(IReader<T> reader, IWriter<T> writer, ILogger logger) : ICrud<T> where T : class {
     public Task<Response<T>> GetAllAsync(string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null) {
         var filter = Filter.FromJson(filterJson);
         var orderBy = OrderBy.FromJson(orderByJson);  
@@ -54,7 +54,7 @@ public class Crud<T>(IReader<T> reader, IWriter writer, ILogger logger) : ICrud<
     }
 
     public async Task<Response> DeleteItemAsync(T item) {
-        writer.AddForDelete<T>(item);
+        writer.AddForDelete(item);
         var updatedRowCount = await writer.SaveAsync().ConfigureAwait(false);
         return new Response(updatedRowCount == 1);
     }

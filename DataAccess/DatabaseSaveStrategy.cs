@@ -5,14 +5,10 @@ using DataAccess.Interfaces;
 
 namespace DataAccess;
 
-public abstract class DatabaseSaveStrategy : ISaveStrategy {
+public abstract class DatabaseSaveStrategy(IDbConnectionManager dbConnection, IDatabaseMapper databaseMapper)
+    : ISaveStrategy {
     public abstract Task<int> SaveAsync(IEnumerable<IDataChange> dataChanges);
 
-    protected readonly IDbConnectionManager dbConnection;
-    protected readonly IDatabaseMapper databaseMapper;
-
-    protected DatabaseSaveStrategy(IDbConnectionManager dbConnection, IDatabaseMapper databaseMapper) {
-        this.dbConnection = dbConnection;
-        this.databaseMapper = databaseMapper;
-    }
+    protected readonly IDbConnectionManager dbConnection = dbConnection;
+    protected readonly IDatabaseMapper databaseMapper = databaseMapper;
 }
