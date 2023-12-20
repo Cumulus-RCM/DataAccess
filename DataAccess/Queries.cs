@@ -7,10 +7,10 @@ using Microsoft.Extensions.Logging;
 
 namespace DataAccess;
 
-public class Crud<T>(IReader<T> reader, IWriter<T> writer, ILogger logger) : ICrud<T> where T : class {
+public class Queries<T>(IReader<T> reader, ILogger logger) : IQueries<T> where T : class {
     public Task<Response<T>> GetAllAsync(string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null) {
         var filter = Filter.FromJson(filterJson);
-        var orderBy = OrderBy.FromJson(orderByJson);  
+        var orderBy = OrderBy.FromJson(orderByJson);
         return getAllAsync(filter, pageSize, pageNumber, orderBy);
     }
 
@@ -39,23 +39,24 @@ public class Crud<T>(IReader<T> reader, IWriter<T> writer, ILogger logger) : ICr
             ? Response<T>.Fail($"No Entity with Primary Key Value:{pkValue}")
             : new Response<T>(result);
     }
+}
 
-
+public class Commands<T>(IUnitOfWork unitOfWork, ILogger logger) : ICommands<T> where T : class {
     public async Task<Response> UpdateItemAsync(T item) {
-        writer.AddForUpdate(item);
-        var updatedRowCount = await writer.SaveAsync().ConfigureAwait(false);
+        unitOfWork.AddForUpdate(item);
+        var updatedRowCount = await unitOfWork.SaveAsync().ConfigureAwait(false);
         return new Response(updatedRowCount == 1);
     }
 
     public async Task<Response<T>> CreateItemAsync(T item) {
-        writer.AddForInsert(item);
-        var updatedRowCount = await writer.SaveAsync().ConfigureAwait(false);
+        unitOfWork.AddForInsert(item);
+        var updatedRowCount = await unitOfWork.SaveAsync().ConfigureAwait(false);
         return new Response<T>(item, updatedRowCount == 1);
     }
 
     public async Task<Response> DeleteItemAsync(T item) {
-        writer.AddForDelete(item);
-        var updatedRowCount = await writer.SaveAsync().ConfigureAwait(false);
+        unitOfWork.AddForDelete(item);
+        var updatedRowCount = await unitOfWork.SaveAsync().ConfigureAwait(false);
         return new Response(updatedRowCount == 1);
     }
 }

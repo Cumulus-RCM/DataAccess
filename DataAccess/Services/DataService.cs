@@ -7,13 +7,14 @@ using DataAccess.Interfaces;
 
 namespace DataAccess;
 
-public abstract class DataService(IReaderFactory readerFactory, IWriterFactory writerFactory, ILoggerFactory loggerFactory) : IDataService {
+public abstract class DataService(IReaderFactory readerFactory, IUnitOfWork unitOfWork, ILoggerFactory loggerFactory) : IDataService {
     static DataService() {
         SqlMapper.AddTypeHandler(new SqlTimeOnlyTypeHandler());
         SqlMapper.AddTypeHandler(new DapperSqlDateOnlyTypeHandler());
     }
 
-    public virtual ICrud<T> GetCrud<T>() where T : class => new Crud<T>(readerFactory.GetReader<T>(), writerFactory.GetWriter<T>(), loggerFactory.CreateLogger<Crud<T>>());
+    public virtual IQueries<T> GetQueries<T>() where T : class => new Queries<T>(readerFactory.GetReader<T>(), loggerFactory.CreateLogger<Queries<T>>());
+    public virtual ICommands<T> GetCommands<T>() where T : class => new Commands<T>(unitOfWork, loggerFactory.CreateLogger<Commands<T>>());
 }
 
 public class SqlTimeOnlyTypeHandler : SqlMapper.TypeHandler<TimeOnly> {

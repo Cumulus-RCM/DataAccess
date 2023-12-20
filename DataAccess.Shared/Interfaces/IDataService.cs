@@ -1,5 +1,6 @@
 ﻿namespace DataAccess.Shared;
 
 public interface IDataService {
-    ICrud<T> GetCrud<T>() where T : class;
+    IQueries<T> GetQueries<T>() where T : class;
+    ICommands<T> GetCommands<T>() where T : class;
 }

@@ -7,7 +7,7 @@ using Refit;
 
 namespace DataAccess.Shared;
 
-public interface ICrud<T> {
+public interface IQueries<T> {
     [Get("/")]
     Task<Response<T>> GetAllAsync(string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null);
 
@@ -21,10 +21,9 @@ public interface ICrud<T> {
     Task<Response<T>> GetByPkAsync(string pkValue);
 
     Task<Response<T>> GetByPkAsync<TKey>(TKey id) where TKey : notnull => GetByPkAsync(id.ToString() ?? throw new InvalidDataException("Key must be have valid ToString() method."));
+}
 
-    //[Get("/")]
-    //Task<Response<T>> GetByModelAsync([Body] T item);
-
+public interface ICommands<T> {
     [Put("")]
     Task<Response> UpdateItemAsync([Body] T item);
 
