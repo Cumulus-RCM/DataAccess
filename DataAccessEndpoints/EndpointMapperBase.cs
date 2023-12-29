@@ -19,7 +19,7 @@ public abstract class EndpointMapperBase {
             .WithName($"Get{typeName}")
             .WithOpenApi();
 
-        group.MapGet("/{PrimaryKeyValue}", async Task<Response<T>> (string pkValue) => await queries.GetByPkAsync(pkValue).ConfigureAwait(false))
+        group.MapGet("/{pkValue}", async Task<Response<T>> (string pkValue) => await queries.GetByPkAsync(pkValue).ConfigureAwait(false))
             .WithName($"Get{typeName}ByPk")
             .WithOpenApi();
         

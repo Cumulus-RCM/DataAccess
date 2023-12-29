@@ -5,7 +5,7 @@ using DataAccess.Interfaces;
 namespace DataAccess;
 
 public class DatabaseMapper : IDatabaseMapper {
-    private readonly Dictionary<Type, ITableInfo> tableInfos = new ();
+    private readonly Dictionary<Type, ITableInfo> tableInfos = [];
 
     public DatabaseMapper(IDatabaseMap? dbMap = null) {
         tableInfos.Clear();

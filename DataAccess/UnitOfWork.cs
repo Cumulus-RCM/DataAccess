@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DataAccess.Interfaces;
+using DataAccess.Shared;
 
 namespace DataAccess;
 
@@ -14,11 +15,6 @@ public class UnitOfWork(ISaveStrategy strategy, IDatabaseMapper databaseMapper) 
         var count = strategy.SaveAsync(queuedItems);
         queuedItems.Clear();
         return count;
-    }
-
-    private bool alreadyQueued(IDataChange item) {
-        if (item is null) throw new ArgumentNullException(nameof(item));
-        return queuedItems.Contains(item);
     }
 
     public void Reset() => queuedItems.Clear();

@@ -71,7 +71,7 @@ INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{para
     }
 
     public string GetUpdateSql(IEnumerable<string>? changedPropertyNames = null) {
-        var changedPropertiesList = changedPropertyNames is null ? new List<string>() : changedPropertyNames.ToList();
+        var changedPropertiesList = changedPropertyNames is null ? [] : changedPropertyNames.ToList();
         var setStatements = tableInfo.ColumnsMap
             .Where(property => changedPropertyNames is null ||
                                changedPropertiesList.Contains(property.PropertyName, StringComparer.OrdinalIgnoreCase))

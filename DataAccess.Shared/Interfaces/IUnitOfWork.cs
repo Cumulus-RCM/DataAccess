@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace DataAccess.Interfaces;
+namespace DataAccess.Shared;
 
 public interface IUnitOfWork {
     int QueuedItemsCount { get; }
