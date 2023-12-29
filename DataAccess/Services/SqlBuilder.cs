@@ -6,13 +6,8 @@ using DataAccess.Shared;
 
 namespace DataAccess;
 
-public class SqlBuilder {
+public class SqlBuilder(ITableInfo tableInfo) {
     private const string PREFIX_PARAMETER_NAME = "@";
-    private readonly ITableInfo tableInfo;
-
-    public SqlBuilder(ITableInfo tableInfo) {
-        this.tableInfo = tableInfo;
-    }
 
     public string GetSelectSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, OrderBy? orderBy = null ) {
         if (pageNum <= 0) pageNum = 1;
