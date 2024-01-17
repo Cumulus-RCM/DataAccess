@@ -10,9 +10,10 @@ namespace DataAccess;
 public sealed class TableInfo<T> : ITableInfo {
     public string TableName { get; }
     public string PrimaryKeyName { get; }
-    public string SequenceName { get; }
+    public string SequenceName { get; } = "";
     public bool IsIdentity { get; }
     public bool IsSequencePk { get;}
+    public bool IsTable { get; init; } = true;
     public IReadOnlyCollection<ColumnInfo> ColumnsMap { get; }
 
     public Type EntityType { get; } = typeof(T);
@@ -21,6 +22,7 @@ public sealed class TableInfo<T> : ITableInfo {
     public string? CustomDeleteSqlTemplate { get; init; }
     public string? CustomInsertSqlTemplate { get; init; }
     public string? CustomUpdateSqlTemplate { get; init; }
+    public string? CustomStoredProcedureSqlTemplate { get; init; }
 
     private readonly MethodInfo? pkSetter;
     private readonly MethodInfo? pkGetter;
@@ -32,20 +34,18 @@ public sealed class TableInfo<T> : ITableInfo {
         TableName = tableName ?? EntityType.Name;
         PrimaryKeyName = primaryKeyName ?? "Id";
         IsIdentity = isIdentity;
-        //IsCompoundPk = isCompoundPk;
 
         var properties = typeof(T).GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public);
-        //if (!IsCompoundPk) {
-        var pkPropertyInfo =
-            properties.SingleOrDefault(pi => pi.Name.Equals(PrimaryKeyName, StringComparison.InvariantCultureIgnoreCase)) ??
-            throw new InvalidDataException($"No PrimaryKeyName Defined for {TableName}.");
-        IsSequencePk = !isIdentity
-                       && (pkPropertyInfo.PropertyType == typeof(int) || pkPropertyInfo.PropertyType == typeof(long));
-        SequenceName = IsSequencePk ? sequence ?? $"{TableName}_id_seq" : "";
+        if (IsTable) {
+            var pkPropertyInfo = properties.SingleOrDefault(pi => pi.Name.Equals(PrimaryKeyName, StringComparison.InvariantCultureIgnoreCase)) ??
+                                 throw new InvalidDataException($"No PrimaryKeyName Defined for {TableName}.");
+            IsSequencePk = !isIdentity
+                           && (pkPropertyInfo.PropertyType == typeof(int) || pkPropertyInfo.PropertyType == typeof(long));
+            SequenceName = IsSequencePk ? sequence ?? $"{TableName}_id_seq" : "";
 
-        pkSetter = pkPropertyInfo.GetSetMethod(true);
-        pkGetter = pkPropertyInfo.GetGetMethod(true);
-
+            pkSetter = pkPropertyInfo.GetSetMethod(true);
+            pkGetter = pkPropertyInfo.GetGetMethod(true);
+        }
 
         var mappedColumns = (mappedColumnsInfos ?? Enumerable.Empty<ColumnInfo>()).ToList();
 

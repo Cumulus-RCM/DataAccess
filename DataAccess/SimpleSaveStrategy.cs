@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
@@ -15,9 +14,9 @@ using Newtonsoft.Json.Serialization;
 
 namespace DataAccess;
 
-public class SimpleSingleEntitySaveStrategy(IDbConnectionManager dbConnection, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory)
+public class SimpleSaveStrategy(IDbConnectionManager dbConnection, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory)
     : DatabaseSaveStrategy(dbConnection, databaseMapper) {
-    private readonly ILogger<SimpleSingleEntitySaveStrategy> logger = loggerFactory.CreateLogger<SimpleSingleEntitySaveStrategy>();
+    private readonly ILogger<SimpleSaveStrategy> logger = loggerFactory.CreateLogger<SimpleSaveStrategy>();
 
     public override async Task<int> SaveAsync(IEnumerable<IDataChange> dataChanges) {
         var conn = dbConnection.CreateConnection();
@@ -26,7 +25,7 @@ public class SimpleSingleEntitySaveStrategy(IDbConnectionManager dbConnection, I
             var totalRowsEffected = 0;
             foreach (var dataChange in dataChanges.ToList()) {
                 var tableInfo = databaseMapper.GetTableInfo(dataChange.EntityType);
-                var sql = getSql(dataChange, tableInfo);
+                var sql = SqlBuilder.GetWriteSql(tableInfo, dataChange.DataChangeKind, !dataChange.IsCollection, !dataChange.IsCollection);
                 int rowsEffected = 0;
                 if (dataChange.DataChangeKind == DataChangeKind.Insert) {
                     if (dataChange.IsCollection) {
@@ -55,7 +54,10 @@ public class SimpleSingleEntitySaveStrategy(IDbConnectionManager dbConnection, I
                     }
                 }
                 else {
-                    rowsEffected = await conn.ExecuteAsync(sql, dataChange.Entity, dbTransaction).ConfigureAwait(false);
+                    var ct = dataChange.DataChangeKind == DataChangeKind.StoredProcedure
+                        ? CommandType.StoredProcedure
+                        : CommandType.Text;
+                    rowsEffected = await conn.ExecuteAsync(sql, dataChange.Entity, dbTransaction, commandType:ct).ConfigureAwait(false);
                 }
                 totalRowsEffected += rowsEffected;
             }
@@ -67,14 +69,6 @@ public class SimpleSingleEntitySaveStrategy(IDbConnectionManager dbConnection, I
             logger.LogError(ex, nameof(SaveAsync));
             return 0;
         }
-    }
-
-    private static string getSql(IDataChange dataChange, ITableInfo tableInfo) {
-        var sqlBuilder = new SqlBuilder(tableInfo);
-        if (dataChange.DataChangeKind == DataChangeKind.Update) return sqlBuilder.GetUpdateSql();
-        if (dataChange.DataChangeKind == DataChangeKind.Insert) return sqlBuilder.GetInsertSql(!dataChange.IsCollection, !dataChange.IsCollection);
-        if (dataChange.DataChangeKind == DataChangeKind.Delete) return sqlBuilder.GetDeleteSql();
-        throw new InvalidEnumArgumentException(nameof(IDataChange.DataChangeKind));
     }
 
     private async Task<int> getSequenceValuesAsync(IDbConnection conn, string sequenceName, int cnt) {

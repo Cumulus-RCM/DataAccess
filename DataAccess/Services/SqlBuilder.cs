@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using DataAccess.Interfaces;
 using DataAccess.Shared;
@@ -9,7 +11,17 @@ namespace DataAccess;
 public class SqlBuilder(ITableInfo tableInfo) {
     private const string PREFIX_PARAMETER_NAME = "@";
 
-    public string GetSelectSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, OrderBy? orderBy = null ) {
+    public static string GetWriteSql(ITableInfo tableInfo, DataChangeKind dataChangeKind, bool shouldSetPk, bool shouldReturnNewId) {
+        var sqlBuilder = new SqlBuilder(tableInfo);
+        return dataChangeKind.Value switch {
+            DataChangeKind.UPDATE => sqlBuilder.getUpdateSql(),
+            DataChangeKind.INSERT => sqlBuilder.getInsertSql(shouldSetPk, shouldReturnNewId),
+            DataChangeKind.DELETE => sqlBuilder.getDeleteSql(),
+            DataChangeKind.STORED_PROCEDURE => sqlBuilder.getStoredProcedureSql(),
+            _ => throw new InvalidEnumArgumentException(nameof(IDataChange.DataChangeKind))
+        };
+    }
+    public string GetReadSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, OrderBy? orderBy = null ) {
         if (pageNum <= 0) pageNum = 1;
         var whereClause = GetWhereClause(filter);
         var orderByClause = generateOrderByClause(orderBy ?? new OrderBy(tableInfo.PrimaryKeyName));
@@ -20,6 +32,17 @@ public class SqlBuilder(ITableInfo tableInfo) {
         var result = $"SELECT {columns} FROM {tableInfo.TableName} {whereClause} {orderByClause} {offsetFetchClause}";
         return result.Trim();
     }
+    public string GetCountSql(Filter? filter = null) {
+        var whereClause = GetWhereClause(filter);
+        return $"SELECT COUNT(*) FROM {tableInfo.TableName} {whereClause}";
+    }
+    public string GetWhereClause(Filter? filter) {
+        if (filter == null) return "";
+        var where =  "WHERE " + string.Join(AndOr.And.DisplayName, 
+            filter.Segments.SelectMany(segment => segment.Expressions.Select(exp => toSql(exp.FilterExpression))));
+        return where;
+    }
+
 
     private string generateOrderByClause(OrderBy orderBy) {
         var cols = string.Join(",", orderBy.OrderByExpressions.Select(expr => $"{getMappedColumnName(expr)} {expr.OrderDirection.DisplayName}" ));
@@ -38,16 +61,11 @@ public class SqlBuilder(ITableInfo tableInfo) {
             : $" {op} {result}";
     }
 
-    public string GetCountSql(Filter? filter = null) {
-        var whereClause = GetWhereClause(filter);
-        return $"SELECT COUNT(*) FROM {tableInfo.TableName} {whereClause}";
-    }
-
-    public string GetNextSequenceStatement() => !tableInfo.IsIdentity
+    private string getNextSequenceStatement() => !tableInfo.IsIdentity
         ? $"NEXT VALUE FOR {tableInfo.SequenceName}"
         : throw new InvalidOperationException($"No SequenceName for Table:{tableInfo.TableName}, it uses Identity.");
 
-    public string GetInsertSql(bool shouldSetPk, bool shouldReturnNewId) {
+    private string getInsertSql(bool shouldSetPk, bool shouldReturnNewId) {
         if (tableInfo.IsIdentity && shouldSetPk) throw new InvalidOperationException("Can not set PK on Identity.");
         var returnNewId = "";
         var getNewIdFromSequence = "";
@@ -56,7 +74,7 @@ public class SqlBuilder(ITableInfo tableInfo) {
         if (shouldSetPk && tableInfo.IsSequencePk) {
             pkValue = "@newID, ";
             pkName = $"{tableInfo.PrimaryKeyName},";
-            getNewIdFromSequence = $"DECLARE @newID INT;SELECT @newID = {GetNextSequenceStatement()}";
+            getNewIdFromSequence = $"DECLARE @newID INT;SELECT @newID = {getNextSequenceStatement()}";
         }
 
         if (shouldReturnNewId)
@@ -70,7 +88,7 @@ INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{para
 {returnNewId};";
     }
 
-    public string GetUpdateSql(IEnumerable<string>? changedPropertyNames = null) {
+    private string getUpdateSql(IEnumerable<string>? changedPropertyNames = null) {
         var changedPropertiesList = changedPropertyNames is null ? [] : changedPropertyNames.ToList();
         var setStatements = tableInfo.ColumnsMap
             .Where(property => changedPropertyNames is null ||
@@ -80,19 +98,15 @@ INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{para
         return string.Format($"UPDATE {tableInfo.TableName} SET {string.Join(",", setStatements)} WHERE {tableInfo.PrimaryKeyName}={PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName}");
     }
 
-    public string GetDeleteSql() => tableInfo.CustomDeleteSqlTemplate ?? $"DELETE FROM {tableInfo.TableName} WHERE {tableInfo.PrimaryKeyName} IN ({PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName})";
+    private string getDeleteSql() => tableInfo.CustomDeleteSqlTemplate ?? $"DELETE FROM {tableInfo.TableName} WHERE {tableInfo.PrimaryKeyName} IN ({PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName})";
 
-    public string GetWhereClause(Filter? filter) {
-        if (filter == null) return "";
-        //var x = filter.Segments.SelectMany(segment => segment.Expressions.Select(exp => toSql(exp.FilterExpression)));
-        var where =  "WHERE " + string.Join(AndOr.And.DisplayName, 
-            filter.Segments.SelectMany(segment => segment.Expressions.Select(exp => toSql(exp.FilterExpression))));
-        return where;
-    }
+    private string getStoredProcedureSql() =>
+        tableInfo.CustomStoredProcedureSqlTemplate ??
+        throw new InvalidDataException($"No stored procedure template defined for Table:{tableInfo.TableName}");
 
     bool isString(string propertyName) => tableInfo.EntityType.GetProperty(propertyName)?.PropertyType == typeof(string);
 
-    string toSql(FilterExpression fe) {
+    private string toSql(FilterExpression fe) {
         var columnName = getMappedPropertyName(fe.PropertyName);
         var (pre, post) = stringifyTemplates();
         return $" {columnName} {fe.Operator.DisplayName} {pre}@{fe.PropertyName}{post} ";

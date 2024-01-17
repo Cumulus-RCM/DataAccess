@@ -10,6 +10,7 @@ public interface ITableInfo {
     string SequenceName { get; }
     bool IsIdentity { get; }
     bool IsSequencePk { get;}
+    bool IsTable { get; }
     IReadOnlyCollection<ColumnInfo> ColumnsMap { get; }
     void SetPrimaryKeyValue(object entity, int value);
     object GetPrimaryKeyValue(object entity);
@@ -17,5 +18,5 @@ public interface ITableInfo {
     string? CustomDeleteSqlTemplate { get; }
     string? CustomInsertSqlTemplate { get; }
     string? CustomUpdateSqlTemplate { get; }
-
+    string? CustomStoredProcedureSqlTemplate { get; }
 }
