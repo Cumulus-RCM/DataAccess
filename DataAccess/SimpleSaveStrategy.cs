@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Net.WebSockets;
 using System.Threading.Tasks;
 using BaseLib;
 using Dapper;
@@ -15,9 +14,8 @@ using Newtonsoft.Json.Serialization;
 
 namespace DataAccess;
 
-public class SimpleSaveStrategy(IDbConnectionManager dbConnection, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory)
-    : DatabaseSaveStrategy(dbConnection, databaseMapper) {
-    private readonly ILogger<SimpleSaveStrategy> logger = loggerFactory.CreateLogger<SimpleSaveStrategy>();
+public class SimpleSaveStrategy(IDbConnectionManager dbConnection, IDatabaseMapper databaseMapper, ILogger logger)
+    : DatabaseSaveStrategy(dbConnection, databaseMapper, logger) {
 
     public override async Task<SaveResult> SaveAsync(IEnumerable<IDataChange> dataChanges) {
         var conn = dbConnection.CreateConnection();
@@ -31,7 +29,7 @@ public class SimpleSaveStrategy(IDbConnectionManager dbConnection, IDatabaseMapp
                 var sql = SqlBuilder.GetWriteSql(tableInfo, dataChange.DataChangeKind, !dataChange.IsCollection, !dataChange.IsCollection);
                 if (dataChange.DataChangeKind == DataChangeKind.Insert) {
                     if (dataChange.IsCollection) {
-                        var collection = (ICollection) dataChange.Entity;
+                        var collection = (ICollection<IDataChange>) dataChange.Entity;
                         if (tableInfo.IsIdentity) {
                             foreach (var item in collection) {
                                 var id = await conn.ExecuteAsync($"{sql}", item).ConfigureAwait(false);
@@ -41,13 +39,14 @@ public class SimpleSaveStrategy(IDbConnectionManager dbConnection, IDatabaseMapp
                         }
                         else {
                             if (conn is SqlConnection sqlConn && dbTransaction is SqlTransaction sqlTransaction) {
-                                var id = await getSequenceValuesAsync(conn, tableInfo.SequenceName, collection.Count).ConfigureAwait(false);
+                                var idsNeeded = collection.Count(x => x.TableInfo.IsSequencePk && (IdPk)x.TableInfo.GetPrimaryKeyValue(x.Entity) == 0);
+                                var id = await getSequenceValuesAsync(conn, tableInfo.SequenceName, idsNeeded).ConfigureAwait(false);
                                 foreach (var item in collection) {
-                                    tableInfo.SetPrimaryKeyValue(item, id);
+                                    if ((IdPk)item.TableInfo.GetPrimaryKeyValue(item) == 0) tableInfo.SetPrimaryKeyValue(item, id);
                                     insertedIds.Add(id);
                                     id++;
                                 }
-                                await bulkInsert(sqlConn, tableName: tableInfo.TableName, collection, sqlTransaction).ConfigureAwait(false);
+                                await bulkInsert(sqlConn, tableName: tableInfo.TableName, collection.Select(x=>x.Entity), sqlTransaction).ConfigureAwait(false);
                             }
                         }
                     }
@@ -76,29 +75,8 @@ public class SimpleSaveStrategy(IDbConnectionManager dbConnection, IDatabaseMapp
         }
     }
 
-    private async Task<int> getSequenceValuesAsync(IDbConnection conn, string sequenceName, int cnt) {
-        try {
-            object objResult = new();
-            var parameters = new DynamicParameters();
-            parameters.Add("@sequence_name", dbType: DbType.String, value: sequenceName,
-                direction: ParameterDirection.Input);
-            parameters.Add("@range_size", dbType: DbType.Int32, value: cnt, direction: ParameterDirection.Input);
-            parameters.Add("@range_first_value", dbType: DbType.Object, value: objResult,
-                direction: ParameterDirection.Output);
-            await conn.ExecuteAsync("sys.sp_sequence_get_range", parameters, commandType: CommandType.StoredProcedure)
-                .ConfigureAwait(false);
-            return objResult as int? ?? throw new Exception("No SequenceName value returned.");
-        }
-        catch (Exception ex) {
-            logger.LogError(ex, "Failed to get new SequenceName value");
-            throw;
-        }
-    }
-
-    private static async Task<int> bulkInsert(SqlConnection conn, string tableName, ICollection items,
-        SqlTransaction? transaction) {
-        using var bulkCopy = new SqlBulkCopy(conn,
-            SqlBulkCopyOptions.CheckConstraints | SqlBulkCopyOptions.FireTriggers, transaction);
+    private static async Task<int> bulkInsert(SqlConnection conn, string tableName, IEnumerable items, SqlTransaction? transaction) {
+        using var bulkCopy = new SqlBulkCopy(conn, SqlBulkCopyOptions.CheckConstraints | SqlBulkCopyOptions.FireTriggers, transaction);
         bulkCopy.BulkCopyTimeout = 0;
         bulkCopy.BatchSize = 500;
         bulkCopy.DestinationTableName = tableName;
