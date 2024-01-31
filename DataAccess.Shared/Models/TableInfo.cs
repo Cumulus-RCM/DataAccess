@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace DataAccess.Shared;
 
-public sealed class TableInfo<T> : ITableInfo {
+public sealed record TableInfo<T> : ITableInfo {
     public string TableName { get; }
     public string PrimaryKeyName { get; }
     public string SequenceName { get; } = "";
