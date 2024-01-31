@@ -1,20 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using DataAccess.Interfaces;
-using DataAccess.Shared;
 
-namespace DataAccess;
+namespace DataAccess.Shared;
 
 public class UnitOfWork(ISaveStrategy strategy, IDatabaseMapper databaseMapper) : IUnitOfWork {
-    public int QueuedItemsCount => queuedItems.Count;
+    public int QueuedItemsCount => queuedItems.Sum(x=>x.Count);
 
     private readonly HashSet<IDataChange> queuedItems = new(new DataChangeComparer(databaseMapper));
 
-    public Task<int> SaveAsync() {
-        var count = strategy.SaveAsync(queuedItems);
+    public async Task<SaveResult> SaveAsync() {
+        var saveResult = await strategy.SaveAsync(queuedItems).ConfigureAwait(false);
         queuedItems.Clear();
-        return count;
+        return saveResult;
     }
 
     public void Reset() => queuedItems.Clear();

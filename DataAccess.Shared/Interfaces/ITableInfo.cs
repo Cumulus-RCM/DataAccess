@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace DataAccess.Interfaces;
+namespace DataAccess.Shared;
 
 public interface ITableInfo {
     Type EntityType { get; }

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using DataAccess.Interfaces;
+using DataAccess.Shared;
 
 namespace DataAccess;
 

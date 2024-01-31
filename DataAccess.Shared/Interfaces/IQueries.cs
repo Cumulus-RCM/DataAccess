@@ -22,14 +22,3 @@ public interface IQueries<T> {
 
     Task<Response<T>> GetByPkAsync<TKey>(TKey id) where TKey : notnull => GetByPkAsync(id.ToString() ?? throw new InvalidDataException("Key must be have valid ToString() method."));
 }
-
-public interface ICommands<T> {
-    [Put("")]
-    Task<Response> UpdateItemAsync([Body] T item);
-
-    [Post("")]
-    Task<Response<T>> CreateItemAsync([Body] T item);
-
-    [Delete("")]
-    Task<Response> DeleteItemAsync([Body] T item);
-}

@@ -12,5 +12,5 @@ public interface IUnitOfWork {
     void AddForDelete<T>(IEnumerable<T> entities) where T : class;
     void AddForInsert<T>(T entity) where T : class;
     void AddForInsert<T>(IEnumerable<T> entities) where T : class;
-    Task<int> SaveAsync();
+    Task<SaveResult> SaveAsync();
 }

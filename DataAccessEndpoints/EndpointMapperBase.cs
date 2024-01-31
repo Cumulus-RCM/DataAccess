@@ -3,7 +3,6 @@ using BaseLib;
 using DataAccess.Shared;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
 namespace EndpointMapper; 
@@ -30,19 +29,6 @@ public abstract class EndpointMapperBase {
                     .WithOpenApi();
             }
         }
-
-        var commands = dataService.GetCommands<T>();
-        group.MapPut("/", async Task<Response> (T item) => await commands.UpdateItemAsync(item).ConfigureAwait(false))
-            .WithName($"Update{typeName}")
-            .WithOpenApi();
-
-        group.MapPost("/", async Task<Response<T>> (T item) => await commands.CreateItemAsync(item).ConfigureAwait(false))
-            .WithName($"Create{typeName}")
-            .WithOpenApi();
-
-        group.MapDelete("/", async Task<Response> ([FromBody] T item) => await commands.DeleteItemAsync(item).ConfigureAwait(false))
-            .WithName($"Delete{typeName}")
-            .WithOpenApi();
 
         return group;
     }

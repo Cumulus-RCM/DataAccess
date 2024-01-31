@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using BaseLib;
 using Dapper;
-using DataAccess.Interfaces;
 using DataAccess.Shared;
 using Microsoft.Extensions.Logging;
 

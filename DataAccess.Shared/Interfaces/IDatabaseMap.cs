@@ -1,4 +1,4 @@
-﻿namespace DataAccess.Interfaces;
+﻿namespace DataAccess.Shared;
 
 public interface IDatabaseMap {
     ITableInfo[] Map { get; }

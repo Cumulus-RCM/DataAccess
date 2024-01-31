@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using DataAccess.Interfaces;
 
-namespace DataAccess;
+namespace DataAccess.Shared;
 
 public sealed class TableInfo<T> : ITableInfo {
     public string TableName { get; }

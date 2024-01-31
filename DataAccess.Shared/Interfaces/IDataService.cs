@@ -1,6 +1,5 @@
 ﻿namespace DataAccess.Shared;
 
-public interface IDataService {
+public interface IDataService : IUnitOfWork {
     IQueries<T> GetQueries<T>() where T : class;
-    ICommands<T> GetCommands<T>() where T : class;
 }

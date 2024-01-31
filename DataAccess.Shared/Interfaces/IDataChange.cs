@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Linq;
 
-namespace DataAccess.Interfaces;
+namespace DataAccess.Shared;
 
 public interface IDataChange {
     object Entity { get; init; }

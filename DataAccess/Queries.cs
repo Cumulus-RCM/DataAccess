@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using BaseLib;
-using DataAccess.Interfaces;
 using DataAccess.Shared;
 using Microsoft.Extensions.Logging;
 
@@ -38,25 +37,5 @@ public class Queries<T>(IReader<T> reader, ILogger logger) : IQueries<T> where T
         return result == null
             ? Response<T>.Fail($"No Entity with Primary Key Value:{pkValue}")
             : new Response<T>(result);
-    }
-}
-
-public class Commands<T>(IUnitOfWork unitOfWork, ILogger logger) : ICommands<T> where T : class {
-    public async Task<Response> UpdateItemAsync(T item) {
-        unitOfWork.AddForUpdate(item);
-        var updatedRowCount = await unitOfWork.SaveAsync().ConfigureAwait(false);
-        return new Response(updatedRowCount == 1);
-    }
-
-    public async Task<Response<T>> CreateItemAsync(T item) {
-        unitOfWork.AddForInsert(item);
-        var updatedRowCount = await unitOfWork.SaveAsync().ConfigureAwait(false);
-        return new Response<T>(item, updatedRowCount == 1);
-    }
-
-    public async Task<Response> DeleteItemAsync(T item) {
-        unitOfWork.AddForDelete(item);
-        var updatedRowCount = await unitOfWork.SaveAsync().ConfigureAwait(false);
-        return new Response(updatedRowCount == 1);
     }
 }

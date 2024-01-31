@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DataAccess.Interfaces;
+namespace DataAccess.Shared;
 
 public interface IDatabaseMapper {
     TableInfo<T> GetTableInfo<T>();

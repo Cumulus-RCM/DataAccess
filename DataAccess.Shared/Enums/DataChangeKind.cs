@@ -1,6 +1,6 @@
 ﻿using BaseLib;
 
-namespace DataAccess;
+namespace DataAccess.Shared;
 
 public sealed record DataChangeKind : Enumeration {
     public const int INSERT = 1;

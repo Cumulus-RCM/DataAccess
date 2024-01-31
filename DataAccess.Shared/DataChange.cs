@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections;
-using DataAccess.Interfaces;
 
-namespace DataAccess;
+namespace DataAccess.Shared;
 
 public class DataChange<T>(DataChangeKind dataChangeKind, object entity) : IDataChange {
     public object Entity { get; init; } = entity;

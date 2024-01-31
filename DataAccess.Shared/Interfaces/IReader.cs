@@ -1,8 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using DataAccess.Shared;
 
-namespace DataAccess.Interfaces;
+namespace DataAccess.Shared;
 
 public interface IReader<T> {
     Task<T?> GetByPkAsync(string pk);

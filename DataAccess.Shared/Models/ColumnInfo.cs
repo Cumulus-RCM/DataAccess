@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DataAccess;
+namespace DataAccess.Shared;
 
 public class ColumnInfo {
     public string ColumnName { get; init; }
