@@ -12,13 +12,16 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
+
 namespace DataAccess;
 
-public class SimpleSaveStrategy(IDbConnectionManager dbConnection, IDatabaseMapper databaseMapper, ILogger logger)
-    : DatabaseSaveStrategy(dbConnection, databaseMapper, logger) {
+public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory)
+    : DatabaseSaveStrategy(connectionManager, loggerFactory) {
+    private readonly ILogger logger = loggerFactory.CreateLogger<SimpleSaveStrategy>();
+    private readonly IDbConnectionManager dbConnectionManager = connectionManager;
 
     public override async Task<SaveResult> SaveAsync(IEnumerable<IDataChange> dataChanges) {
-        var conn = dbConnection.CreateConnection();
+        var conn = connectionManager.CreateConnection();
         var dbTransaction = conn.BeginTransaction();
         try {
             var updatedRowCount = 0;

@@ -6,9 +6,9 @@ using System.Data;
 
 namespace DataAccess;
 
-public abstract class DataService(IReaderFactory readerFactory, ISaveStrategy saveStrategy, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory)
-    : DataServiceBase(saveStrategy,databaseMapper), IDataService {
-    static DataService() {
+public abstract class DataServiceBase(IReaderFactory readerFactory, ISaveStrategy saveStrategy, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory)
+    : Shared.DataService(saveStrategy,databaseMapper), IDataService {
+    static DataServiceBase() {
         SqlMapper.AddTypeHandler(new SqlTimeOnlyTypeHandler());
         SqlMapper.AddTypeHandler(new DapperSqlDateOnlyTypeHandler());
     }

@@ -9,12 +9,12 @@ using Microsoft.Extensions.Logging;
 
 namespace DataAccess;
 
-public abstract class DatabaseSaveStrategy(IDbConnectionManager dbConnection, IDatabaseMapper databaseMapper, ILogger logger)
-    : ISaveStrategy {
+public abstract class DatabaseSaveStrategy(IDbConnectionManager dbConnectionManager, ILoggerFactory loggerFactory) : ISaveStrategy {
+    private readonly ILogger logger = loggerFactory.CreateLogger<DatabaseSaveStrategy>();
     public abstract Task<SaveResult> SaveAsync(IEnumerable<IDataChange> dataChanges);
 
     public async Task<IdPk> GetSequenceValuesAsync(string sequenceName, int cnt) {
-        var conn = dbConnection.CreateConnection();
+        var conn = dbConnectionManager.CreateConnection();
         return await getSequenceValuesAsync(conn, sequenceName, cnt).ConfigureAwait(false);
     }
 
@@ -36,7 +36,4 @@ public abstract class DatabaseSaveStrategy(IDbConnectionManager dbConnection, ID
             throw;
         }
     }
-
-    protected readonly IDbConnectionManager dbConnection = dbConnection;
-    protected readonly IDatabaseMapper databaseMapper = databaseMapper;
 }

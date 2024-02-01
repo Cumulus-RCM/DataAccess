@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 namespace DataAccess.Shared;
 
 public class UnitOfWork : IUnitOfWork {
-   
     public int QueuedItemsCount => queuedItems.Sum(x=>x.Count);
 
     private readonly HashSet<IDataChange> queuedItems = new(new DataChangeComparer());
@@ -17,31 +16,19 @@ public class UnitOfWork : IUnitOfWork {
         dataChangeFactory = new DataChangeFactory(databaseMapper);
     }
 
+    public void Add<T>(DataChangeKind dataChangeKind, T entity) where T : class => 
+        queuedItems.Add(dataChangeFactory.Create(dataChangeKind, entity));
+
+    public void Add<T>(DataChangeKind dataChangeKind, IEnumerable<T> entities) where T : class =>
+        queuedItems.Add(dataChangeFactory.Create(dataChangeKind, entities));
 
     public async Task<SaveResult> SaveAsync() {
-        var saveResult = await strategy.SaveAsync(queuedItems).ConfigureAwait(false);
+        var saveResult = await strategy.SaveAsync(queuedItems);
         queuedItems.Clear();
         return saveResult;
     }
 
     public void Reset() => queuedItems.Clear();
-
-    public void AddForUpdate<T>(T entity) where T : class => queuedItems.Add(dataChangeFactory.Create(DataChangeKind.Update, entity));
-
-    public void AddForUpdate<T>(IEnumerable<T> entities) where T : class =>
-        queuedItems.Add(dataChangeFactory.Create(DataChangeKind.Update, entities));
-
-    public void AddForDelete<T>(T entity) where T : class => queuedItems.Add(dataChangeFactory.Create(DataChangeKind.Delete, entity));
-
-    public void AddForDelete<T>(IEnumerable<T> entities) where T : class =>
-        queuedItems.Add(dataChangeFactory.Create(DataChangeKind.Delete, entities));
-
-    public void AddForInsert<T>(T entity) where T : class =>
-        queuedItems.Add(dataChangeFactory.Create(DataChangeKind.Insert, entity));
-
-    public void AddForInsert<T>(IEnumerable<T> entities) where T : class =>
-        queuedItems.Add(dataChangeFactory.Create(DataChangeKind.Insert, entities));
-
 }
 
 public class DataChangeComparer : IEqualityComparer<IDataChange> {
