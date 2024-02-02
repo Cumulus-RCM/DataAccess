@@ -15,11 +15,16 @@ using Newtonsoft.Json.Serialization;
 
 namespace DataAccess;
 
-public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory)
-    : SaveStrategyBase(connectionManager, databaseMapper, loggerFactory) {
+public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory) : ISaveStrategy {
     private readonly ILogger logger = loggerFactory.CreateLogger<SimpleSaveStrategy>();
 
-    public override async Task<SaveResult> SaveAsync(IEnumerable<IDataChange> dataChanges) {
+    public async Task<IdPk> GetSequenceValuesAsync<T>(int cnt) where T : class {
+        var tableInfo = databaseMapper.GetTableInfo<T>();
+        var conn = connectionManager.CreateConnection();
+        return await getSequenceValuesAsync(conn, tableInfo.SequenceName, cnt).ConfigureAwait(false);
+    }
+
+    public async Task<SaveResult> SaveAsync(IEnumerable<IDataChange> dataChanges) {
         var conn = connectionManager.CreateConnection();
         var dbTransaction = conn.BeginTransaction();
         try {
@@ -74,6 +79,25 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
             dbTransaction.Rollback();
             logger.LogError(ex, nameof(SaveAsync));
             return new SaveResult(0,0,[]);
+        }
+    }
+
+    private async Task<int> getSequenceValuesAsync(IDbConnection conn, string sequenceName, int cnt) {
+        try {
+            object objResult = new();
+            var parameters = new DynamicParameters();
+            parameters.Add("@sequence_name", dbType: DbType.String, value: sequenceName,
+                direction: ParameterDirection.Input);
+            parameters.Add("@range_size", dbType: DbType.Int32, value: cnt, direction: ParameterDirection.Input);
+            parameters.Add("@range_first_value", dbType: DbType.Object, value: objResult,
+                direction: ParameterDirection.Output);
+            await conn.ExecuteAsync("sys.sp_sequence_get_range", parameters, commandType: CommandType.StoredProcedure)
+                .ConfigureAwait(false);
+            return objResult as int? ?? throw new Exception("No SequenceName value returned.");
+        }
+        catch (Exception ex) {
+            logger.LogError(ex, "Failed to get new SequenceName value");
+            throw;
         }
     }
 
