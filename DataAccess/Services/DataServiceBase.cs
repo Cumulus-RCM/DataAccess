@@ -3,17 +3,19 @@ using Dapper;
 using DataAccess.Shared;
 using Microsoft.Extensions.Logging;
 using System.Data;
+using System.Threading.Tasks;
 
 namespace DataAccess;
 
 public abstract class DataServiceBase(IReaderFactory readerFactory, ISaveStrategy saveStrategy, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory)
-    : Shared.DataService(saveStrategy,databaseMapper), IDataService {
+    : DataServiceUnitOfWork(saveStrategy,databaseMapper), IDataService {
     static DataServiceBase() {
         SqlMapper.AddTypeHandler(new SqlTimeOnlyTypeHandler());
         SqlMapper.AddTypeHandler(new DapperSqlDateOnlyTypeHandler());
     }
 
     public virtual IQueries<T> GetQueries<T>() where T : class => new Queries<T>(readerFactory.GetReader<T>(), loggerFactory.CreateLogger<Queries<T>>());
+    public Task<IdPk> GetSequenceValuesAsync<T>(int cnt) where T : class => saveStrategy.GetSequenceValuesAsync<T>(cnt);
 }
 
 public class SqlTimeOnlyTypeHandler : SqlMapper.TypeHandler<TimeOnly> {

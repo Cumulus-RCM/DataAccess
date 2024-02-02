@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace DataAccess.Shared;
 
-public class DataService(ISaveStrategy saveStrategy, IDatabaseMapper databaseMapper) : IUnitOfWork {
+public class DataServiceUnitOfWork(ISaveStrategy saveStrategy, IDatabaseMapper databaseMapper) : IUnitOfWork {
     private readonly IUnitOfWork unitOfWork = new UnitOfWork(saveStrategy, databaseMapper);
 
     public int QueuedItemsCount => unitOfWork.QueuedItemsCount;

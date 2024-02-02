@@ -9,5 +9,5 @@ public interface ISaveStrategy {
     Task<SaveResult> SaveAsync(IEnumerable<IDataChange> dataChanges);
 
     [Post("/SequenceValues")]
-    Task<IdPk> GetSequenceValuesAsync(string sequenceName, int cnt);
+    Task<IdPk> GetSequenceValuesAsync<T>(int cnt) where T : class;
 }

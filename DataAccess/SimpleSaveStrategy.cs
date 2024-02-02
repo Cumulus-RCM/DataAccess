@@ -16,9 +16,8 @@ using Newtonsoft.Json.Serialization;
 namespace DataAccess;
 
 public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory)
-    : DatabaseSaveStrategy(connectionManager, loggerFactory) {
+    : SaveStrategyBase(connectionManager, databaseMapper, loggerFactory) {
     private readonly ILogger logger = loggerFactory.CreateLogger<SimpleSaveStrategy>();
-    private readonly IDbConnectionManager dbConnectionManager = connectionManager;
 
     public override async Task<SaveResult> SaveAsync(IEnumerable<IDataChange> dataChanges) {
         var conn = connectionManager.CreateConnection();

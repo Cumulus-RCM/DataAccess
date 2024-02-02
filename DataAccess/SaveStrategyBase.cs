@@ -9,13 +9,14 @@ using Microsoft.Extensions.Logging;
 
 namespace DataAccess;
 
-public abstract class DatabaseSaveStrategy(IDbConnectionManager dbConnectionManager, ILoggerFactory loggerFactory) : ISaveStrategy {
-    private readonly ILogger logger = loggerFactory.CreateLogger<DatabaseSaveStrategy>();
+public abstract class SaveStrategyBase(IDbConnectionManager dbConnectionManager, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory) : ISaveStrategy {
+    private readonly ILogger logger = loggerFactory.CreateLogger<SaveStrategyBase>();
     public abstract Task<SaveResult> SaveAsync(IEnumerable<IDataChange> dataChanges);
 
-    public async Task<IdPk> GetSequenceValuesAsync(string sequenceName, int cnt) {
+    public async Task<IdPk> GetSequenceValuesAsync<T>(int cnt) where T : class {
+        var tableInfo = databaseMapper.GetTableInfo<T>();
         var conn = dbConnectionManager.CreateConnection();
-        return await getSequenceValuesAsync(conn, sequenceName, cnt).ConfigureAwait(false);
+        return await getSequenceValuesAsync(conn, tableInfo.SequenceName, cnt).ConfigureAwait(false);
     }
 
     protected async Task<int> getSequenceValuesAsync(IDbConnection conn, string sequenceName, int cnt) {
