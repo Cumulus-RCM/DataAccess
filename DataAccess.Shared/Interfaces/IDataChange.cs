@@ -11,10 +11,9 @@ public interface IDataChange {
     Type EntityType { get; }
     ITableInfo TableInfo { get; }
     bool SqlShouldGenPk => DataChangeKind == DataChangeKind.Insert 
-                           && ((IsCollection && TableInfo.IsIdentity) 
-                               || (!IsCollection &&!TableInfo.IsIdentity 
-                                                 && (TableInfo.GetPrimaryKeyValue(Entity) is 0L 
-                                                     || TableInfo.GetPrimaryKeyValue(Entity) is 0)));
-    bool SqlShouldReturnPk => (IsCollection && TableInfo.IsIdentity) || !IsCollection;
+                           && !IsCollection 
+                           && !TableInfo.IsIdentity 
+                           && (TableInfo.GetPrimaryKeyValue(Entity) is 0L || TableInfo.GetPrimaryKeyValue(Entity) is 0);
+    bool SqlShouldReturnPk => TableInfo.IsIdentity || SqlShouldGenPk;
     int Count => IsCollection ? ((IEnumerable)Entity).Cast<object>().Count() : 1;
 }
