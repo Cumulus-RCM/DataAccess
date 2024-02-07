@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using DataAccess.Shared;
+
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 
-namespace DataAccess.Shared;
+namespace DataAccess;
 
 public sealed record TableInfo<T> : ITableInfo {
     public string TableName { get; }
@@ -14,7 +16,7 @@ public sealed record TableInfo<T> : ITableInfo {
     public bool IsIdentity { get; }
     public bool IsSequencePk { get;}
     public bool IsTable { get; init; } = true;
-    public IReadOnlyCollection<ColumnInfo> ColumnsMap { get; }
+    public IReadOnlyCollection<IColumnInfo> ColumnsMap { get; }
 
     public Type EntityType { get; } = typeof(T);
     
@@ -23,7 +25,8 @@ public sealed record TableInfo<T> : ITableInfo {
     public string? CustomInsertSqlTemplate { get; init; }
     public string? CustomUpdateSqlTemplate { get; init; }
     public string? CustomStoredProcedureSqlTemplate { get; init; }
-
+    
+    private readonly ISqlBuilder sqlBuilder;
     private readonly MethodInfo? pkSetter;
     private readonly MethodInfo? pkGetter;
 
@@ -34,6 +37,7 @@ public sealed record TableInfo<T> : ITableInfo {
         TableName = tableName ?? EntityType.Name;
         PrimaryKeyName = primaryKeyName ?? "Id";
         IsIdentity = isIdentity;
+        sqlBuilder = new SqlBuilder(this);
 
         var properties = typeof(T).GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public);
         if (IsTable) {
@@ -57,8 +61,7 @@ public sealed record TableInfo<T> : ITableInfo {
                 x.mappedColumnInfo?.IsSkipByDefault, x.propertyInfo.CanWrite,
                 x.propertyInfo.Name.Equals(PrimaryKeyName, StringComparison.InvariantCultureIgnoreCase),
                 x.propertyInfo.PropertyType)
-            )
-            .ToList();
+            ).ToList();
     }
 
     public void SetPrimaryKeyValue(object entity, int value) => pkSetter?.Invoke(entity, new object[] { value });
@@ -66,4 +69,8 @@ public sealed record TableInfo<T> : ITableInfo {
     public object GetPrimaryKeyValue(object entity) =>
         pkGetter?.Invoke(entity, null) ?? throw new InvalidDataException("PrimaryKeyName value is null");
 
+    public string GetWriteSql(IDataChange dataChange) => sqlBuilder.GetWriteSql(dataChange);
+    public string GetReadSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, OrderBy? orderBy = null) => sqlBuilder.GetReadSql(filter, pageSize, pageNum, orderBy);
+    public string GetCountSql(Filter? filter = null) => sqlBuilder.GetCountSql(filter);
+    public string GetWhereClause(Filter? filter) => sqlBuilder.GetWhereClause(filter);
 }

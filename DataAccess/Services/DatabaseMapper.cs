@@ -16,7 +16,7 @@ public class DatabaseMapper : IDatabaseMapper {
         }
     }
 
-    public TableInfo<T> GetTableInfo<T>() {
+    public ITableInfo GetTableInfo<T>() {
         var type = typeof(T);
         if (tableInfos.TryGetValue(type, out var value)) return (TableInfo<T>)value;
         var newTableInfo = new TableInfo<T>();

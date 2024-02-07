@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 
 namespace DataAccess.Shared;
 
-public interface ITableInfo {
+public interface ITableInfo : ISqlBuilder {
     Type EntityType { get; }
     string TableName { get; }
     string PrimaryKeyName { get; }
@@ -12,7 +11,7 @@ public interface ITableInfo {
     bool IsIdentity { get; }
     bool IsSequencePk { get;}
     bool IsTable { get; }
-    IReadOnlyCollection<ColumnInfo> ColumnsMap { get; }
+    IReadOnlyCollection<IColumnInfo> ColumnsMap { get; }
     void SetPrimaryKeyValue(object entity, int value);
     object GetPrimaryKeyValue(object entity);
     string? CustomSelectSqlTemplate { get; }
@@ -20,5 +19,4 @@ public interface ITableInfo {
     string? CustomInsertSqlTemplate { get; }
     string? CustomUpdateSqlTemplate { get; }
     string? CustomStoredProcedureSqlTemplate { get; }
-    
 }

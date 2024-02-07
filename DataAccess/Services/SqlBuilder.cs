@@ -7,10 +7,10 @@ using DataAccess.Shared;
 
 namespace DataAccess;
 
-public class SqlBuilder(ITableInfo tableInfo) {
+public class SqlBuilder(ITableInfo tableInfo) : ISqlBuilder {
     private const string PREFIX_PARAMETER_NAME = "@";
 
-    public static string GetWriteSql(IDataChange dataChange) {
+    public string GetWriteSql(IDataChange dataChange) {
         var sqlBuilder = new SqlBuilder(dataChange.TableInfo);
         return dataChange.DataChangeKind.Value switch {
             DataChangeKind.UPDATE => sqlBuilder.getUpdateSql(),
@@ -63,13 +63,13 @@ public class SqlBuilder(ITableInfo tableInfo) {
         ? $"NEXT VALUE FOR {tableInfo.SequenceName}"
         : throw new InvalidOperationException($"No SequenceName for Table:{tableInfo.TableName}, it uses Identity.");
 
-    private string getInsertSql(bool shouldSetPk, bool shouldReturnNewId) {
-        if (tableInfo.IsIdentity && shouldSetPk) throw new InvalidOperationException("Can not set PK on Identity.");
+    private string getInsertSql(bool shouldGenSetPk, bool shouldReturnNewId) {
+        if (tableInfo.IsIdentity && shouldGenSetPk) throw new InvalidOperationException("Can not set PK on Identity.");
         var returnNewId = "";
         var getNewIdFromSequence = "";
         var pkValue = "";
         var pkName = "";
-        if (shouldSetPk && tableInfo.IsSequencePk) {
+        if (shouldGenSetPk && tableInfo.IsSequencePk) {
             pkValue = "@newID, ";
             pkName = $"{tableInfo.PrimaryKeyName},";
             getNewIdFromSequence = $"DECLARE @newID INT;SELECT @newID = {getNextSequenceStatement()}";

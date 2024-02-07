@@ -14,7 +14,7 @@ public class Reader<T> : IReader<T> where T : class {
     protected readonly IDbConnectionManager dbConnectionService;
     private readonly ILogger logger;
     protected readonly SqlBuilder sqlBuilder;
-    private readonly TableInfo<T> tableInfo;
+    private readonly ITableInfo tableInfo;
 
     public Reader(IDbConnectionManager dbConnectionService, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory) {
         this.dbConnectionService = dbConnectionService;

@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace DataAccess.Shared;
+namespace DataAccess;
 
-public class ColumnInfo {
+public class ColumnInfo : IColumnInfo {
     public string ColumnName { get; init; }
     public string PropertyName { get; init; }
     public bool IsSkipByDefault { get; init; }
