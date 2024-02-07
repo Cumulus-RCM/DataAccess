@@ -10,11 +10,11 @@ namespace DataAccess;
 public class SqlBuilder(ITableInfo tableInfo) {
     private const string PREFIX_PARAMETER_NAME = "@";
 
-    public static string GetWriteSql(ITableInfo tableInfo, DataChangeKind dataChangeKind, bool shouldSetPk, bool shouldReturnNewId) {
-        var sqlBuilder = new SqlBuilder(tableInfo);
-        return dataChangeKind.Value switch {
+    public static string GetWriteSql(IDataChange dataChange) {
+        var sqlBuilder = new SqlBuilder(dataChange.TableInfo);
+        return dataChange.DataChangeKind.Value switch {
             DataChangeKind.UPDATE => sqlBuilder.getUpdateSql(),
-            DataChangeKind.INSERT => sqlBuilder.getInsertSql(shouldSetPk, shouldReturnNewId),
+            DataChangeKind.INSERT => sqlBuilder.getInsertSql(dataChange.SqlShouldGenPk, dataChange.SqlShouldReturnPk),
             DataChangeKind.DELETE => sqlBuilder.getDeleteSql(),
             DataChangeKind.STORED_PROCEDURE => sqlBuilder.getStoredProcedureSql(),
             _ => throw new InvalidEnumArgumentException(nameof(IDataChange.DataChangeKind))
@@ -41,7 +41,6 @@ public class SqlBuilder(ITableInfo tableInfo) {
             filter.Segments.SelectMany(segment => segment.Expressions.Select(exp => toSql(exp.FilterExpression))));
         return where;
     }
-
 
     private string generateOrderByClause(OrderBy orderBy) {
         var cols = string.Join(",", orderBy.OrderByExpressions.Select(expr => $"{getMappedColumnName(expr)} {expr.OrderDirection.DisplayName}" ));

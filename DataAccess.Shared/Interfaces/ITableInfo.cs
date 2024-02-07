@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 
 namespace DataAccess.Shared;
 
@@ -19,4 +20,5 @@ public interface ITableInfo {
     string? CustomInsertSqlTemplate { get; }
     string? CustomUpdateSqlTemplate { get; }
     string? CustomStoredProcedureSqlTemplate { get; }
+    
 }

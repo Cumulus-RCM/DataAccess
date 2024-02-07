@@ -33,7 +33,7 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
             var deletedRowCount = 0;
             foreach (var dataChange in dataChanges.ToList()) {
                 var tableInfo = databaseMapper.GetTableInfo(dataChange.EntityType);
-                var sql = SqlBuilder.GetWriteSql(tableInfo, dataChange.DataChangeKind, !dataChange.IsCollection, !dataChange.IsCollection);
+                var sql = SqlBuilder.GetWriteSql(dataChange);
                 if (dataChange.DataChangeKind == DataChangeKind.Insert) {
                     if (dataChange.IsCollection) {
                         var collection = (ICollection<IDataChange>) dataChange.Entity;
