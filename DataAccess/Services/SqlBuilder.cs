@@ -7,10 +7,10 @@ using DataAccess.Shared;
 
 namespace DataAccess;
 
-public class SqlBuilder(ITableInfo tableInfo) : ISqlBuilder {
+public class SqlBuilder(ITableInfo tableInfo)  {
     private const string PREFIX_PARAMETER_NAME = "@";
 
-    public string GetWriteSql(IDataChange dataChange) {
+    public static string GetWriteSql(IDataChange dataChange) {
         var sqlBuilder = new SqlBuilder(dataChange.TableInfo);
         return dataChange.DataChangeKind.Value switch {
             DataChangeKind.UPDATE => sqlBuilder.getUpdateSql(),

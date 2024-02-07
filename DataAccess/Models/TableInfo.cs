@@ -26,7 +26,6 @@ public sealed record TableInfo<T> : ITableInfo {
     public string? CustomUpdateSqlTemplate { get; init; }
     public string? CustomStoredProcedureSqlTemplate { get; init; }
     
-    private readonly ISqlBuilder sqlBuilder;
     private readonly MethodInfo? pkSetter;
     private readonly MethodInfo? pkGetter;
 
@@ -37,7 +36,6 @@ public sealed record TableInfo<T> : ITableInfo {
         TableName = tableName ?? EntityType.Name;
         PrimaryKeyName = primaryKeyName ?? "Id";
         IsIdentity = isIdentity;
-        sqlBuilder = new SqlBuilder(this);
 
         var properties = typeof(T).GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public);
         if (IsTable) {
@@ -68,9 +66,4 @@ public sealed record TableInfo<T> : ITableInfo {
 
     public object GetPrimaryKeyValue(object entity) =>
         pkGetter?.Invoke(entity, null) ?? throw new InvalidDataException("PrimaryKeyName value is null");
-
-    public string GetWriteSql(IDataChange dataChange) => sqlBuilder.GetWriteSql(dataChange);
-    public string GetReadSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, OrderBy? orderBy = null) => sqlBuilder.GetReadSql(filter, pageSize, pageNum, orderBy);
-    public string GetCountSql(Filter? filter = null) => sqlBuilder.GetCountSql(filter);
-    public string GetWhereClause(Filter? filter) => sqlBuilder.GetWhereClause(filter);
 }

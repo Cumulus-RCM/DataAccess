@@ -31,22 +31,22 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
             var insertedIds = new List<long>();
             var deletedRowCount = 0;
             foreach (var dataChange in dataChanges.ToList()) {
-                var tableInfo = databaseMapper.GetTableInfo(dataChange.EntityType);
-                var sql = tableInfo.GetWriteSql(dataChange);
+                var tableInfo = dataChange.TableInfo;
+                var sql = SqlBuilder.GetWriteSql(dataChange);
                 if (dataChange.DataChangeKind == DataChangeKind.Insert) {
                     if (dataChange.IsCollection) {
                         var collection = (ICollection<IDataChange>) dataChange.Entity;
-                        if (tableInfo.IsIdentity) {
+                        if (dataChange.TableInfo.IsIdentity) {
                             foreach (var item in collection) {
                                 var id = await conn.ExecuteAsync($"{sql}", item).ConfigureAwait(false);
-                                tableInfo.SetPrimaryKeyValue(item, id);
+                                dataChange.TableInfo.SetPrimaryKeyValue(item, id);
                                 insertedIds.Add(id);
                             }
                         }
                         else {
                             if (conn is SqlConnection sqlConn && dbTransaction is SqlTransaction sqlTransaction) {
                                 var idsNeeded = collection.Count(x => x.TableInfo.IsSequencePk && (IdPk)x.TableInfo.GetPrimaryKeyValue(x.Entity) == 0);
-                                var id = await getSequenceValuesAsync(conn, tableInfo.SequenceName, idsNeeded).ConfigureAwait(false);
+                                var id = await getSequenceValuesAsync(conn, dataChange.TableInfo.SequenceName, idsNeeded).ConfigureAwait(false);
                                 foreach (var item in collection) {
                                     if ((IdPk)item.TableInfo.GetPrimaryKeyValue(item) == 0) tableInfo.SetPrimaryKeyValue(item, id);
                                     insertedIds.Add(id);

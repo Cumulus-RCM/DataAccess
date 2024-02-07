@@ -26,6 +26,6 @@ public class DataChange<T> : IDataChange {
 }
 
 public class DataChangeFactory(IDatabaseMapper databaseMapper) {
-    public DataChange<T> Create<T>(DataChangeKind dataChangeKind, T entity) => new(dataChangeKind, entity, databaseMapper.GetTableInfo<T>());
-    public DataChange<T> Create<T>(DataChangeKind dataChangeKind,IEnumerable<T> entities) => new(dataChangeKind, entities, databaseMapper.GetTableInfo<T>());
+    public IDataChange Create<T>(DataChangeKind dataChangeKind, T entity) => new DataChange<T>(dataChangeKind, entity, databaseMapper.GetTableInfo<T>());
+    public IDataChange Create<T>(DataChangeKind dataChangeKind,IEnumerable<T> entities) => new DataChange<T>(dataChangeKind, entities, databaseMapper.GetTableInfo<T>());
 }

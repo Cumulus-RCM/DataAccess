@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace DataAccess.Shared;
 
-public interface ITableInfo : ISqlBuilder {
+public interface ITableInfo {
     Type EntityType { get; }
     string TableName { get; }
     string PrimaryKeyName { get; }
