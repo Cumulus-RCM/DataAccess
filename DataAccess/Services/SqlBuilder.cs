@@ -7,7 +7,7 @@ using DataAccess.Shared;
 
 namespace DataAccess;
 
-public class SqlBuilder(ITableInfo tableInfo)  {
+public class SqlBuilder(ITableInfo tableInfo) {
     private const string PREFIX_PARAMETER_NAME = "@";
 
     public static string GetWriteSql(IDataChange dataChange) {
@@ -20,7 +20,8 @@ public class SqlBuilder(ITableInfo tableInfo)  {
             _ => throw new InvalidEnumArgumentException(nameof(IDataChange.DataChangeKind))
         };
     }
-    public string GetReadSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, OrderBy? orderBy = null ) {
+
+    public string GetReadSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, OrderBy? orderBy = null) {
         if (pageNum <= 0) pageNum = 1;
         var whereClause = GetWhereClause(filter);
         var orderByClause = generateOrderByClause(orderBy ?? new OrderBy(tableInfo.PrimaryKeyName));
@@ -31,22 +32,24 @@ public class SqlBuilder(ITableInfo tableInfo)  {
         var result = $"SELECT {columns} FROM {tableInfo.TableName} {whereClause} {orderByClause} {offsetFetchClause}";
         return result.Trim();
     }
+
     public string GetCountSql(Filter? filter = null) {
         var whereClause = GetWhereClause(filter);
         return $"SELECT COUNT(*) FROM {tableInfo.TableName} {whereClause}";
     }
+
     public string GetWhereClause(Filter? filter) {
         if (filter == null) return "";
-        var where =  "WHERE " + string.Join(AndOr.And.DisplayName, 
+        var where = "WHERE " + string.Join(AndOr.And.DisplayName,
             filter.Segments.SelectMany(segment => segment.Expressions.Select(exp => toSql(exp.FilterExpression))));
         return where;
     }
 
     private string generateOrderByClause(OrderBy orderBy) {
-        var cols = string.Join(",", orderBy.OrderByExpressions.Select(expr => $"{getMappedColumnName(expr)} {expr.OrderDirection.DisplayName}" ));
+        var cols = string.Join(",", orderBy.OrderByExpressions.Select(expr => $"{getMappedColumnName(expr)} {expr.OrderDirection.DisplayName}"));
         return readifyOrderByClause(cols);
 
-        string getMappedColumnName(OrderByExpression orderByExpression) => tableInfo.ColumnsMap.Single(x=>x.PropertyName == orderByExpression.PropertyName ).ColumnName;
+        string getMappedColumnName(OrderByExpression orderByExpression) => tableInfo.ColumnsMap.Single(x => x.PropertyName == orderByExpression.PropertyName).ColumnName;
     }
 
     private static string readifyOrderByClause(string? rawOrderByClause) => readifyClause(rawOrderByClause, "ORDER BY");
@@ -63,20 +66,23 @@ public class SqlBuilder(ITableInfo tableInfo)  {
         ? $"NEXT VALUE FOR {tableInfo.SequenceName}"
         : throw new InvalidOperationException($"No SequenceName for Table:{tableInfo.TableName}, it uses Identity.");
 
-    private string getInsertSql(bool shouldGenSetPk, bool shouldReturnNewId) {
-        if (tableInfo.IsIdentity && shouldGenSetPk) throw new InvalidOperationException("Can not set PK on Identity.");
+    private string getInsertSql(bool shouldGenerateNextSeqValue, bool shouldReturnNewId) {
+        if (tableInfo.IsIdentity && shouldGenerateNextSeqValue) throw new InvalidOperationException("Can not set PK on Identity.");
         var returnNewId = "";
         var getNewIdFromSequence = "";
         var pkValue = "";
         var pkName = "";
-        if (shouldGenSetPk && tableInfo.IsSequencePk) {
-            pkValue = "@newID, ";
+        if (tableInfo.IsSequencePk) {
             pkName = $"{tableInfo.PrimaryKeyName},";
-            getNewIdFromSequence = $"DECLARE @newID INT;SELECT @newID = {getNextSequenceStatement()}";
+            pkValue = $"{PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName}";
+            if (shouldGenerateNextSeqValue) {
+                pkValue = $"{PREFIX_PARAMETER_NAME}newID, ";
+                getNewIdFromSequence = $"DECLARE @newID INT;SELECT @newID = {getNextSequenceStatement()}";
+            }
         }
 
         if (shouldReturnNewId)
-            returnNewId = !tableInfo.IsIdentity ? "SELECT @newId as newID" : "SELECT SCOPE_IDENTITY() as newID";
+            returnNewId = tableInfo.IsIdentity ? "SELECT SCOPE_IDENTITY() as newID" : "SELECT @newId as newID";
 
         var columnNames = string.Join(", ", tableInfo.ColumnsMap.Where(p => p is {CanWrite: true, IsPrimaryKey: false}).Select(x => x.ColumnName));
         var parameterNames = string.Join(", ", tableInfo.ColumnsMap.Where(p => p is {CanWrite: true, IsPrimaryKey: false}).Select(x => $"@{x.PropertyName}"));
