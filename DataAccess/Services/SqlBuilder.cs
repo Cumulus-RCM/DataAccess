@@ -74,7 +74,7 @@ public class SqlBuilder(ITableInfo tableInfo) {
         var pkName = "";
         if (tableInfo.IsSequencePk) {
             pkName = $"{tableInfo.PrimaryKeyName},";
-            pkValue = $"{PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName}";
+            pkValue = $"{PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName},";
             if (shouldGenerateNextSeqValue) {
                 pkValue = $"{PREFIX_PARAMETER_NAME}newID, ";
                 getNewIdFromSequence = $"DECLARE @newID INT;SELECT @newID = {getNextSequenceStatement()}";
