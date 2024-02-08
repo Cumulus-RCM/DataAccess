@@ -81,18 +81,15 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
         }
     }
 
-    private async Task<int> getSequenceValuesAsync(IDbConnection conn, string sequenceName, int cnt) {
+    private async Task<long> getSequenceValuesAsync(IDbConnection conn, string sequenceName, int cnt) {
         try {
-            object objResult = new();
             var parameters = new DynamicParameters();
-            parameters.Add("@sequence_name", dbType: DbType.String, value: sequenceName,
-                direction: ParameterDirection.Input);
+            parameters.Add("@sequence_name", dbType: DbType.String, value: sequenceName, direction: ParameterDirection.Input);
             parameters.Add("@range_size", dbType: DbType.Int32, value: cnt, direction: ParameterDirection.Input);
-            parameters.Add("@range_first_value", dbType: DbType.Object, value: objResult,
-                direction: ParameterDirection.Output);
-            await conn.ExecuteAsync("sys.sp_sequence_get_range", parameters, commandType: CommandType.StoredProcedure)
+            parameters.Add("@range_first_value", dbType: DbType.Object, direction: ParameterDirection.Output);
+            await conn.ExecuteAsync("sp_sequence_get_range", parameters, commandType: CommandType.StoredProcedure)
                 .ConfigureAwait(false);
-            return objResult as int? ?? throw new Exception("No SequenceName value returned.");
+            return parameters.Get<long>("@range_first_value");
         }
         catch (Exception ex) {
             logger.LogError(ex, "Failed to get new SequenceName value");

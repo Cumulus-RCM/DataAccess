@@ -62,7 +62,7 @@ public sealed record TableInfo<T> : ITableInfo {
             ).ToList();
     }
 
-    public void SetPrimaryKeyValue(object entity, int value) => pkSetter?.Invoke(entity, new object[] { value });
+    public void SetPrimaryKeyValue(object entity, IdPk value) => pkSetter?.Invoke(entity, new object[] { value });
 
     public object GetPrimaryKeyValue(object entity) =>
         pkGetter?.Invoke(entity, null) ?? throw new InvalidDataException("PrimaryKeyName value is null");

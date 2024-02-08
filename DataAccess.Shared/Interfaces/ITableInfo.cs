@@ -12,7 +12,7 @@ public interface ITableInfo {
     bool IsSequencePk { get;}
     bool IsTable { get; }
     IReadOnlyCollection<IColumnInfo> ColumnsMap { get; }
-    void SetPrimaryKeyValue(object entity, int value);
+    void SetPrimaryKeyValue(object entity, IdPk value);
     object GetPrimaryKeyValue(object entity);
     string? CustomSelectSqlTemplate { get; }
     string? CustomDeleteSqlTemplate { get; }
