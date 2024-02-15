@@ -77,7 +77,7 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
         catch (Exception ex) {
             dbTransaction.Rollback();
             logger.LogError(ex, nameof(SaveAsync));
-            return new SaveResult(0,0,[]);
+            return new SaveResult(0,0,[], ex);
         }
     }
 
