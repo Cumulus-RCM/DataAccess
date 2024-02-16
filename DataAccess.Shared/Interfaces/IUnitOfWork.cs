@@ -9,7 +9,7 @@ public interface IUnitOfWork {
     void Reset();
     void Add<T>(DataChangeKind dataChangeKind, T entity) where T : class;
     void Add<T>(DataChangeKind dataChangeKind, IEnumerable<T> entity)  where T : class;
-    Task<SaveResult> SaveAsync();
+    Task<SaveResponse> SaveAsync();
 
     void AddForUpdate<T>(T entity) where T : class => Add<T>(Update, entity);
     void AddForUpdate<T>(IEnumerable<T> entities)  where T : class => Add<T>(Update, entities);

@@ -23,7 +23,7 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
         return await getSequenceValuesAsync(conn, tableInfo.SequenceName, cnt).ConfigureAwait(false);
     }
 
-    public async Task<SaveResult> SaveAsync(IEnumerable<IDataChange> dataChanges) {
+    public async Task<SaveResponse> SaveAsync(IEnumerable<IDataChange> dataChanges) {
         var conn = connectionManager.CreateConnection();
         var dbTransaction = conn.BeginTransaction();
         try {
@@ -72,12 +72,12 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
                 }
             }
             dbTransaction.Commit();
-            return new SaveResult(updatedRowCount, deletedRowCount, insertedIds.ToArray() );
+            return new SaveResponse(updatedRowCount, deletedRowCount, insertedIds.ToArray() );
         }
         catch (Exception ex) {
             dbTransaction.Rollback();
             logger.LogError(ex, nameof(SaveAsync));
-            return new SaveResult(0,0,[], ex);
+            return new SaveResponse(0,0,[], ex);
         }
     }
 

@@ -14,5 +14,5 @@ public class DataServiceUnitOfWork(ISaveStrategy saveStrategy, IDatabaseMapper d
     public void Add<T>(DataChangeKind dataChangeKind, IEnumerable<T> entities) where T : class => 
         unitOfWork.Add<T>(dataChangeKind,entities);
 
-    public async Task<SaveResult> SaveAsync() => await unitOfWork.SaveAsync();
+    public async Task<SaveResponse> SaveAsync() => await unitOfWork.SaveAsync();
 }

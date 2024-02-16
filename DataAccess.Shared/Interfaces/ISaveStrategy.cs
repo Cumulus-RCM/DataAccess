@@ -6,7 +6,7 @@ namespace DataAccess.Shared;
 
 public interface ISaveStrategy {
     [Post("/Save")]
-    Task<SaveResult> SaveAsync(IEnumerable<IDataChange> dataChanges);
+    Task<SaveResponse> SaveAsync(IEnumerable<IDataChange> dataChanges);
 
     [Post("/SequenceValues")]
     Task<IdPk> GetSequenceValuesAsync<T>(int cnt) where T : class;

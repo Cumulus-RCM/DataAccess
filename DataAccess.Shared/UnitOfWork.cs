@@ -22,7 +22,7 @@ public class UnitOfWork : IUnitOfWork {
     public void Add<T>(DataChangeKind dataChangeKind, IEnumerable<T> entities) where T : class =>
         queuedItems.Add(dataChangeFactory.Create(dataChangeKind, entities));
 
-    public async Task<SaveResult> SaveAsync() {
+    public async Task<SaveResponse> SaveAsync() {
         var saveResult = await strategy.SaveAsync(queuedItems);
         queuedItems.Clear();
         return saveResult;

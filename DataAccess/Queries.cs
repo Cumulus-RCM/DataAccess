@@ -22,11 +22,11 @@ public class Queries<T>(IReader<T> reader, ILogger logger) : IQueries<T> where T
             }
 
             var items = await reader.GetAllAsync(filter, pageSize, pageNumber, orderBy).ConfigureAwait(false);
-            return new Response<T>(true, items, cnt);
+            return new Response<T>(items, cnt);
         }
         catch (Exception ex) {
             logger.LogError(ex, nameof(GetAllAsync));
-            return Response<T>.Empty(false, ex.Message);
+            return Response<T>.Empty(ex.Message);
         }
     }
 
