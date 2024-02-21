@@ -29,12 +29,13 @@ public record FilterExpression(string PropertyName, Operator Operator) {
 }
 
 public record FilterExpression<T> : FilterExpression {
-    public FilterExpression(string propertyName, Operator oper) : base(propertyName, oper) {
+    public FilterExpression(string propertyName, Operator oper, object? value = null) : base(propertyName, oper) {
         //ensure property exists on T
         var propertyInfo = typeof(T).GetProperty(propertyName) ?? throw new ArgumentException($"Property: {propertyName} NOT found on {typeof(T).Name}");
         PropertyName = propertyName;
         Operator = oper;
         ValueTypeName = propertyInfo.PropertyType.FullName;
+        if (value is not null) Value = value;
     }
 
     public FilterExpression() { }

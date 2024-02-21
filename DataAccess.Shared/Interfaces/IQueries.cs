@@ -2,7 +2,6 @@
 using System.IO;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
-using BaseLib;
 using Refit;
 
 namespace DataAccess.Shared;

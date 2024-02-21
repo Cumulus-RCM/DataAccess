@@ -4,12 +4,13 @@ using System.Text.Json;
 namespace DataAccess.Shared;
 
 public record FilterSegment {
-    public List<ConnectedExpression> Expressions { get; set; } = [];
+    public List<ConnectedExpression> Expressions { get; } = [];
+    public AndOr AndOr { get; } = AndOr.And; 
 
     public FilterSegment() { }
 
-    public FilterSegment(FilterExpression filterExpression, AndOr? andOr = null) {
-        AddExpression(filterExpression, andOr);
+    public FilterSegment(FilterExpression filterExpression) {
+        AddExpression(filterExpression);
     }
 
     public void AddExpression(FilterExpression filterExpression, AndOr? andOr = null) {

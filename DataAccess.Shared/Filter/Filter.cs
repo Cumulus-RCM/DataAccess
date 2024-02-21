@@ -80,6 +80,12 @@ public class Filter {
     public static Filter Create<T>(FilterExpression<T> filterExpression, AndOr? andOr = null) where T : class =>
         new Filter(new FilterSegment<T>(filterExpression, andOr));
 
+    public static Filter Create<T>(IEnumerable<FilterSegment<T>> filterSegments) {
+        var filter = new Filter();
+        filter.Segments.AddRange(filterSegments);
+        return filter;
+    }
+
     private Filter(FilterSegment filterSegment) => Segments.Add(filterSegment);
 
     public string PrimaryExpressionPropertyName() => Segments.First().Expressions.First().FilterExpression.PropertyName;

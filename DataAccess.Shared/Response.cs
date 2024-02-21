@@ -6,7 +6,7 @@ using BaseLib;
 namespace DataAccess.Shared;
 
 public record Response(Exception? Exception = null) {
-    public bool Success => Exception is not null;
+    public bool IsSuccess => Exception is not null;
 
     public static Response Failed(string exceptionMessage) => 
         new Response(new InvalidOperationException(exceptionMessage));
