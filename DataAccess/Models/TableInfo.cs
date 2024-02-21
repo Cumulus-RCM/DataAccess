@@ -16,6 +16,8 @@ public sealed record TableInfo<T> : ITableInfo {
     public bool IsIdentity { get; }
     public bool IsSequencePk { get;}
     public bool IsTable { get; init; } = true;
+    public int Priority { get; init; } = 1000;
+
     public IReadOnlyCollection<IColumnInfo> ColumnsMap { get; }
 
     public Type EntityType { get; } = typeof(T);

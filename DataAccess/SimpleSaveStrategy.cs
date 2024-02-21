@@ -24,13 +24,20 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
     }
 
     public async Task<SaveResponse> SaveAsync(IEnumerable<IDataChange> dataChanges) {
+        //Implements simplistic approach to ordering the data changes to ensure referential integrity
+        //  i.e. parent table is inserted before child table
+        //  Each table has a priority which can be set in the TableInfo
         var conn = connectionManager.CreateConnection();
         var dbTransaction = conn.BeginTransaction();
         try {
             var updatedRowCount = 0;
             var insertedIds = new List<long>();
             var deletedRowCount = 0;
-            foreach (var dataChange in dataChanges.ToList()) {
+            var changes = dataChanges
+                .OrderBy(dc => dc.TableInfo.Priority)
+                .ThenBy(dc => dc.TableInfo.TableName)
+                .ToList();
+            foreach (var dataChange in changes) {
                 var tableInfo = dataChange.TableInfo;
                 var sql = SqlBuilder.GetWriteSql(dataChange);
                 if (dataChange.DataChangeKind == DataChangeKind.Insert) {
