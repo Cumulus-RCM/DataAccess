@@ -14,7 +14,7 @@ public abstract class DataServiceBase(IReaderFactory readerFactory, ISaveStrateg
         SqlMapper.AddTypeHandler(new DapperSqlDateOnlyTypeHandler());
     }
 
-    public virtual IQueries<T> GetQueries<T>(bool useCache) where T : class => new Queries<T>(readerFactory.GetReader<T>(useCache), loggerFactory.CreateLogger<Queries<T>>());
+    public virtual IQueries<T> GetQueries<T>() where T : class => new Queries<T>(readerFactory.GetReader<T>(), loggerFactory.CreateLogger<Queries<T>>());
     public Task<IdPk> GetSequenceValuesAsync<T>(int cnt) where T : class => saveStrategy.GetSequenceValuesAsync<T>(cnt);
 }
 

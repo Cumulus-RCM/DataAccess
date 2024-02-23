@@ -11,8 +11,6 @@ using Microsoft.Extensions.Logging;
 namespace DataAccess;
 
 public class Reader<T> : IReader<T> where T : class {
-    protected bool IsUsingCache { get; set; } = false;
-
     protected readonly IDbConnectionManager dbConnectionService;
     private readonly ILogger logger;
     protected readonly SqlBuilder sqlBuilder;
@@ -23,11 +21,6 @@ public class Reader<T> : IReader<T> where T : class {
         this.logger = loggerFactory.CreateLogger(typeof(T));
         tableInfo = databaseMapper.GetTableInfo<T>();
         sqlBuilder = new SqlBuilder(tableInfo);
-    }
-
-    public void UseCache() {
-        IsUsingCache = true;
-        //TODO: Implement caching
     }
 
     public virtual async Task<ReadOnlyCollection<T>> GetAllAsync(Filter? filter = null, int pageSize = 0, int pageNum = 0, OrderBy? orderBy = null) {
