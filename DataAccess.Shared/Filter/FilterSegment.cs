@@ -4,8 +4,8 @@ using System.Text.Json;
 namespace DataAccess.Shared;
 
 public record FilterSegment {
-    public List<ConnectedExpression> Expressions { get; } = [];
-    public AndOr AndOr { get; } = AndOr.And; 
+    public List<ConnectedExpression> Expressions { get; set; } = [];
+    public AndOr AndOr { get; private set; } = AndOr.And; 
 
     public FilterSegment() { }
 

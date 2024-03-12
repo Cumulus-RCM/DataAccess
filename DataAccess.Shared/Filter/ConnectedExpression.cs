@@ -8,6 +8,8 @@ public record ConnectedExpression {
     public FilterExpression FilterExpression { get; set; }
     public AndOr AndOr { get; init; } = AndOr.And;
 
+    private ConnectedExpression() { }
+
     public ConnectedExpression(FilterExpression filterExpression, AndOr andOr) {
         this.FilterExpression = filterExpression;
         this.AndOr = andOr;
