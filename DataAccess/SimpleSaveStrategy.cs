@@ -18,6 +18,7 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
     private readonly ILogger logger = loggerFactory.CreateLogger<SimpleSaveStrategy>();
 
     public async Task<IdPk> GetSequenceValuesAsync<T>(int cnt) where T : class {
+        if (cnt == 0) return 0;
         var tableInfo = databaseMapper.GetTableInfo<T>();
         var conn = connectionManager.CreateConnection();
         return await getSequenceValuesAsync(conn, tableInfo.SequenceName, cnt).ConfigureAwait(false);
