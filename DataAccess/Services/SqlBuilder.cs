@@ -118,8 +118,8 @@ INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{para
         (string pre, string post) stringifyTemplates() {
             if (!isString(fe.PropertyName)) return ("", "");
             var singleQuote = fe.Operator.IsTemplateWrappedInQuotes ? "'" : "";
-            var before = string.IsNullOrWhiteSpace(fe.Operator.PreTemplate) ? "" : $"{singleQuote}{fe.Operator.PreTemplate}{singleQuote} + ";
-            var after = string.IsNullOrWhiteSpace(fe.Operator.PostTemplate) ? "" : $" + {singleQuote}{fe.Operator.PostTemplate}{singleQuote}";
+            var before = string.IsNullOrWhiteSpace(fe.Operator.PreTemplate) ? "" : $"{singleQuote}{fe.Operator.PreTemplate}{singleQuote}";
+            var after = string.IsNullOrWhiteSpace(fe.Operator.PostTemplate) ? "" : $"{singleQuote}{fe.Operator.PostTemplate}{singleQuote}";
             return (before, after);
         }
 
