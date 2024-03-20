@@ -1,7 +1,7 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace DataAccess.Shared;
 
@@ -9,16 +9,16 @@ public record FilterExpression(string PropertyName, Operator Operator) {
     public string PropertyName { get; set; } = PropertyName;
     public Operator Operator { get; set; } = Operator;
 
-    [JsonIgnore]
-    public object Value {
-        set => ValueString = value.ToString();
+    private object? _value;
+    public object? Value { 
+        get => _value;
+        set {
+            _value = value;
+            if (value is not null) ValueTypeName = value.GetType().FullName!;
+        }
     }
 
-    public string? ValueString { get; set; }
-
-    [JsonIgnore] public Type ValueType => Type.GetType(ValueTypeName ?? typeof(object).FullName!)!;
-
-    public string? ValueTypeName { get; set; }
+    public string ValueTypeName { get; set; }
 
     protected FilterExpression() : this("", Operator.Contains) { }
 
@@ -35,7 +35,6 @@ public record FilterExpression<T> : FilterExpression {
                            throw new ArgumentException($"Property: {propertyName} NOT found on {typeof(T).Name}");
         PropertyName = propertyName;
         Operator = oper;
-        ValueTypeName = propertyInfo.PropertyType.FullName;
         if (value is not null) Value = value;
     }
 

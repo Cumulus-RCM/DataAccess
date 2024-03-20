@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using DataAccess.Shared;
 
 namespace DataAccess;
@@ -28,8 +29,13 @@ public class SqlBuilder(ITableInfo tableInfo) {
         var offsetFetchClause = pageSize > 0
             ? $"OFFSET {pageSize * (pageNum - 1)} ROWS FETCH NEXT {pageSize} ROW ONLY"
             : "";
-        var columns = string.Join(",", tableInfo.ColumnsMap.Where(c => !c.IsSkipByDefault).Select(c => $"{c.ColumnName} {c.Alias}"));
-        var result = $"SELECT {columns} FROM {tableInfo.TableName} {whereClause} {orderByClause} {offsetFetchClause}";
+        string selectClause;
+        if (string.IsNullOrWhiteSpace(tableInfo.CustomSelectSqlTemplate)) {
+            var columns = string.Join(",", tableInfo.ColumnsMap.Where(c => !c.IsSkipByDefault).Select(c => $"{c.ColumnName} {c.Alias}"));
+            selectClause = $"SELECT {columns} FROM {tableInfo.TableName}";
+        }
+        else selectClause = tableInfo.CustomSelectSqlTemplate;
+        var result = $"{selectClause} {whereClause} {orderByClause} {offsetFetchClause}";
         return result.Trim();
     }
 
@@ -41,7 +47,7 @@ public class SqlBuilder(ITableInfo tableInfo) {
     public string GetWhereClause(Filter? filter) {
         if (filter == null) return "";
         var where = "WHERE " + string.Join(AndOr.And.DisplayName,
-            filter.Segments.SelectMany(segment => segment.Expressions.Select(exp => toSql(exp.FilterExpression))));
+            filter.Segments.SelectMany(segment => segment.Expressions.Where(exp => exp.FilterExpression.Value is not null).Select(exp => toSql(exp.FilterExpression))));
         return where;
     }
 
@@ -116,10 +122,9 @@ INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{para
         return $" {columnName} {fe.Operator.DisplayName} {pre}@{fe.PropertyName}{post} ";
 
         (string pre, string post) stringifyTemplates() {
-            if (!isString(fe.PropertyName)) return ("", "");
-            var singleQuote = fe.Operator.IsTemplateWrappedInQuotes ? "'" : "";
-            var before = string.IsNullOrWhiteSpace(fe.Operator.PreTemplate) ? "" : $"{singleQuote}{fe.Operator.PreTemplate}{singleQuote}";
-            var after = string.IsNullOrWhiteSpace(fe.Operator.PostTemplate) ? "" : $"{singleQuote}{fe.Operator.PostTemplate}{singleQuote}";
+            //if (!isString(fe.PropertyName)) return ("", "");
+            var before = string.IsNullOrWhiteSpace(fe.Operator.PreTemplate) ? "" : $"{fe.Operator.PreTemplate}";
+            var after = string.IsNullOrWhiteSpace(fe.Operator.PostTemplate) ? "" : $"{fe.Operator.PostTemplate}";
             return (before, after);
         }
 
