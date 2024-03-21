@@ -20,16 +20,19 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
     public async Task<IdPk> GetSequenceValuesAsync<T>(int cnt) where T : class {
         if (cnt == 0) return 0;
         var tableInfo = databaseMapper.GetTableInfo<T>();
-        var conn = connectionManager.CreateConnection();
-        return await getSequenceValuesAsync(conn, tableInfo.SequenceName, cnt).ConfigureAwait(false);
+        IdPk result;
+        using (var conn = connectionManager.CreateConnection()) {
+            result = await getSequenceValuesAsync(conn, tableInfo.SequenceName, cnt).ConfigureAwait(false);
+        }
+        return result;
     }
 
     public async Task<SaveResponse> SaveAsync(IEnumerable<IDataChange> dataChanges) {
         //Implements simplistic approach to ordering the data changes to ensure referential integrity
         //  i.e. parent table is inserted before child table
         //  Each table has a priority which can be set in the TableInfo
-        var conn = connectionManager.CreateConnection();
-        var dbTransaction = conn.BeginTransaction();
+        using var conn = connectionManager.CreateConnection();
+        using var dbTransaction = conn.BeginTransaction();
         try {
             var updatedRowCount = 0;
             var insertedIds = new List<long>();
