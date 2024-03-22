@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Net.Sockets;
 using DataAccess.Shared;
 
 namespace DataAccess;
@@ -47,7 +46,7 @@ public class SqlBuilder(ITableInfo tableInfo) {
     public string GetWhereClause(Filter? filter) {
         if (filter == null) return "";
         var where = "WHERE " + string.Join(AndOr.And.DisplayName,
-            filter.Segments.SelectMany(segment => segment.Expressions.Where(exp => exp.FilterExpression.Value is not null).Select(exp => toSql(exp.FilterExpression))));
+            filter.Segments.SelectMany(segment => segment.Expressions.Select(exp => toSql(exp.FilterExpression))));
         return where;
     }
 
@@ -118,8 +117,9 @@ INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{para
 
     private string toSql(FilterExpression fe) {
         var columnName = getMappedPropertyName(fe.PropertyName);
-        var (pre, post) = stringifyTemplates();
-        return $" {columnName} {fe.Operator.DisplayName} {pre}@{fe.PropertyName}{post} ";
+        var (pre, post) = stringifyTemplates();   
+        var value = fe.Operator.UsesValue ? $" {pre}@{fe.PropertyName}{post}" : "";
+        return $" {columnName} {fe.Operator.DisplayName}{value} ";
 
         (string pre, string post) stringifyTemplates() {
             //if (!isString(fe.PropertyName)) return ("", "");
