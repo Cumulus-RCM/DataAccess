@@ -7,15 +7,15 @@ using System.Threading.Tasks;
 
 namespace DataAccess;
 
-public abstract class DataServiceBase(IReaderFactory readerFactory, ISaveStrategy saveStrategy, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory)
-    : DataServiceUnitOfWork(saveStrategy,databaseMapper), IDataService {
+public abstract record DataServiceBase(IReaderFactory ReaderFactory, ISaveStrategy SaveStrategy, IDatabaseMapper DatabaseMapper, ILoggerFactory loggerFactory)
+    : DataServiceUnitOfWork(SaveStrategy,DatabaseMapper), IDataService {
     static DataServiceBase() {
         SqlMapper.AddTypeHandler(new SqlTimeOnlyTypeHandler());
         SqlMapper.AddTypeHandler(new DapperSqlDateOnlyTypeHandler());
     }
 
-    public virtual IQueries<T> GetQueries<T>() where T : class => new Queries<T>(readerFactory.GetReader<T>(), loggerFactory.CreateLogger<Queries<T>>());
-    public Task<IdPk> GetSequenceValuesAsync<T>(int cnt) where T : class => saveStrategy.GetSequenceValuesAsync<T>(cnt);
+    public virtual IQueries<T> GetQueries<T>() where T : class => new Queries<T>(ReaderFactory.GetReader<T>(), loggerFactory.CreateLogger<Queries<T>>());
+    public Task<IdPk> GetSequenceValuesAsync<T>(int cnt) where T : class => SaveStrategy.GetSequenceValuesAsync<T>(cnt);
 }
 
 public class SqlTimeOnlyTypeHandler : SqlMapper.TypeHandler<TimeOnly> {
