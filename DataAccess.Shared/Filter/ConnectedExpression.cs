@@ -5,7 +5,7 @@ using System.Text.Json;
 namespace DataAccess.Shared;
 
 public record ConnectedExpression {
-    public FilterExpression FilterExpression { get; set; }
+    public FilterExpression FilterExpression { get; init; } = null!;
     public AndOr AndOr { get; init; } = AndOr.And;
 
     private ConnectedExpression() { }
@@ -23,7 +23,7 @@ public record ConnectedExpression {
 
 public record ConnectedExpression<T> : ConnectedExpression {
     public ConnectedExpression(FilterExpression<T> filterExpression, AndOr andOr, object? value = null) : base(filterExpression, andOr) {
-        if (value is not null) FilterExpression.Value = value;
+        if (value is not null) FilterExpression!.Value = value;
     }
 
     public ConnectedExpression(string propertyName, Operator oper, AndOr andOr, object? value = null)

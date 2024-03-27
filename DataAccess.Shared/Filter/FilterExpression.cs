@@ -5,19 +5,19 @@ using System.Text.Json;
 namespace DataAccess.Shared;
 
 public record FilterExpression(string PropertyName, Operator Operator) {
-    public string PropertyName { get; set; } = PropertyName;
-    public Operator Operator { get; set; } = Operator;
+    public string PropertyName { get; protected init; } = PropertyName;
+    public Operator Operator { get; protected init; } = Operator;
 
     private object? _value;
     public object? Value { 
         get => _value;
         set {
             _value = value;
-            if (value is not null) ValueTypeName = value.GetType().FullName!;
+            if (value is not null) ValueTypeName = value.GetType().AssemblyQualifiedName!;
         }
     }
 
-    public string ValueTypeName { get; set; }
+    public string ValueTypeName { get; set; } = "";
 
     protected FilterExpression() : this("", Operator.Contains) { }
 
@@ -30,7 +30,7 @@ public record FilterExpression(string PropertyName, Operator Operator) {
 public record FilterExpression<T> : FilterExpression {
     public FilterExpression(string propertyName, Operator oper, object? value = null) : base(propertyName, oper) {
         //ensure property exists on T
-        var propertyInfo = typeof(T).GetProperty(propertyName) ??
+        _ = typeof(T).GetProperty(propertyName) ??
                            throw new ArgumentException($"Property: {propertyName} NOT found on {typeof(T).Name}");
         PropertyName = propertyName;
         Operator = oper;

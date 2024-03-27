@@ -21,7 +21,8 @@ public class Filter {
     public static Filter? FromJson(string? json) {
         if (string.IsNullOrWhiteSpace(json)) return null;
         var filter = JsonSerializer.Deserialize<Filter>(json);
-        foreach (var expression in filter!.Segments.SelectMany(s => s.Expressions).ToList()) {
+        var expressions = filter!.Segments.SelectMany(s => s.Expressions).ToList();
+        foreach (var expression in expressions) {
             if (expression.FilterExpression.Value is JsonElement jsonElement) {
                 var type = Type.GetType(expression.FilterExpression.ValueTypeName);
                 if (type is not null) expression.FilterExpression.Value = JsonSerializer.Deserialize(jsonElement.GetRawText(), type);
@@ -34,7 +35,6 @@ public class Filter {
     //https://long2know.com/2016/10/building-linq-expressions-part-2/
     public Func<T, bool> ToLinqExpression<T>() {
         var firstExpression = Segments.SelectMany(s => s.Expressions).First();
-
         if (firstExpression.FilterExpression.Value is string filterStringValue) {
             var parameter = Expression.Parameter(typeof(T), "x");
             var property = Expression.Property(parameter, firstExpression.FilterExpression.PropertyName);
@@ -48,18 +48,18 @@ public class Filter {
             MethodInfo methodInfo;
             MethodCallExpression body;
             if (firstExpression.FilterExpression.Operator == Operator.In) {
-                methodInfo = typeof(string).GetMethod("Contains", new[] {typeof(string)});
+                methodInfo = typeof(string).GetMethod("Contains", new[] {typeof(string)})!;
                 body = Expression.Call(filterValue,methodInfo!, lowered);
             }
             else {
-                methodInfo = typeof(string).GetMethod("StartsWith", new[] {typeof(string)});
+                methodInfo = typeof(string).GetMethod("StartsWith", new[] {typeof(string)})!;
                 body = Expression.Call(lowered, methodInfo!, filterValue);
             }
             var lambda = Expression.Lambda<Func<T, bool>>(body, parameter);
             return lambda.Compile();
         }
 
-        var t = firstExpression.FilterExpression.Value.GetType();
+        var t = firstExpression.FilterExpression.Value?.GetType();
         if (t.IsNumeric()) {
             var parameter = Expression.Parameter(typeof(T), "x");
             var property = Expression.Property(parameter, firstExpression.FilterExpression.PropertyName);
@@ -70,7 +70,6 @@ public class Filter {
             var lambda = Expression.Lambda<Func<T, bool>>(body, parameter);
             return lambda.Compile();
         }
-
         return _ => true;
     }
 
