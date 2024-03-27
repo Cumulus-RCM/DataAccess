@@ -8,14 +8,13 @@ using System.Threading.Tasks;
 using BaseLib;
 using Dapper;
 using DataAccess.Shared;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using Serilog;
 
 namespace DataAccess;
 
-public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory) : ISaveStrategy {
-    private readonly ILogger logger = loggerFactory.CreateLogger<SimpleSaveStrategy>();
+public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabaseMapper databaseMapper) : ISaveStrategy {
 
     public async Task<IdPk> GetSequenceValuesAsync<T>(int cnt) where T : class {
         if (cnt == 0) return 0;
@@ -87,7 +86,7 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
         }
         catch (Exception ex) {
             dbTransaction.Rollback();
-            logger.LogError(ex, nameof(SaveAsync));
+            Log.Error(ex, nameof(SaveAsync));
             return new SaveResponse(0,0,[], ex);
         }
     }
@@ -103,7 +102,7 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
             return parameters.Get<long>("@range_first_value");
         }
         catch (Exception ex) {
-            logger.LogError(ex, "Failed to get new SequenceName value");
+            Log.Error(ex, "Failed to get new SequenceName value");
             throw;
         }
     }

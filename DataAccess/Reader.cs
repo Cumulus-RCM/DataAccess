@@ -6,19 +6,17 @@ using System.Threading.Tasks;
 using BaseLib;
 using Dapper;
 using DataAccess.Shared;
-using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace DataAccess;
 
 public class Reader<T> : IReader<T> where T : class {
     protected readonly IDbConnectionManager dbConnectionService;
-    private readonly ILogger logger;
     protected readonly SqlBuilder sqlBuilder;
     private readonly ITableInfo tableInfo;
 
-    public Reader(IDbConnectionManager dbConnectionService, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory) {
+    public Reader(IDbConnectionManager dbConnectionService, IDatabaseMapper databaseMapper) {
         this.dbConnectionService = dbConnectionService;
-        this.logger = loggerFactory.CreateLogger(typeof(T));
         tableInfo = databaseMapper.GetTableInfo<T>();
         sqlBuilder = new SqlBuilder(tableInfo);
     }
@@ -35,7 +33,7 @@ public class Reader<T> : IReader<T> where T : class {
             return result.ToList().AsReadOnly();
         }
         catch (Exception e) {
-            logger.LogError(e, "Error in GetAllAsync: sql:{0}", [sql, paramsToString(parms)]);
+            Log.Error(e, "Error in GetAllAsync: sql:{0}", [sql, paramsToString(parms)]);
             return Array.Empty<T>().AsReadOnly();
         }
 

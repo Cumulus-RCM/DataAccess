@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Threading.Tasks;
 using DataAccess.Shared;
-using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace DataAccess;
 
-public class Queries<T>(IReader<T> reader, ILogger logger) : IQueries<T> where T : class {
+public class Queries<T>(IReader<T> reader) : IQueries<T> where T : class {
     public Task<Response<T>> GetAllAsync(string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null) {
         var filter = Filter.FromJson(filterJson);
         var orderBy = OrderBy.FromJson(orderByJson);
@@ -24,7 +24,7 @@ public class Queries<T>(IReader<T> reader, ILogger logger) : IQueries<T> where T
             return new Response<T>(items, cnt);
         }
         catch (Exception ex) {
-            logger.LogError(ex, nameof(GetAllAsync));
+            Log.Error(ex, nameof(GetAllAsync));
             return Response<T>.Empty(ex.Message);
         }
     }
