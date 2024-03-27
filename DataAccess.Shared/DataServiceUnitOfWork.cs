@@ -3,10 +3,18 @@ using System.Threading.Tasks;
 
 namespace DataAccess.Shared;
 
-public class DataServiceUnitOfWork(ISaveStrategy saveStrategy, IDatabaseMapper databaseMapper) : IUnitOfWork {
-    private readonly IUnitOfWork unitOfWork = new UnitOfWork(saveStrategy, databaseMapper);
+public abstract record DataServiceUnitOfWork : IUnitOfWork {
+    private readonly IUnitOfWork unitOfWork;
+
+    protected DataServiceUnitOfWork(ISaveStrategy SaveStrategy, IDatabaseMapper DatabaseMapper) {
+        this.SaveStrategy = SaveStrategy;
+        this.DatabaseMapper = DatabaseMapper;
+        unitOfWork = new UnitOfWork(SaveStrategy, DatabaseMapper);
+    }
 
     public int QueuedItemsCount => unitOfWork.QueuedItemsCount;
+    public ISaveStrategy SaveStrategy { get; }
+    public IDatabaseMapper DatabaseMapper { get; init; }
 
     public void Reset() => unitOfWork.Reset();
 
