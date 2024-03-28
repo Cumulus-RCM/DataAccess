@@ -15,9 +15,9 @@ public interface IQueries<T> {
         Observable.FromAsync(() => GetAllAsync(filterJson, pageSize, pageNumber, orderBy));
 
     [Get("/Dynamic")]
-    Task<Response<dynamic>> GetAllDynamicAsync(IEnumerable<string> columnNames, string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null);
+    Task<Response<dynamic>> GetAllDynamicAsync(IReadOnlyCollection<string> columnNames, string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null);
 
-    IObservable<Response<dynamic>> GetAllDynamic(IEnumerable<string> columnNames, string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null) => 
+    IObservable<Response<dynamic>> GetAllDynamic(IReadOnlyCollection<string> columnNames, string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null) => 
         Observable.FromAsync(() => GetAllDynamicAsync(columnNames, filterJson, pageSize, pageNumber, orderByJson));
  
     Task<Response<T>> GetAllAsync(Filter? filter, int pageSize = 0, int pageNumber = 1, OrderBy? orderBy = null) =>
