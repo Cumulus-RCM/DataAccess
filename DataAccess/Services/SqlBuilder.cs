@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
 using DataAccess.Shared;
+using Serilog;
 
 namespace DataAccess;
 
@@ -22,8 +24,13 @@ public class SqlBuilder(ITableInfo tableInfo) {
         };
     }
 
-    public string GetReadSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, OrderBy? orderBy = null, IEnumerable<string>? columnNames = null) {
+    public string GetReadSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, OrderBy? orderBy = null, IReadOnlyCollection<string>? columnNames = null) {
         if (pageNum <= 0) pageNum = 1;
+        if (columnNames is not null) {
+            var errColumnNames = columnNames.Where(colName => tableInfo.ColumnsMap.All(mappedCol => !colName.Equals(mappedCol.PropertyName, StringComparison.OrdinalIgnoreCase)));
+            foreach (var columnName in errColumnNames) Log.Warning("Column:{columnName} specified in dynamic columnNames not found in Table:{TableName}", columnName, tableInfo.TableName);
+        }
+
         var whereClause = GetWhereClause(filter);
         var orderByClause = generateOrderByClause(orderBy ?? new OrderBy(tableInfo.PrimaryKeyName));
         var offsetFetchClause = pageSize > 0
@@ -31,13 +38,14 @@ public class SqlBuilder(ITableInfo tableInfo) {
             : "";
         string selectClause;
         if (string.IsNullOrWhiteSpace(tableInfo.CustomSelectSqlTemplate)) {
-            var selectCols = columnNames is not null 
-                ? tableInfo.ColumnsMap.Where(c => columnNames.Contains(c.ColumnName)) 
+            var cols = columnNames is not null
+                ? tableInfo.ColumnsMap.Where(c => columnNames.Contains(c.ColumnName))
                 : tableInfo.ColumnsMap.Where(c => !c.IsSkipByDefault);
-            var columns = string.Join(",", selectCols.Select(c => $"{c.ColumnName} {c.Alias}"));
+            var columns = string.Join(",", cols.Select(c => $"{c.ColumnName} {c.Alias}"));
             selectClause = $"SELECT {columns} FROM {tableInfo.TableName}";
         }
         else selectClause = tableInfo.CustomSelectSqlTemplate;
+
         var result = $"{selectClause} {whereClause} {orderByClause} {offsetFetchClause}";
         return result.Trim();
     }
@@ -121,7 +129,7 @@ INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{para
 
     private string toSql(FilterExpression fe) {
         var columnName = getMappedPropertyName(fe.PropertyName);
-        var (pre, post) = stringifyTemplates();   
+        var (pre, post) = stringifyTemplates();
         var value = fe.Operator.UsesValue ? $" {pre}@{fe.PropertyName}{post}" : "";
         return $" {columnName} {fe.Operator.DisplayName}{value} ";
 
