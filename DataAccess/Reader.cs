@@ -21,7 +21,7 @@ public class Reader<T> : IReader<T> where T : class {
         sqlBuilder = new SqlBuilder(tableInfo);
     }
 
-    public async Task<ReadOnlyCollection<dynamic>> GetAllDynamicAsync(IEnumerable<string> columns, Filter? filter = null, int pageSize = 0, int pageNum = 0, OrderBy? orderBy = null) {
+    public async Task<ReadOnlyCollection<dynamic>> GetAllDynamicAsync(IReadOnlyCollection<string>? columns, Filter? filter = null, int pageSize = 0, int pageNum = 0, OrderBy? orderBy = null) {
         var sql = "";
         DynamicParameters? parms = null;
 
