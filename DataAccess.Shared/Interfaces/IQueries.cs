@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
@@ -9,10 +10,16 @@ namespace DataAccess.Shared;
 public interface IQueries<T> {
     [Get("/")]
     Task<Response<T>> GetAllAsync(string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null);
-
+    
     IObservable<Response<T>> GetAll(Filter? filterJson = null, int pageSize = 0, int pageNumber = 1, OrderBy? orderBy = null) =>
         Observable.FromAsync(() => GetAllAsync(filterJson, pageSize, pageNumber, orderBy));
 
+    [Get("/Dynamic")]
+    Task<Response<dynamic>> GetAllDynamicAsync(IEnumerable<string> columnNames, string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null);
+
+    IObservable<Response<dynamic>> GetAllDynamic(IEnumerable<string> columnNames, string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null) => 
+        Observable.FromAsync(() => GetAllDynamicAsync(columnNames, filterJson, pageSize, pageNumber, orderByJson));
+ 
     Task<Response<T>> GetAllAsync(Filter? filter, int pageSize = 0, int pageNumber = 1, OrderBy? orderBy = null) =>
         GetAllAsync(filter?.AsJson(), pageSize, pageNumber, orderBy?.AsJson());
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
 using DataAccess.Shared;
@@ -21,7 +22,7 @@ public class SqlBuilder(ITableInfo tableInfo) {
         };
     }
 
-    public string GetReadSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, OrderBy? orderBy = null) {
+    public string GetReadSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, OrderBy? orderBy = null, IEnumerable<string>? columnNames = null) {
         if (pageNum <= 0) pageNum = 1;
         var whereClause = GetWhereClause(filter);
         var orderByClause = generateOrderByClause(orderBy ?? new OrderBy(tableInfo.PrimaryKeyName));
@@ -30,7 +31,10 @@ public class SqlBuilder(ITableInfo tableInfo) {
             : "";
         string selectClause;
         if (string.IsNullOrWhiteSpace(tableInfo.CustomSelectSqlTemplate)) {
-            var columns = string.Join(",", tableInfo.ColumnsMap.Where(c => !c.IsSkipByDefault).Select(c => $"{c.ColumnName} {c.Alias}"));
+            var selectCols = columnNames is not null 
+                ? tableInfo.ColumnsMap.Where(c => columnNames.Contains(c.ColumnName)) 
+                : tableInfo.ColumnsMap.Where(c => !c.IsSkipByDefault);
+            var columns = string.Join(",", selectCols.Select(c => $"{c.ColumnName} {c.Alias}"));
             selectClause = $"SELECT {columns} FROM {tableInfo.TableName}";
         }
         else selectClause = tableInfo.CustomSelectSqlTemplate;

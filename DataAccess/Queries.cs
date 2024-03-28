@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using DataAccess.Shared;
 using Serilog;
@@ -10,6 +11,25 @@ public class Queries<T>(IReader<T> reader) : IQueries<T> where T : class {
         var filter = Filter.FromJson(filterJson);
         var orderBy = OrderBy.FromJson(orderByJson);
         return getAllAsync(filter, pageSize, pageNumber, orderBy);
+    }
+
+    public async Task<Response<dynamic>> GetAllDynamicAsync(IEnumerable<string> columnNames, string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null) {
+        var filter = Filter.FromJson(filterJson);
+        var orderBy = OrderBy.FromJson(orderByJson);
+
+        try {
+            var cnt = 0;
+            if (pageNumber == 0) {
+                cnt = await reader.GetCountAsync(filter).ConfigureAwait(false);
+                if (cnt == 0) return Response<dynamic>.Empty();
+            }
+            var items = await reader.GetAllDynamicAsync(columnNames, filter, pageSize, pageNumber, orderBy).ConfigureAwait(false);
+            return new Response<dynamic>(items, cnt);
+        }
+        catch (Exception ex) {
+            Log.Error(ex, nameof(GetAllAsync));
+            return Response<dynamic>.Empty(ex.Message);
+        }
     }
 
     private async Task<Response<T>> getAllAsync(Filter? filter = null, int pageSize = 0, int pageNumber = 1, OrderBy? orderBy = null) {
