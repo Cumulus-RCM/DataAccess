@@ -3,10 +3,10 @@ using System.Threading.Tasks;
 
 namespace DataAccess.Shared;
 
-public abstract record DataServiceUnitOfWork : IUnitOfWork {
+public record DataServiceUnitOfWork : IUnitOfWork {
     private readonly IUnitOfWork unitOfWork;
 
-    protected DataServiceUnitOfWork(ISaveStrategy SaveStrategy, IDatabaseMapper DatabaseMapper) {
+    public DataServiceUnitOfWork(ISaveStrategy SaveStrategy, IDatabaseMapper DatabaseMapper) {
         this.SaveStrategy = SaveStrategy;
         this.DatabaseMapper = DatabaseMapper;
         unitOfWork = new UnitOfWork(SaveStrategy, DatabaseMapper);

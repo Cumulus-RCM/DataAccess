@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -9,12 +7,10 @@ using System.Text.Json;
 using BaseLib;
 using Dapper;
 
-// ReSharper disable ArrangeObjectCreationWhenTypeEvident
-
 namespace DataAccess.Shared;
 
 public class Filter {
-    public List<FilterSegment> Segments { get; set; } = [];
+    public List<FilterSegment> Segments { get; init; } = [];
 
     public Filter() { }
 
@@ -30,8 +26,7 @@ public class Filter {
         }
         return filter;
     }
-
-
+    
     //https://long2know.com/2016/10/building-linq-expressions-part-2/
     public Func<T, bool> ToLinqExpression<T>() {
         var firstExpression = Segments.SelectMany(s => s.Expressions).First();
@@ -48,12 +43,12 @@ public class Filter {
             MethodInfo methodInfo;
             MethodCallExpression body;
             if (firstExpression.FilterExpression.Operator == Operator.In) {
-                methodInfo = typeof(string).GetMethod("Contains", new[] {typeof(string)})!;
-                body = Expression.Call(filterValue,methodInfo!, lowered);
+                methodInfo = typeof(string).GetMethod("Contains", [typeof(string)])!;
+                body = Expression.Call(filterValue,methodInfo, lowered);
             }
             else {
-                methodInfo = typeof(string).GetMethod("StartsWith", new[] {typeof(string)})!;
-                body = Expression.Call(lowered, methodInfo!, filterValue);
+                methodInfo = typeof(string).GetMethod("StartsWith", [typeof(string)])!;
+                body = Expression.Call(lowered, methodInfo, filterValue);
             }
             var lambda = Expression.Lambda<Func<T, bool>>(body, parameter);
             return lambda.Compile();
@@ -99,12 +94,11 @@ public class Filter {
 
     public string PrimaryExpressionPropertyName() => Segments.First().Expressions.First().FilterExpression.PropertyName;
 
- //   public string? PrimaryExpressionStringValue() => Segments.First().Expressions.First().FilterExpression.ValueString;
 
-    //public void SetParameterValue(string propertyName, string value) {
-    //    var exp = Segments.SelectMany(s => s.Expressions).FirstOrDefault(e => e.FilterExpression.PropertyName == propertyName);
-    //    if (exp is not null) exp.FilterExpression.ValueString = value;
-    //}
+    public void SetParameterValue<T>(string propertyName, T value) {
+        var exp = Segments.SelectMany(s => s.Expressions).FirstOrDefault(e => e.FilterExpression.PropertyName == propertyName);
+        if (exp is not null) exp.FilterExpression.Value = value;
+    }
 
     public DynamicParameters GetDynamicParameters() {
         var expressions = Segments.SelectMany(s => s.Expressions);
