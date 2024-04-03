@@ -51,10 +51,17 @@ public class Queries<T>(IReader<T> reader) : IQueries<T> where T : class {
 
     public Task<Response<T>> GetByModelAsync(T item) => getAllAsync(Filter.FromEntity(item));
 
-    public async Task<Response<T>> GetByPkAsync(string pkValue) {
-        var result = await reader.GetByPkAsync(pkValue).ConfigureAwait(false);
+    public async Task<Response<T>> GetByPkAsync(string pk) {
+        var result = await reader.GetByPkAsync(pk).ConfigureAwait(false);
         return result == null
-            ? Response<T>.Fail($"No Entity with Primary Key Value:{pkValue}")
+            ? Response<T>.Fail($"No Entity with Primary Key Value:{pk}")
             : new Response<T>(result);
+    }
+
+    public async Task<Response<dynamic>> GetByPkDynamicAsync(string pk, IReadOnlyCollection<string> columnNames) {
+        var result = await reader.GetByPkDynamicAsync(pk, columnNames).ConfigureAwait(false);
+        return result == null
+            ? Response<dynamic>.Fail($"No Entity with Primary Key Value:{pk}")
+            : new Response<dynamic>(result);
     }
 }

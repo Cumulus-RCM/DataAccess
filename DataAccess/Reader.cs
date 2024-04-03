@@ -66,6 +66,12 @@ public class Reader<T> : IReader<T> where T : class {
         return result.FirstOrDefault();
     }
 
+    public virtual async Task<dynamic?> GetByPkDynamicAsync(string pkValue, IReadOnlyCollection<string> columnNames) {
+        var filter = Filter.Create(new FilterExpression<T>(tableInfo.PrimaryKeyName, Operator.Equal) {Value = pkValue});
+        var result = await GetAllDynamicAsync(columnNames, filter, pageSize: 1, pageNum: 1).ConfigureAwait(false);
+        return result.FirstOrDefault();
+    }
+
     public virtual async Task<int> GetCountAsync(Filter? filter = null) {
         using var conn = dbConnectionService.CreateConnection();
         return await conn.ExecuteScalarAsync<int>(sqlBuilder.GetCountSql(filter), filter?.GetDynamicParameters());

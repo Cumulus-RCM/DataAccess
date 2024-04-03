@@ -7,6 +7,7 @@ public interface ITableInfo {
     Type EntityType { get; }
     string TableName { get; }
     string PrimaryKeyName { get; }
+    Type PrimaryKeyType { get; }
     string SequenceName { get; }
     bool IsIdentity { get; }
     bool IsSequencePk { get;}

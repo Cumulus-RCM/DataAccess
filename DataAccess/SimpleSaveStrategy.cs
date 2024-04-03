@@ -66,10 +66,14 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
                             }
                         }
                     }
-                    else {
+                    else if (dataChange.SqlShouldReturnPk) {
                         var id = await conn.ExecuteScalarAsync<int>($"{sql}", dataChange.Entity, dbTransaction).ConfigureAwait(false);
                         tableInfo.SetPrimaryKeyValue(dataChange.Entity, id);
                         insertedIds.Add(id);
+                    }
+                    else if (dataChange.TableInfo.PrimaryKeyType == typeof(IdPk)) {
+                        await conn.ExecuteScalarAsync<int>($"{sql}", dataChange.Entity, dbTransaction).ConfigureAwait(false);
+                        insertedIds.Add((IdPk) dataChange.TableInfo.GetPrimaryKeyValue(dataChange.Entity));
                     }
                 }
                 else {

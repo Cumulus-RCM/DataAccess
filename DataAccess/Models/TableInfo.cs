@@ -12,6 +12,7 @@ namespace DataAccess;
 public sealed record TableInfo<T> : ITableInfo {
     public string TableName { get; }
     public string PrimaryKeyName { get; }
+    public Type PrimaryKeyType { get; }
     public string SequenceName { get; } = "";
     public bool IsIdentity { get; }
     public bool IsSequencePk { get;}
@@ -47,6 +48,7 @@ public sealed record TableInfo<T> : ITableInfo {
                            && (pkPropertyInfo.PropertyType == typeof(int) || pkPropertyInfo.PropertyType == typeof(long));
             SequenceName = IsSequencePk ? sequence ?? $"{TableName}_id_seq" : "";
 
+            PrimaryKeyType = pkPropertyInfo.PropertyType;
             pkSetter = pkPropertyInfo.GetSetMethod(true);
             pkGetter = pkPropertyInfo.GetGetMethod(true);
         }
@@ -67,5 +69,5 @@ public sealed record TableInfo<T> : ITableInfo {
     public void SetPrimaryKeyValue(object entity, IdPk value) => pkSetter?.Invoke(entity, new object[] { value });
 
     public object GetPrimaryKeyValue(object entity) =>
-        pkGetter?.Invoke(entity, null) ?? throw new InvalidDataException("PrimaryKeyName value is null");
+        pkGetter?.Invoke((T)entity, null) ?? throw new InvalidDataException("PrimaryKeyName value is null");
 }

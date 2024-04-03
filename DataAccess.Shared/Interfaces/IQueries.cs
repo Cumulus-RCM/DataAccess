@@ -26,5 +26,11 @@ public interface IQueries<T> {
     [Get("/{pkValue}")]
     Task<Response<T>> GetByPkAsync(string pkValue);
 
-    Task<Response<T>> GetByPkAsync<TKey>(TKey id) where TKey : notnull => GetByPkAsync(id.ToString() ?? throw new InvalidDataException("Key must be have valid ToString() method."));
+    Task<Response<T>> GetByPkAsync<TKey>(TKey pk) where TKey : notnull => GetByPkAsync(pk.ToString() ?? throw new InvalidDataException("Key must be have valid ToString() method."));
+
+    [Get("/{pkValue}/{columnNames}")]
+    Task<Response<dynamic>> GetByPkDynamicAsync(string pkValue, IReadOnlyCollection<string> columnNames);
+
+    Task<Response<dynamic>> GetByPkDynamicAsync<TKey>(TKey pk, IReadOnlyCollection<string> columnNames) where TKey : notnull => 
+        GetByPkDynamicAsync(pk.ToString() ?? throw new InvalidDataException("Key must be have valid ToString() method."), columnNames);
 }

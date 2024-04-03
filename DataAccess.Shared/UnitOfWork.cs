@@ -37,8 +37,13 @@ public class DataChangeComparer : IEqualityComparer<IDataChange> {
         if (x is null || y is null) return false;
         if (x.IsCollection || y.IsCollection) return false;  //No dup check for collections
         if (x.TableInfo.TableName != y.TableInfo.TableName) return false;
-        var xPk = x.TableInfo.GetPrimaryKeyValue(x);
-        var yPk = y.TableInfo.GetPrimaryKeyValue(y);
+        var xPk = x.TableInfo.GetPrimaryKeyValue(x.Entity);
+        var yPk = y.TableInfo.GetPrimaryKeyValue(y.Entity);
+
+        if (xPk is IdPk && yPk is IdPk 
+                        && x.DataChangeKind == DataChangeKind.Insert
+                        && y.DataChangeKind == DataChangeKind.Insert) 
+            return x.Entity.GetHashCode().Equals(y.Entity.GetHashCode());
         return xPk.Equals(yPk);
     }
 
