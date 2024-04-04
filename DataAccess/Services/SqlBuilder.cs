@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
+using System.Text;
 using DataAccess.Shared;
 using Serilog;
 
@@ -54,10 +56,49 @@ public class SqlBuilder(ITableInfo tableInfo) {
     }
 
     public string GetWhereClause(Filter? filter) {
-        if (filter == null) return "";
-        var where = "WHERE " + string.Join(AndOr.And.DisplayName,
-            filter.Segments.SelectMany(segment => segment.Expressions.Select(exp => toSql(exp.FilterExpression))));
-        return where;
+        if (filter == null || filter.Segments.Count == 0) return "";
+        var where = $"WHERE {segmentToSql(filter.Segments.First(),0)} ";
+        if (filter.Segments.Count == 1) return where;
+        var sb = new StringBuilder(where);
+        var segmentIndex = 1;
+        foreach (var segment in filter.Segments.Skip(1)) {
+            sb.Append($" {segment.AndOr.DisplayName} ");
+            sb.Append(segmentToSql(segment, segmentIndex++));
+        }
+        return $"{sb}";
+
+        string segmentToSql(FilterSegment filterSegment, int segmentNumber) {
+            string result;
+            var firstExpression = expressionToSql(filterSegment.Expressions.First().FilterExpression, segmentNumber);
+            if (filterSegment.Expressions.Count == 1) 
+                result = firstExpression;
+            else {
+                var sb = new StringBuilder(firstExpression);
+                foreach (var expression in filterSegment.Expressions.Skip(1)) {
+                    sb.Append($" {expression.AndOr.DisplayName} ");
+                    sb.Append(expressionToSql(expression.FilterExpression, segmentNumber));
+                }
+
+                result = sb.ToString();
+            }
+            return $"({result})";
+        }
+        string expressionToSql(FilterExpression fe, int segmentNumber) {
+            var columnName = $"{getMappedPropertyName(fe.PropertyName)}";
+            var (pre, post) = stringifyTemplates();
+            var value = fe.Operator.UsesValue ? $" {pre}@{fe.PropertyName}{segmentNumber}{post}" : "";
+            return $" {columnName} {fe.Operator.DisplayName}{value} ";
+
+            (string pre, string post) stringifyTemplates() {
+                //if (!isString(fe.PropertyName)) return ("", "");
+                var before = string.IsNullOrWhiteSpace(fe.Operator.PreTemplate) ? "" : $"{fe.Operator.PreTemplate}";
+                var after = string.IsNullOrWhiteSpace(fe.Operator.PostTemplate) ? "" : $"{fe.Operator.PostTemplate}";
+                return (before, after);
+            }
+
+            string getMappedPropertyName(string propertyName) =>
+                tableInfo.ColumnsMap.SingleOrDefault(x => x.PropertyName == propertyName)?.ColumnName ?? propertyName;
+        }
     }
 
     private string generateOrderByClause(OrderBy orderBy) {
@@ -124,21 +165,4 @@ INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{para
         throw new InvalidDataException($"No stored procedure template defined for Table:{tableInfo.TableName}");
 
     bool isString(string propertyName) => tableInfo.EntityType.GetProperty(propertyName)?.PropertyType == typeof(string);
-
-    private string toSql(FilterExpression fe) {
-        var columnName = getMappedPropertyName(fe.PropertyName);
-        var (pre, post) = stringifyTemplates();
-        var value = fe.Operator.UsesValue ? $" {pre}@{fe.PropertyName}{post}" : "";
-        return $" {columnName} {fe.Operator.DisplayName}{value} ";
-
-        (string pre, string post) stringifyTemplates() {
-            //if (!isString(fe.PropertyName)) return ("", "");
-            var before = string.IsNullOrWhiteSpace(fe.Operator.PreTemplate) ? "" : $"{fe.Operator.PreTemplate}";
-            var after = string.IsNullOrWhiteSpace(fe.Operator.PostTemplate) ? "" : $"{fe.Operator.PostTemplate}";
-            return (before, after);
-        }
-
-        string getMappedPropertyName(string propertyName) =>
-            tableInfo.ColumnsMap.SingleOrDefault(x => x.PropertyName == propertyName)?.ColumnName ?? propertyName;
-    }
 }
