@@ -14,6 +14,11 @@ public interface IQueries<T> {
     IObservable<Response<T>> GetAll(Filter? filterJson = null, int pageSize = 0, int pageNumber = 1, OrderBy? orderBy = null) =>
         Observable.FromAsync(() => GetAllAsync(filterJson, pageSize, pageNumber, orderBy));
 
+    [Get("/Count")]
+    Task<int> GetCountAsync(string? filterJson = null);
+
+    Task<int> GetCountAsync(Filter? filter = null) => GetCountAsync(filter?.AsJson());
+
     [Get("/Dynamic")]
     Task<Response<dynamic>> GetAllDynamicAsync(IReadOnlyCollection<string> columnNames, string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null);
 

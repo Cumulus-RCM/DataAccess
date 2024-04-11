@@ -32,6 +32,7 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
         //  Each table has a priority which can be set in the TableInfo
         using var conn = connectionManager.CreateConnection();
         using var dbTransaction = conn.BeginTransaction();
+        var sql = "";
         try {
             var updatedRowCount = 0;
             var insertedIds = new List<long>();
@@ -42,7 +43,7 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
                 .ToList();
             foreach (var dataChange in changes) {
                 var tableInfo = dataChange.TableInfo;
-                var sql = SqlBuilder.GetWriteSql(dataChange);
+                sql = SqlBuilder.GetWriteSql(dataChange);
                 if (dataChange.DataChangeKind == DataChangeKind.Insert) {
                     if (dataChange.IsCollection) {
                         var collection = (ICollection<IDataChange>) dataChange.Entity;
@@ -90,7 +91,7 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
         }
         catch (Exception ex) {
             dbTransaction.Rollback();
-            Log.Error(ex, nameof(SaveAsync));
+            Log.Error(ex, $"Method: {nameof(SaveAsync)} Sql: {sql}");
             return new SaveResponse(0,0,[], ex);
         }
     }

@@ -6,6 +6,8 @@ namespace DataAccess.Shared;
 
 public interface IUnitOfWork {
     int QueuedItemsCount { get; }
+
+    IEnumerable<T> GetQueuedInsertItems<T>() where T : class;
     void Reset();
     void Add<T>(DataChangeKind dataChangeKind, T entity) where T : class;
     void Add<T>(DataChangeKind dataChangeKind, IEnumerable<T> entity)  where T : class;

@@ -28,6 +28,9 @@ public class UnitOfWork : IUnitOfWork {
         return saveResult;
     }
 
+    public IEnumerable<T> GetQueuedInsertItems<T>() where T : class => 
+        queuedItems.Where(x=> x.DataChangeKind == DataChangeKind.Insert && x.EntityType == typeof(T)).Select(x=>(T)x.Entity);
+
     public void Reset() => queuedItems.Clear();
 }
 

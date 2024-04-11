@@ -16,6 +16,8 @@ public record DataServiceUnitOfWork : IUnitOfWork {
     public ISaveStrategy SaveStrategy { get; }
     public IDatabaseMapper DatabaseMapper { get; init; }
 
+    public IEnumerable<T> GetQueuedInsertItems<T>() where T : class => unitOfWork.GetQueuedInsertItems<T>();
+
     public void Reset() => unitOfWork.Reset();
 
     public void Add<T> (DataChangeKind dataChangeKind, T entity) where T : class => unitOfWork.Add<T>(dataChangeKind,entity);
