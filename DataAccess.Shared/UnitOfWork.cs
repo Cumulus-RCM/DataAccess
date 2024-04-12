@@ -19,8 +19,8 @@ public class UnitOfWork : IUnitOfWork {
     public void Add<T>(DataChangeKind dataChangeKind, T entity) where T : class => 
         queuedItems.Add(dataChangeFactory.Create(dataChangeKind, entity));
 
-    public void Add<T>(DataChangeKind dataChangeKind, IEnumerable<T> entities) where T : class =>
-        queuedItems.Add(dataChangeFactory.Create(dataChangeKind, entities));
+    public void AddCollection<T>(DataChangeKind dataChangeKind, ICollection<T> entities) where T : class =>
+        queuedItems.Add(dataChangeFactory.Create(dataChangeKind, entities, true));
 
     public async Task<SaveResponse> SaveAsync() {
         var saveResult = await strategy.SaveAsync(queuedItems);

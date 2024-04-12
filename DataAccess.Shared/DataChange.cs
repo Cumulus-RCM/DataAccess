@@ -16,16 +16,9 @@ public class DataChange<T> : IDataChange {
         IsCollection = false;
         TableInfo = tableInfo;
     }
-
-    internal DataChange(DataChangeKind dataChangeKind, IEnumerable<T> entities, ITableInfo tableInfo) {
-        Entity = entities;
-        DataChangeKind = dataChangeKind;
-        IsCollection = true;
-        TableInfo = tableInfo;
-    }
 }
 
 public class DataChangeFactory(IDatabaseMapper databaseMapper) {
-    public IDataChange Create<T>(DataChangeKind dataChangeKind, T entity) => new DataChange<T>(dataChangeKind, entity, databaseMapper.GetTableInfo<T>());
-    public IDataChange Create<T>(DataChangeKind dataChangeKind,IEnumerable<T> entities) => new DataChange<T>(dataChangeKind, entities, databaseMapper.GetTableInfo<T>());
+    public IDataChange Create<T>(DataChangeKind dataChangeKind, T entity, bool isCollection = false) => 
+        new DataChange<T>(dataChangeKind, entity, databaseMapper.GetTableInfo<T>()) {IsCollection = isCollection};
 }

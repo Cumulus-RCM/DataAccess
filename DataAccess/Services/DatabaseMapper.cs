@@ -17,11 +17,22 @@ public class DatabaseMapper : IDatabaseMapper {
     }
 
     public ITableInfo GetTableInfo<T>() {
+        ITableInfo newTableInfo;
+
         var type = typeof(T);
-        if (tableInfos.TryGetValue(type, out var value)) return (TableInfo<T>)value;
-        var newTableInfo = new TableInfo<T>();
+        if (type.IsGenericType) {
+            type = type.GenericTypeArguments[0];
+            if (tableInfos.TryGetValue(type, out var value)) return value;
+            var ti = Activator.CreateInstance(typeof(TableInfo<>).MakeGenericType(type)) ?? 
+                     throw new InvalidOperationException($"Could not create TableInfo<{type}>");
+            newTableInfo = (ITableInfo) ti;
+        }
+        else {
+            if (tableInfos.TryGetValue(type, out var value)) return value;
+            newTableInfo = new TableInfo<T>();
+        }
         tableInfos.Add(type, newTableInfo);
-        return newTableInfo;
+        return  newTableInfo;
     }
 
     public ITableInfo GetTableInfo(Type entityType) {

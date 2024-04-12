@@ -15,7 +15,6 @@ using Serilog;
 namespace DataAccess;
 
 public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabaseMapper databaseMapper) : ISaveStrategy {
-
     public async Task<IdPk> GetSequenceValuesAsync<T>(int cnt) where T : class {
         if (cnt == 0) return 0;
         var tableInfo = databaseMapper.GetTableInfo<T>();
@@ -23,6 +22,7 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
         using (var conn = connectionManager.CreateConnection()) {
             result = await getSequenceValuesAsync(conn, tableInfo.SequenceName, cnt).ConfigureAwait(false);
         }
+
         return result;
     }
 
@@ -33,77 +33,80 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
         using var conn = connectionManager.CreateConnection();
         using var dbTransaction = conn.BeginTransaction();
         var sql = "";
+        ITableInfo? tableInfo = null;
+        var sb = new SaveResponseBuilder();
         try {
-            var updatedRowCount = 0;
-            var insertedIds = new List<long>();
-            var deletedRowCount = 0;
             var changes = dataChanges
                 .OrderBy(dc => dc.TableInfo.Priority)
                 .ThenBy(dc => dc.TableInfo.TableName)
                 .ToList();
             foreach (var dataChange in changes) {
-                var tableInfo = dataChange.TableInfo;
+                tableInfo = dataChange.TableInfo;
                 sql = SqlBuilder.GetWriteSql(dataChange);
                 if (dataChange.DataChangeKind == DataChangeKind.Insert) {
                     if (dataChange.IsCollection) {
-                        var collection = (ICollection<IDataChange>) dataChange.Entity;
+                        var collection = (ICollection)dataChange.Entity;
                         if (dataChange.TableInfo.IsIdentity) {
                             foreach (var item in collection) {
-                                var id = await conn.ExecuteAsync($"{sql}", item).ConfigureAwait(false);
+                                var id = await conn.QuerySingleAsync<IdPk>($"{sql}", item).ConfigureAwait(false);
                                 dataChange.TableInfo.SetPrimaryKeyValue(item, id);
-                                insertedIds.Add(id);
+                                sb.Add(tableInfo.TableName, insertedIds: id.ItemAsEnumerable());
                             }
                         }
                         else {
                             if (conn is SqlConnection sqlConn && dbTransaction is SqlTransaction sqlTransaction) {
-                                var idsNeeded = collection.Count(x => x.TableInfo.IsSequencePk && (IdPk)x.TableInfo.GetPrimaryKeyValue(x.Entity) == 0);
-                                var id = await getSequenceValuesAsync(conn, dataChange.TableInfo.SequenceName, idsNeeded).ConfigureAwait(false);
+                                var idsNeeded = collection.Cast<object>().Count(item => (IdPk) dataChange.TableInfo.GetPrimaryKeyValue(item) == 0);
+                                var id = await getSequenceValuesAsync(conn, dataChange.TableInfo.SequenceName, idsNeeded, sqlTransaction).ConfigureAwait(false);
                                 foreach (var item in collection) {
-                                    if ((IdPk)item.TableInfo.GetPrimaryKeyValue(item) == 0) tableInfo.SetPrimaryKeyValue(item, id);
-                                    insertedIds.Add(id);
+                                    if ((IdPk) tableInfo.GetPrimaryKeyValue(item) == 0) tableInfo.SetPrimaryKeyValue(item, id);
+                                    sb.Add(tableInfo.TableName, insertedIds: id.ItemAsEnumerable());
                                     id++;
                                 }
-                                await bulkInsert(sqlConn, tableName: tableInfo.TableName, collection.Select(x=>x.Entity), sqlTransaction).ConfigureAwait(false);
+                                await bulkInsert(sqlConn, tableName: tableInfo.TableName, collection, sqlTransaction).ConfigureAwait(false);
                             }
                         }
                     }
                     else if (dataChange.SqlShouldReturnPk) {
-                        var id = await conn.ExecuteScalarAsync<int>($"{sql}", dataChange.Entity, dbTransaction).ConfigureAwait(false);
+                        var id = await conn.ExecuteScalarAsync<IdPk>($"{sql}", dataChange.Entity, dbTransaction).ConfigureAwait(false);
                         tableInfo.SetPrimaryKeyValue(dataChange.Entity, id);
-                        insertedIds.Add(id);
+                        sb.Add(tableInfo.TableName, insertedIds: id.ItemAsEnumerable());
                     }
                     else if (dataChange.TableInfo.PrimaryKeyType == typeof(IdPk)) {
                         await conn.ExecuteScalarAsync<int>($"{sql}", dataChange.Entity, dbTransaction).ConfigureAwait(false);
-                        insertedIds.Add((IdPk) dataChange.TableInfo.GetPrimaryKeyValue(dataChange.Entity));
+                        var id = (IdPk) dataChange.TableInfo.GetPrimaryKeyValue(dataChange.Entity);
+                        sb.Add(tableInfo.TableName, insertedIds: id.ItemAsEnumerable());
                     }
                 }
+
                 else {
                     var ct = dataChange.DataChangeKind == DataChangeKind.StoredProcedure
                         ? CommandType.StoredProcedure
                         : CommandType.Text;
-                    var rows = await conn.ExecuteAsync(sql, dataChange.Entity, dbTransaction, commandType:ct).ConfigureAwait(false);
-                    if (dataChange.DataChangeKind == DataChangeKind.Update) updatedRowCount += rows;
-                    else if (dataChange.DataChangeKind == DataChangeKind.Delete) deletedRowCount += rows;
+                    var rows = await conn.ExecuteAsync(sql, dataChange.Entity, dbTransaction, commandType: ct).ConfigureAwait(false);
+                    if (dataChange.DataChangeKind == DataChangeKind.Update) sb.Add(tableInfo.TableName, updatedCount: rows);
+                    else if (dataChange.DataChangeKind == DataChangeKind.Delete) sb.Add(tableInfo.TableName, deletedCount: rows);
                 }
             }
+
             dbTransaction.Commit();
-            return new SaveResponse(updatedRowCount, deletedRowCount, insertedIds.ToArray() );
         }
         catch (Exception ex) {
             dbTransaction.Rollback();
             Log.Error(ex, $"Method: {nameof(SaveAsync)} Sql: {sql}");
-            return new SaveResponse(0,0,[], ex);
+            sb.Add(tableInfo?.TableName ?? "No Table Set", exception: ex);
         }
+
+        return sb.Build();
     }
 
-    private async Task<long> getSequenceValuesAsync(IDbConnection conn, string sequenceName, int cnt) {
+    private async Task<long> getSequenceValuesAsync(IDbConnection conn, string sequenceName, int cnt, IDbTransaction? dbTransaction = null) {
+        if (cnt == 0) return 0;
         try {
             var parameters = new DynamicParameters();
             parameters.Add("@sequence_name", dbType: DbType.String, value: sequenceName, direction: ParameterDirection.Input);
             parameters.Add("@range_size", dbType: DbType.Int32, value: cnt, direction: ParameterDirection.Input);
             parameters.Add("@range_first_value", dbType: DbType.Object, direction: ParameterDirection.Output);
-            await conn.ExecuteAsync("sp_sequence_get_range", parameters, commandType: CommandType.StoredProcedure)
-                .ConfigureAwait(false);
+            await conn.ExecuteAsync("sp_sequence_get_range", parameters, commandType: CommandType.StoredProcedure, transaction:dbTransaction).ConfigureAwait(false);
             return parameters.Get<long>("@range_first_value");
         }
         catch (Exception ex) {

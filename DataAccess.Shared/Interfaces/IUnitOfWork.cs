@@ -10,13 +10,13 @@ public interface IUnitOfWork {
     IEnumerable<T> GetQueuedInsertItems<T>() where T : class;
     void Reset();
     void Add<T>(DataChangeKind dataChangeKind, T entity) where T : class;
-    void Add<T>(DataChangeKind dataChangeKind, IEnumerable<T> entity)  where T : class;
+    void AddCollection<T>(DataChangeKind dataChangeKind, ICollection<T> entity)  where T : class;
     Task<SaveResponse> SaveAsync();
 
     void AddForUpdate<T>(T entity) where T : class => Add<T>(Update, entity);
-    void AddForUpdate<T>(IEnumerable<T> entities)  where T : class => Add<T>(Update, entities);
+    void AddForUpdate<T>(ICollection<T> entities)  where T : class => AddCollection<T>(Update, entities);
     void AddForDelete<T>(T entity)  where T : class => Add<T>(Delete, entity);
-    void AddForDelete<T>(IEnumerable<T> entities) where T : class => Add<T>(Delete, entities);
+    void AddForDelete<T>(ICollection<T> entities) where T : class => AddCollection<T>(Delete, entities);
     void AddForInsert<T>(T entity) where T : class => Add<T>(Insert, entity);
-    void AddForInsert<T>(IEnumerable<T> entities) where T : class => Add<T>(Insert, entities);
+    void AddCollectionForInsert<T>(ICollection<T> entities) where T : class => AddCollection<T>(Insert, entities);
 }

@@ -21,8 +21,8 @@ public record DataServiceUnitOfWork : IUnitOfWork {
     public void Reset() => unitOfWork.Reset();
 
     public void Add<T> (DataChangeKind dataChangeKind, T entity) where T : class => unitOfWork.Add<T>(dataChangeKind,entity);
-    public void Add<T>(DataChangeKind dataChangeKind, IEnumerable<T> entities) where T : class => 
-        unitOfWork.Add<T>(dataChangeKind,entities);
+    public void AddCollection<T>(DataChangeKind dataChangeKind, ICollection<T> entities) where T : class => 
+        unitOfWork.AddCollection<T>(dataChangeKind,entities);
 
     public async Task<SaveResponse> SaveAsync() => await unitOfWork.SaveAsync();
 }
