@@ -127,11 +127,12 @@ public class Filter {
     public static Filter FromEntity<T>(T item) where T : class {
         var type = typeof(T);
         var props = type.GetProperties();
-        var filterSegment = new FilterSegment();
+        var filterSegment = new FilterSegment<T>();
         foreach (var prop in props) {
             var value = prop.GetValue(item);
             if (value != null) {
-                filterSegment.AddExpression(new FilterExpression(prop.Name, Operator.Equal) {Value = value});
+                var exp = new FilterExpression<T>(prop.Name, Operator.Equal, value);
+                filterSegment.AddExpression(new ConnectedExpression<T>(exp, AndOr.And));
             }
         }
 

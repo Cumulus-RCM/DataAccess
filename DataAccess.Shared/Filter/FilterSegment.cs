@@ -13,11 +13,7 @@ public record FilterSegment {
     public FilterSegment() { }
 
     public FilterSegment(FilterExpression filterExpression) {
-        AddExpression(filterExpression);
-    }
-
-    public void AddExpression(FilterExpression filterExpression, AndOr? andOr = null) {
-        Expressions.Add(new ConnectedExpression(filterExpression, andOr ?? AndOr.And));
+        Expressions.Add(new ConnectedExpression(filterExpression, AndOr.And));
     }
 
     public static bool TryParse(string json, out FilterSegment? filterSegment) {
@@ -28,16 +24,23 @@ public record FilterSegment {
 
 
 public record FilterSegment<T> : FilterSegment {
-    public FilterSegment() { }
+    public FilterSegment(AndOr? andOr = null) {
+        AndOr = andOr ?? AndOr.And;
+    }
 
-    public FilterSegment(FilterExpression<T> filterExpression, AndOr? andOr = null) => AddExpression(filterExpression, andOr);
+    public FilterSegment(FilterExpression<T> filterExpression, AndOr? andOr = null) {
+        AddExpression(new ConnectedExpression<T>(filterExpression, AndOr.And));
+        AndOr = andOr ?? AndOr.And;
+    }
 
     public FilterSegment(IEnumerable<ConnectedExpression<T>> filterExpressions, AndOr? andOr = null) {
         Expressions.AddRange(filterExpressions);
         AndOr = andOr ?? AndOr.And;
     }
 
-    public void AddExpression(FilterExpression<T> filterExpression, AndOr? andOr = null) => Expressions.Add(new ConnectedExpression<T>(filterExpression, andOr ?? AndOr.And));
+    public void AddExpression(ConnectedExpression<T> filterExpression) {
+        Expressions.Add(filterExpression);
+    }
 
     public static bool TryParse(string json, out FilterSegment<T>? filterSegment) {
         filterSegment = JsonSerializer.Deserialize<FilterSegment<T>>(json);
