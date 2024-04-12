@@ -72,13 +72,12 @@ public class SqlBuilder(ITableInfo tableInfo) {
             if (filterSegment.Expressions.Count == 1) 
                 result = firstExpression;
             else {
-                var sb = new StringBuilder(firstExpression);
+                var segmentStringBuilder = new StringBuilder(firstExpression);
                 foreach (var expression in filterSegment.Expressions.Skip(1)) {
-                    sb.Append($" {expression.AndOr.DisplayName} ");
-                    sb.Append(expressionToSql(expression.FilterExpression, segmentNumber));
+                    segmentStringBuilder.Append($" {expression.AndOr.DisplayName} ");
+                    segmentStringBuilder.Append(expressionToSql(expression.FilterExpression, segmentNumber));
                 }
-
-                result = sb.ToString();
+                result = segmentStringBuilder.ToString();
             }
             return $"({result})";
         }

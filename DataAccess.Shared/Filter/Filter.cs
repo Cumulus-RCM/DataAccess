@@ -94,7 +94,6 @@ public class Filter {
 
     public string PrimaryExpressionPropertyName() => Segments.First().Expressions.First().FilterExpression.PropertyName;
 
-
     public void SetParameterValue<T>(string propertyName, T value) {
         var exp = Segments.SelectMany(s => s.Expressions).FirstOrDefault(e => e.FilterExpression.PropertyName == propertyName);
         if (exp is not null) exp.FilterExpression.Value = value;
