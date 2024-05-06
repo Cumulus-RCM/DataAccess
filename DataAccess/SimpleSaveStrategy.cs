@@ -117,10 +117,10 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
 
     private static async Task<int> bulkInsert(SqlConnection conn, string tableName, IEnumerable items, SqlTransaction? transaction) {
         using var bulkCopy = new SqlBulkCopy(conn, SqlBulkCopyOptions.CheckConstraints | SqlBulkCopyOptions.FireTriggers, transaction);
-        bulkCopy.BulkCopyTimeout = 0;
-        bulkCopy.BatchSize = 500;
+       
         bulkCopy.DestinationTableName = tableName;
         bulkCopy.EnableStreaming = true;
+        bulkCopy.BatchSize = 1000;
 
         using var dataTable = convertItemsToDataTable();
         if (dataTable is null) return 0;
