@@ -8,6 +8,9 @@ using Refit;
 namespace DataAccess.Shared;
 
 public interface IQueries<T> {
+    //NOTE: This is a generic interface for all queries. It is used to get data from the database.
+    //NOTE: All parameters to interface methods must be serializable to JSON to allow them to be processed by the API.
+
     [Get("/")]
     Task<Response<T>> GetAllAsync(string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null);
     
