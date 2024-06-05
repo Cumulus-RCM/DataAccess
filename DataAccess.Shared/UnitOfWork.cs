@@ -8,11 +8,11 @@ public class UnitOfWork : IUnitOfWork {
     public int QueuedItemsCount => queuedItems.Sum(x=>x.Count);
 
     private readonly HashSet<IDataChange> queuedItems = new(new DataChangeComparer());
-    private readonly ISaveStrategy strategy;
+    private readonly ISaveStrategy saveStrategy;
     private readonly DataChangeFactory dataChangeFactory;
 
-    public UnitOfWork(ISaveStrategy strategy, IDatabaseMapper databaseMapper) {
-        this.strategy = strategy;
+    public UnitOfWork(ISaveStrategy saveStrategy, IDatabaseMapper databaseMapper) {
+        this.saveStrategy = saveStrategy;
         dataChangeFactory = new DataChangeFactory(databaseMapper);
     }
 
@@ -23,7 +23,7 @@ public class UnitOfWork : IUnitOfWork {
         queuedItems.Add(dataChangeFactory.Create(dataChangeKind, entities, true));
 
     public async Task<SaveResponse> SaveAsync() {
-        var saveResult = await strategy.SaveAsync(queuedItems);
+        var saveResult = await saveStrategy.SaveAsync(queuedItems);
         queuedItems.Clear();
         return saveResult;
     }
