@@ -2,7 +2,6 @@
 using Dapper;
 using DataAccess.Shared;
 using System.Data;
-using System.Threading.Tasks;
 
 namespace DataAccess;
 
@@ -14,7 +13,6 @@ public abstract record DataServiceBase(IReaderFactory ReaderFactory, ISaveStrate
     }
 
     public virtual IQueries<T> GetQueries<T>() where T : class => new Queries<T>(ReaderFactory.GetReader<T>());
-    public Task<IdPk> GetSequencesAsync<T>(int cnt) where T : class => SaveStrategy.GetSequencesAsync<T>(cnt);
 }
 
 public class SqlTimeOnlyTypeHandler : SqlMapper.TypeHandler<TimeOnly> {

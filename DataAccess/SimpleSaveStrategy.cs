@@ -14,18 +14,7 @@ using Serilog;
 
 namespace DataAccess;
 
-public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabaseMapper databaseMapper) : ISaveStrategy {
-    public async Task<IdPk> GetSequencesAsync<T>(int cnt) where T : class {
-        if (cnt == 0) return 0;
-        var tableInfo = databaseMapper.GetTableInfo<T>();
-        IdPk result;
-        using (var conn = connectionManager.CreateConnection()) {
-            result = await getSequencesAsync(conn, tableInfo.SequenceName, cnt).ConfigureAwait(false);
-        }
-
-        return result;
-    }
-
+public class SimpleSaveStrategy(IDbConnectionManager connectionManager, ISequenceGenerator sequenceGenerator) : ISaveStrategy {
     public async Task<SaveResponse> SaveAsync(IEnumerable<IDataChange> dataChanges) {
         //Implements simplistic approach to ordering the data changes to ensure referential integrity
         //  i.e. parent table is inserted before child table
@@ -56,7 +45,7 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
                         else {
                             if (conn is SqlConnection sqlConn && dbTransaction is SqlTransaction sqlTransaction) {
                                 var idsNeeded = collection.Cast<object>().Count(item => (IdPk) dataChange.TableInfo.GetPrimaryKeyValue(item) == 0);
-                                var id = await getSequencesAsync(conn, dataChange.TableInfo.SequenceName, idsNeeded, sqlTransaction).ConfigureAwait(false);
+                                var id = await sequenceGenerator.GetSequencesAsync(dataChange.TableInfo, idsNeeded).ConfigureAwait(false);
                                 foreach (var item in collection) {
                                     if ((IdPk) tableInfo.GetPrimaryKeyValue(item) == 0) tableInfo.SetPrimaryKeyValue(item, id);
                                     sb.Add(tableInfo.TableName, insertedIds: id.ItemAsEnumerable());
@@ -97,22 +86,6 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, IDatabas
         }
 
         return sb.Build();
-    }
-
-    private async Task<long> getSequencesAsync(IDbConnection conn, string sequenceName, int cnt, IDbTransaction? dbTransaction = null) {
-        if (cnt == 0) return 0;
-        try {
-            var parameters = new DynamicParameters();
-            parameters.Add("@sequence_name", dbType: DbType.String, value: sequenceName, direction: ParameterDirection.Input);
-            parameters.Add("@range_size", dbType: DbType.Int32, value: cnt, direction: ParameterDirection.Input);
-            parameters.Add("@range_first_value", dbType: DbType.Object, direction: ParameterDirection.Output);
-            await conn.ExecuteAsync("sp_sequence_get_range", parameters, commandType: CommandType.StoredProcedure, transaction:dbTransaction).ConfigureAwait(false);
-            return parameters.Get<long>("@range_first_value");
-        }
-        catch (Exception ex) {
-            Log.Error(ex, "Failed to get new SequenceName value");
-            throw;
-        }
     }
 
     private static async Task<int> bulkInsert(SqlConnection conn, string tableName, IEnumerable items, SqlTransaction? transaction) {

@@ -7,12 +7,11 @@ namespace DataAccess.Shared;
 public interface IUnitOfWork {
     int QueuedItemsCount { get; }
 
-    IEnumerable<T> GetQueuedInsertItems<T>() where T : class;
     void Reset();
     void Add<T>(DataChangeKind dataChangeKind, T entity) where T : class;
-    void AddCollection<T>(DataChangeKind dataChangeKind, ICollection<T> entity)  where T : class;
+    void AddCollection<T>(DataChangeKind dataChangeKind, ICollection<T> entities)  where T : class;
     Task<SaveResponse> SaveAsync();
-
+    
     void AddForUpdate<T>(T entity) where T : class => Add<T>(Update, entity);
     void AddForUpdate<T>(ICollection<T> entities)  where T : class => AddCollection<T>(Update, entities);
     void AddForDelete<T>(T entity)  where T : class => Add<T>(Delete, entity);

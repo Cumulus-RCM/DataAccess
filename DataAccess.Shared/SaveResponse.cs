@@ -20,6 +20,9 @@ public record SaveResponse(IReadOnlyCollection<SaveResult> SaveResults) : Respon
         }
         return sb.ToString();
     }
+
+    public static SaveResponse Failed(string message) => new([]) {Exception = new Exception(message)};
+    public static SaveResponse Empty() => new([]);
 }
 
 public class SaveResponseBuilder {

@@ -21,7 +21,7 @@ public abstract class EndpointMapperBase {
         group.MapGet("/{pkValue}", async Task<Response<T>> (string pkValue) => await queries.GetByPkAsync(pkValue).ConfigureAwait(false))
             .WithName($"Get{typeName}ByPk")
             .WithOpenApi();
-        
+
         if (typeof(T).IsAssignableTo(typeof(ICustomQueries))) {
             foreach (var (endPoint, handler, name) in ((ICustomQueries) queries).GetEndPoints()) {
                 group.MapGet(endPoint, handler)

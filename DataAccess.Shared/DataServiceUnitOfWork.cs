@@ -12,11 +12,10 @@ public record DataServiceUnitOfWork : IUnitOfWork {
         unitOfWork = new UnitOfWork(SaveStrategy, DatabaseMapper);
     }
 
+
     public int QueuedItemsCount => unitOfWork.QueuedItemsCount;
     public ISaveStrategy SaveStrategy { get; }
     public IDatabaseMapper DatabaseMapper { get; init; }
-
-    public IEnumerable<T> GetQueuedInsertItems<T>() where T : class => unitOfWork.GetQueuedInsertItems<T>();
 
     public void Reset() => unitOfWork.Reset();
 
