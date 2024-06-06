@@ -8,7 +8,7 @@ using Serilog;
 
 namespace DataAccess;
 
-public class SequenceGenerator(DatabaseMapper databaseMapper, IDbConnectionManager connectionManager) : ISequenceGenerator {
+public class SequenceGenerator(IDatabaseMapper databaseMapper, IDbConnectionManager connectionManager) : ISequenceGenerator {
     public Task<IdPk> GetSequencesAsync<T>(int cnt,IDbConnection? dbConnection = null, IDbTransaction? dbTransaction = null) where T : class => 
         GetSequencesAsync(databaseMapper.GetTableInfo<T>(), cnt, dbConnection, dbTransaction);
 
