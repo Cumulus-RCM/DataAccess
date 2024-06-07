@@ -89,8 +89,8 @@ public class SqlBuilder(ITableInfo tableInfo) {
 
             (string pre, string post) stringifyTemplates() {
                 //if (!isString(fe.PropertyName)) return ("", "");
-                var before = string.IsNullOrWhiteSpace(fe.Operator.PreTemplate) ? "" : $"{fe.Operator.PreTemplate}";
-                var after = string.IsNullOrWhiteSpace(fe.Operator.PostTemplate) ? "" : $"{fe.Operator.PostTemplate}";
+                var before = string.IsNullOrWhiteSpace(fe.Operator.PreTemplate) ? "" : $"'{fe.Operator.PreTemplate}' + ";
+                var after = string.IsNullOrWhiteSpace(fe.Operator.PostTemplate) ? "" : $" + '{fe.Operator.PostTemplate}'";
                 return (before, after);
             }
 
