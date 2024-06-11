@@ -6,7 +6,7 @@ namespace DataAccess.Shared;
 
 public record FilterExpression(string PropertyName, Operator Operator) {
     public string PropertyName { get; protected init; } = PropertyName;
-    public Operator Operator { get; protected init; } = Operator;
+    public Operator Operator { get; set; } = Operator;
 
     private object? _value;
     public object? Value { 

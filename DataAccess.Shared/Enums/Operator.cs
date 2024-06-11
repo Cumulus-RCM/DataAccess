@@ -5,25 +5,31 @@ namespace DataAccess.Shared;
 
 [JsonConverter(typeof(EnumerationJsonConverter<Operator>))]
 public sealed record Operator : Enumeration {
-    public static readonly Operator Equal = new(1, "=");
-    public static readonly Operator NotEqual = new(2, "<>");
-    public static readonly Operator LessThan = new(3, "<");
-    public static readonly Operator GreatThan = new(4, ">");
-    public static readonly Operator LessThanOrEqual = new(5, "<=");
-    public static readonly Operator GreaterThanOrEqual = new(6, ">=");
-    public static readonly Operator StartsWith = new(7, " like ") { PreTemplate = "", PostTemplate = "%"}; //spaces to allow 2 Operators to have the same value: like
-    public static readonly Operator Contains = new(8, "like") {PreTemplate = "%", PostTemplate = "%"};
-    public static readonly Operator In = new(9, "IN");
-    public static readonly Operator IsNull = new(10, " IS NULL ") {UsesValue = false};
-    public static readonly Operator IsNotNull = new(11, " IS NOT NULL ") {UsesValue = false};
+    public static readonly Operator Equal = new(1, "=", "Equal");
+    public static readonly Operator NotEqual = new(2, "<>", "Not Equal"  );
+    public static readonly Operator LessThan = new(3, "<", "Less Than");
+    public static readonly Operator GreaterThan = new(4, ">", "Greater Than");
+    public static readonly Operator LessThanOrEqual = new(5, "<=", "Less Than Or Equal");
+    public static readonly Operator GreaterThanOrEqual = new(6, ">=", "Greater Than Or Equal");
+    public static readonly Operator StartsWith = new(7, "like", "Starts With") { PreTemplate = "", PostTemplate = "%"}; //spaces to allow 2 Operators to have the same value: like
+    public static readonly Operator EndsWith = new(8, "like", "Ends With") { PreTemplate = "%", PostTemplate = ""}; //spaces to allow 2 Operators to have the same value: like
+    public static readonly Operator Contains = new(9, "like", "Contains") {PreTemplate = "%", PostTemplate = "%"};
+    public static readonly Operator In = new(10, "IN", "In");
+    public static readonly Operator IsNull = new(11, " IS NULL ", "is Null") {UsesValue = false};
+    public static readonly Operator IsNotNull = new(12, " IS NOT NULL ", "is NOT Null") {UsesValue = false};
 
     [JsonIgnore]
-    public string PreTemplate { get; init; }= "";
+    public string PreTemplate { get; private init; }= "";
     [JsonIgnore]
-    public string PostTemplate { get; init; }= "";
+    public string PostTemplate { get; private init; } = "";
 
-    public bool UsesValue { get; init; } = true;
+    [JsonIgnore] public string SqlOperator { get; private init; } = "";
+
+    public bool UsesValue { get; private init; } = true;
 
     public Operator() { }
-    public Operator(int value, string name) : base(typeof(Operator),value,name) { }
+
+    public Operator(int value, string sqlOperator, string displayName) : base(typeof(Operator), value, displayName) {
+        SqlOperator = sqlOperator;
+    }
 }

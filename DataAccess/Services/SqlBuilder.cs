@@ -85,7 +85,7 @@ public class SqlBuilder(ITableInfo tableInfo) {
             var columnName = $"{getMappedPropertyName(fe.PropertyName)}";
             var (pre, post) = stringifyTemplates();
             var value = fe.Operator.UsesValue ? $" {pre}@{fe.PropertyName}{segmentNumber}{post}" : "";
-            return $" {columnName} {fe.Operator.DisplayName}{value} ";
+            return $" {columnName} {fe.Operator.SqlOperator}{value} ";
 
             (string pre, string post) stringifyTemplates() {
                 //if (!isString(fe.PropertyName)) return ("", "");
