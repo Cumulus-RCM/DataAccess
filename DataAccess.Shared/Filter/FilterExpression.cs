@@ -5,7 +5,7 @@ using System.Text.Json;
 namespace DataAccess.Shared;
 
 public record FilterExpression(string PropertyName, Operator Operator) {
-    public string PropertyName { get; protected init; } = PropertyName;
+    public string PropertyName { get; set; } = PropertyName;
     public Operator Operator { get; set; } = Operator;
 
     private object? _value;
