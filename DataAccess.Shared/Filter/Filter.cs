@@ -24,9 +24,10 @@ public class Filter {
                 if (type is not null) expression.FilterExpression.Value = JsonSerializer.Deserialize(jsonElement.GetRawText(), type);
             }
         }
+
         return filter;
     }
-    
+
     //https://long2know.com/2016/10/building-linq-expressions-part-2/
     public Func<T, bool> ToLinqExpression<T>() {
         var firstExpression = Segments.SelectMany(s => s.Expressions).First();
@@ -44,12 +45,13 @@ public class Filter {
             MethodCallExpression body;
             if (firstExpression.FilterExpression.Operator == Operator.In) {
                 methodInfo = typeof(string).GetMethod("Contains", [typeof(string)])!;
-                body = Expression.Call(filterValue,methodInfo, lowered);
+                body = Expression.Call(filterValue, methodInfo, lowered);
             }
             else {
                 methodInfo = typeof(string).GetMethod("StartsWith", [typeof(string)])!;
                 body = Expression.Call(lowered, methodInfo, filterValue);
             }
+
             var lambda = Expression.Lambda<Func<T, bool>>(body, parameter);
             return lambda.Compile();
         }
@@ -65,6 +67,7 @@ public class Filter {
             var lambda = Expression.Lambda<Func<T, bool>>(body, parameter);
             return lambda.Compile();
         }
+
         return _ => true;
     }
 
@@ -94,7 +97,8 @@ public class Filter {
 
     public string PrimaryExpressionPropertyName() => Segments.First().Expressions.First().FilterExpression.PropertyName;
 
-    public void SetParameterValue<T>(string propertyName, T value) {
+    public void SetParameterValue<T>(string? propertyName, T value) {
+        if (propertyName is null) return;
         var exp = Segments.SelectMany(s => s.Expressions).FirstOrDefault(e => e.FilterExpression.PropertyName == propertyName);
         if (exp is not null) exp.FilterExpression.Value = value;
     }
@@ -116,11 +120,12 @@ public class Filter {
         return filter is not null;
     }
 
-    public Filter Merge(Filter filter) {
-        foreach (var filterSegment in filter.Segments) {
-            Segments.Add(filterSegment);
+    public Filter Merge(Filter? filter) {
+        if (filter is not null) {
+            foreach (var filterSegment in filter.Segments) {
+                Segments.Add(filterSegment);
+            }
         }
-
         return this;
     }
 
