@@ -93,6 +93,10 @@ public class Filter {
         return filter;
     }
 
+    public static Filter Create(FilterExpression filterExpression) {
+        var segment = new FilterSegment(filterExpression);
+        return new Filter(segment);
+    }
     private Filter(FilterSegment filterSegment) => Segments.Add(filterSegment);
 
     public string PrimaryExpressionPropertyName() => Segments.First().Expressions.First().FilterExpression.PropertyName;
