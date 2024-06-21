@@ -17,23 +17,25 @@ public class Filter {
     public static Filter? FromJson(string? json) {
         if (string.IsNullOrWhiteSpace(json)) return null;
         var filter = JsonSerializer.Deserialize<Filter>(json);
-        var expressions = filter!.Segments.SelectMany(s => s.Expressions).ToList();
-        foreach (var expression in expressions) {
-            if (expression.FilterExpression.Value is JsonElement jsonElement) {
-                var type = Type.GetType(expression.FilterExpression.ValueTypeName);
-                if (type is not null) expression.FilterExpression.Value = JsonSerializer.Deserialize(jsonElement.GetRawText(), type);
+        var expressions = filter!.Segments.SelectMany(s => s.FilterExpressions).ToList();
+        foreach (var expr in expressions) {
+            if (expr.Value.FilterExpression.Value is JsonElement jsonElement) {
+                var type = Type.GetType(expr.Value.FilterExpression.ValueTypeName);
+                if (type is not null) expr.Value.FilterExpression.Value = JsonSerializer.Deserialize(jsonElement.GetRawText(), type);
             }
         }
-
         return filter;
     }
 
     //https://long2know.com/2016/10/building-linq-expressions-part-2/
-    public Func<T, bool> ToLinqExpression<T>() {
-        var firstExpression = Segments.SelectMany(s => s.Expressions).First();
-        if (firstExpression.FilterExpression.Value is string filterStringValue) {
+    public Func<T, bool> ToLinqExpression<T>() {        
+        //Note: this only works for the first expression
+        //Note: this only works for IN and StartsWith
+        var firstExpression = Segments.SelectMany(s => s.FilterExpressions).First();
+        var expr = firstExpression.Value.FilterExpression;
+        if (expr.Value is string filterStringValue) {
             var parameter = Expression.Parameter(typeof(T), "x");
-            var property = Expression.Property(parameter, firstExpression.FilterExpression.PropertyName);
+            var property = Expression.Property(parameter, expr.PropertyName);
             var value = filterStringValue.ToLower().Trim();
             var filterValue = Expression.Constant(value);
             var miTrim = typeof(string).GetMethod("Trim", Type.EmptyTypes);
@@ -43,7 +45,7 @@ public class Filter {
             var lowered = Expression.Call(trimmed, miLower!);
             MethodInfo methodInfo;
             MethodCallExpression body;
-            if (firstExpression.FilterExpression.Operator == Operator.In) {
+            if (expr.Operator == Operator.In) {
                 methodInfo = typeof(string).GetMethod("Contains", [typeof(string)])!;
                 body = Expression.Call(filterValue, methodInfo, lowered);
             }
@@ -56,18 +58,17 @@ public class Filter {
             return lambda.Compile();
         }
 
-        var t = firstExpression.FilterExpression.Value?.GetType();
+        var t = expr.Value?.GetType();
         if (t.IsNumeric()) {
             var parameter = Expression.Parameter(typeof(T), "x");
-            var property = Expression.Property(parameter, firstExpression.FilterExpression.PropertyName);
+            var property = Expression.Property(parameter, expr.PropertyName);
             //var converter = TypeDescriptor.GetConverter(t);
             //var numeric = converter.ConvertFrom(firstExpression.FilterExpression.ValueString!);
-            var filterValue = Expression.Constant(firstExpression.FilterExpression.Value);
+            var filterValue = Expression.Constant(expr.Value);
             var body = Expression.Equal(property, filterValue);
             var lambda = Expression.Lambda<Func<T, bool>>(body, parameter);
             return lambda.Compile();
         }
-
         return _ => true;
     }
 
@@ -99,23 +100,26 @@ public class Filter {
     }
     private Filter(FilterSegment filterSegment) => Segments.Add(filterSegment);
 
-    public string PrimaryExpressionPropertyName() => Segments.First().Expressions.First().FilterExpression.PropertyName;
+    public string PrimaryExpressionPropertyName() => Segments.First().FilterExpressions.First().Value.FilterExpression.PropertyName;
 
-    public void SetParameterValue<T>(string? propertyName, T value) {
-        if (propertyName is null) return;
-        var exp = Segments.SelectMany(s => s.Expressions).FirstOrDefault(e => e.FilterExpression.PropertyName == propertyName);
-        if (exp is not null) exp.FilterExpression.Value = value;
+    public void SetParameterValue<T>(string? expName, T value) {
+        if (expName is null) return;
+        foreach(var segment in Segments) {
+            if (segment.FilterExpressions.TryGetValue(expName, out var exp)) {
+                exp.FilterExpression.Value = value;
+                break;
+            }
+        }
     }
 
     public DynamicParameters GetDynamicParameters() {
         var parameters = new DynamicParameters();
         for (var index = 0; index < Segments.Count; index++) {
             var segment = Segments[index];
-            foreach (var expression in segment.Expressions) {
-                parameters.Add($"{expression.FilterExpression.PropertyName}{index}", expression.FilterExpression.Value);
+            foreach (var expr in segment.FilterExpressions) {
+                parameters.Add($"{expr.Key}{index}", expr.Value.FilterExpression.Value);
             }
         }
-
         return parameters;
     }
 

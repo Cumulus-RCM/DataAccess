@@ -1,19 +1,27 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace DataAccess.Shared;
 
-[SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Global")]
 public record FilterSegment {
     //NOTE: setters are required for deserialization
-    public List<ConnectedExpression> Expressions { get; set; } = [];
-    public AndOr AndOr { get; set; } = AndOr.And; 
+    public AndOr AndOr { get; set; } = AndOr.And;
+
+    public Dictionary<string, ConnectedExpression> FilterExpressions { get; private init; } = [];
 
     public FilterSegment() { }
 
-    public FilterSegment(FilterExpression filterExpression) {
-        Expressions.Add(new ConnectedExpression(filterExpression, AndOr.And));
+    public FilterSegment(FilterExpression filterExpression, AndOr? andOr = null) {
+        AddExpression(filterExpression, andOr);
+    }
+
+    public void AddExpression(FilterExpression filterExpression, AndOr? andOr = null) {
+        FilterExpressions.Add(filterExpression.Name, new ConnectedExpression(filterExpression, andOr ?? AndOr));
+    }
+
+
+    public void AddExpression(ConnectedExpression connectedExpression) {
+        FilterExpressions.Add(connectedExpression.FilterExpression.Name, connectedExpression);
     }
 
     public static bool TryParse(string json, out FilterSegment? filterSegment) {
@@ -21,7 +29,6 @@ public record FilterSegment {
         return filterSegment is not null;
     }
 }
-
 
 public record FilterSegment<T> : FilterSegment {
     public FilterSegment(AndOr? andOr = null) {
@@ -34,12 +41,15 @@ public record FilterSegment<T> : FilterSegment {
     }
 
     public FilterSegment(IEnumerable<ConnectedExpression<T>> filterExpressions, AndOr? andOr = null) {
-        Expressions.AddRange(filterExpressions);
+        foreach (var filterExpression in filterExpressions) {
+            FilterExpressions.Add(filterExpression.FilterExpression.Name, filterExpression);
+        }
+
         AndOr = andOr ?? AndOr.And;
     }
 
     public void AddExpression(ConnectedExpression<T> filterExpression) {
-        Expressions.Add(filterExpression);
+        FilterExpressions.Add(filterExpression.FilterExpression.Name, filterExpression);
     }
 
     public static bool TryParse(string json, out FilterSegment<T>? filterSegment) {

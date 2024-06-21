@@ -68,12 +68,13 @@ public class SqlBuilder(ITableInfo tableInfo) {
 
         string segmentToSql(FilterSegment filterSegment, int segmentNumber) {
             string result;
-            var firstExpression = expressionToSql(filterSegment.Expressions.First().FilterExpression, segmentNumber);
-            if (filterSegment.Expressions.Count == 1) 
+            var expressions = filterSegment.FilterExpressions.Values;
+            var firstExpression = expressionToSql(expressions.First().FilterExpression, segmentNumber);
+            if (expressions.Count == 1) 
                 result = firstExpression;
             else {
                 var segmentStringBuilder = new StringBuilder(firstExpression);
-                foreach (var expression in filterSegment.Expressions.Skip(1)) {
+                foreach (var expression in expressions.Skip(1)) {
                     segmentStringBuilder.Append($" {expression.AndOr.DisplayName} ");
                     segmentStringBuilder.Append(expressionToSql(expression.FilterExpression, segmentNumber));
                 }
@@ -162,5 +163,5 @@ INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{para
         tableInfo.CustomStoredProcedureSqlTemplate ??
         throw new InvalidDataException($"No stored procedure template defined for Table:{tableInfo.TableName}");
 
-    bool isString(string propertyName) => tableInfo.EntityType.GetProperty(propertyName)?.PropertyType == typeof(string);
+    public bool IsString(string propertyName) => tableInfo.EntityType.GetProperty(propertyName)?.PropertyType == typeof(string);
 }

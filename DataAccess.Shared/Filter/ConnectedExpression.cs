@@ -5,15 +5,18 @@ using System.Text.Json;
 namespace DataAccess.Shared;
 
 public record ConnectedExpression {
-    public FilterExpression FilterExpression { get; init; } = null!;
+    public FilterExpression FilterExpression { get; set; } = null!;
     public AndOr AndOr { get; init; } = AndOr.And;
 
     private ConnectedExpression() { }
 
-    public ConnectedExpression(FilterExpression filterExpression, AndOr andOr) {
+    public ConnectedExpression(FilterExpression filterExpression, AndOr? andOr = null) {
         this.FilterExpression = filterExpression;
-        this.AndOr = andOr;
+        this.AndOr = andOr ?? AndOr.And;
     }
+
+    public ConnectedExpression(string propertyName, Operator op, AndOr? andOr = null) 
+        : this(new FilterExpression(propertyName, op), andOr) { }
 
     public static bool TryParse(string json, out ConnectedExpression? filterSegment) {
         filterSegment = JsonSerializer.Deserialize<ConnectedExpression>(json);
@@ -23,12 +26,12 @@ public record ConnectedExpression {
 
 public record ConnectedExpression<T> : ConnectedExpression {
     public ConnectedExpression(FilterExpression<T> filterExpression, AndOr andOr, object? value = null) : base(filterExpression, andOr) {
-        if (value is not null) FilterExpression!.Value = value;
+        if (value is not null) FilterExpression.Value = value;
     }
 
-    public ConnectedExpression(string propertyName, Operator oper, AndOr andOr, object? value = null)
-        : base(new FilterExpression<T>(propertyName, oper, value),  andOr) { }
+    public ConnectedExpression(string propertyName, Operator op, AndOr andOr, object? value = null)
+        : base(new FilterExpression<T>(propertyName, op, value),  andOr) { }
 
-    public ConnectedExpression(Expression<Func<T, object>> propertyNameExpression, Operator oper, AndOr andOr, object? value = null)
-    : base(new FilterExpression<T>(propertyNameExpression, oper,value), andOr) { }
+    public ConnectedExpression(Expression<Func<T, object>> propertyNameExpression, Operator op, AndOr andOr, object? value = null)
+    : base(new FilterExpression<T>(propertyNameExpression, op,value), andOr) { }
 }

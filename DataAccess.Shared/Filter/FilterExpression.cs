@@ -5,19 +5,18 @@ using System.Text.Json;
 namespace DataAccess.Shared;
 
 public record FilterExpression(string PropertyName, Operator Operator) {
-    public string PropertyName { get; set; } = PropertyName;
-    public Operator Operator { get; set; } = Operator;
-
-    private object? _value;
+    private object? val;
     public object? Value { 
-        get => _value;
+        get => val;
         set {
-            _value = value;
+            val = value;
             if (value is not null) ValueTypeName = value.GetType().AssemblyQualifiedName!;
         }
     }
 
-    public string ValueTypeName { get; set; } = "";
+    public string ValueTypeName { get; private set; } = "";
+
+    public string Name { get; init; } = PropertyName;
 
     protected FilterExpression() : this("", Operator.Contains) { }
 
@@ -28,12 +27,10 @@ public record FilterExpression(string PropertyName, Operator Operator) {
 }
 
 public record FilterExpression<T> : FilterExpression {
-    public FilterExpression(string propertyName, Operator oper, object? value = null) : base(propertyName, oper) {
+    public FilterExpression(string propertyName, Operator op, object? value = null) : base(propertyName, op) {
         //ensure property exists on T
         _ = typeof(T).GetProperty(propertyName) ??
                            throw new ArgumentException($"Property: {propertyName} NOT found on {typeof(T).Name}");
-        PropertyName = propertyName;
-        Operator = oper;
         if (value is not null) Value = value;
     }
 
@@ -44,8 +41,8 @@ public record FilterExpression<T> : FilterExpression {
         return result is not null;
     }
 
-    public FilterExpression(Expression<Func<T, object>> propertyNameExpression, Operator oper, object? value = null) :
-        this(MemberHelpers.GetMemberName(propertyNameExpression), oper, value) {
+    public FilterExpression(Expression<Func<T, object>> propertyNameExpression, Operator op, object? value = null) :
+        this(MemberHelpers.GetMemberName(propertyNameExpression), op, value) {
         if (value is not null) Value = value;
     }
 }
