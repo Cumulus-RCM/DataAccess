@@ -65,40 +65,43 @@ public class SqlBuilder(ITableInfo tableInfo) {
             sb.Append(segmentToSql(segment, segmentIndex++));
         }
         return $"{sb}";
-
-        string segmentToSql(FilterSegment filterSegment, int segmentNumber) {
-            string result;
-            var expressions = filterSegment.FilterExpressions.Values;
-            var firstExpression = expressionToSql(expressions.First().FilterExpression, segmentNumber);
-            if (expressions.Count == 1) 
-                result = firstExpression;
-            else {
-                var segmentStringBuilder = new StringBuilder(firstExpression);
-                foreach (var expression in expressions.Skip(1)) {
-                    segmentStringBuilder.Append($" {expression.AndOr.DisplayName} ");
-                    segmentStringBuilder.Append(expressionToSql(expression.FilterExpression, segmentNumber));
-                }
-                result = segmentStringBuilder.ToString();
-            }
-            return $"({result})";
-        }
-        string expressionToSql(FilterExpression fe, int segmentNumber) {
-            var columnName = $"{getMappedPropertyName(fe.PropertyName)}";
-            var (pre, post) = stringifyTemplates();
-            var value = fe.Operator.UsesValue ? $" {pre}@{fe.PropertyName}{segmentNumber}{post}" : "";
-            return $" {columnName} {fe.Operator.SqlOperator}{value} ";
-
-            (string pre, string post) stringifyTemplates() {
-                //if (!isString(fe.PropertyName)) return ("", "");
-                var before = string.IsNullOrWhiteSpace(fe.Operator.PreTemplate) ? "" : $"'{fe.Operator.PreTemplate}' + ";
-                var after = string.IsNullOrWhiteSpace(fe.Operator.PostTemplate) ? "" : $" + '{fe.Operator.PostTemplate}'";
-                return (before, after);
-            }
-
-            string getMappedPropertyName(string propertyName) =>
-                tableInfo.ColumnsMap.SingleOrDefault(x => x.PropertyName == propertyName)?.ColumnName ?? propertyName;
-        }
     }
+
+    private string segmentToSql(FilterSegment filterSegment, int segmentIndex) {
+        string result;
+        var expressions = filterSegment.FilterExpressions.Values;
+        var firstExpression = expressionToSql(expressions.First().FilterExpression, segmentIndex, 0);
+        if (expressions.Count == 1) 
+            result = firstExpression;
+        else {
+            var segmentStringBuilder = new StringBuilder(firstExpression);
+            var expressionIndex = 1;
+            foreach (var expression in expressions.Skip(1)) {
+                segmentStringBuilder.Append($" {expression.AndOr.DisplayName} ");
+                segmentStringBuilder.Append(expressionToSql(expression.FilterExpression, segmentIndex, expressionIndex++));
+            }
+            result = segmentStringBuilder.ToString();
+        }
+        return $"({result})";
+    }
+
+    private string expressionToSql(FilterExpression fe, int segmentIndex, int expressionIndex) {
+        var columnName = $"{getMappedPropertyName(fe.PropertyName)}";
+        var (pre, post) = stringifyTemplates();
+        var value = fe.Operator.UsesValue ? $" {pre}@{fe.Name}{segmentIndex}{expressionIndex}{post}" : "";
+        return $" {columnName} {fe.Operator.SqlOperator}{value} ";
+
+        (string pre, string post) stringifyTemplates() {
+            //if (!isString(fe.PropertyName)) return ("", "");
+            var before = string.IsNullOrWhiteSpace(fe.Operator.PreTemplate) ? "" : $"'{fe.Operator.PreTemplate}' + ";
+            var after = string.IsNullOrWhiteSpace(fe.Operator.PostTemplate) ? "" : $" + '{fe.Operator.PostTemplate}'";
+            return (before, after);
+        }
+
+        string getMappedPropertyName(string propertyName) =>
+            tableInfo.ColumnsMap.SingleOrDefault(x => x.PropertyName == propertyName)?.ColumnName ?? propertyName;
+    }
+
 
     private string generateOrderByClause(OrderBy orderBy) {
         var cols = string.Join(",", orderBy.OrderByExpressions.Select(expr => $"{getMappedColumnName(expr)} {expr.OrderDirection.DisplayName}"));

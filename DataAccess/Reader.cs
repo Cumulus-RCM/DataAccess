@@ -73,7 +73,14 @@ public class Reader<T> : IReader<T> where T : class {
     }
 
     public virtual async Task<int> GetCountAsync(Filter? filter = null) {
-        using var conn = dbConnectionService.CreateConnection();
-        return await conn.ExecuteScalarAsync<int>(sqlBuilder.GetCountSql(filter), filter?.GetDynamicParameters());
+        try {
+            using var conn = dbConnectionService.CreateConnection();
+            return await conn.ExecuteScalarAsync<int>(sqlBuilder.GetCountSql(filter), filter?.GetDynamicParameters());
+        }
+        catch (Exception e) {
+            Log.Error(e, "Error in GetCountAsync");
+            return 0;
+        }
+
     }
 }

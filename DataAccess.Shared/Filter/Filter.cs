@@ -114,10 +114,11 @@ public class Filter {
 
     public DynamicParameters GetDynamicParameters() {
         var parameters = new DynamicParameters();
-        for (var index = 0; index < Segments.Count; index++) {
-            var segment = Segments[index];
+        for (var segmentIndex = 0; segmentIndex < Segments.Count; segmentIndex++) {
+            var segment = Segments[segmentIndex];
+            var expressionIndex = 0;
             foreach (var expr in segment.FilterExpressions) {
-                parameters.Add($"{expr.Key}{index}", expr.Value.FilterExpression.Value);
+                parameters.Add($"{expr.Key}{segmentIndex}{expressionIndex++}", expr.Value.FilterExpression.Value);
             }
         }
         return parameters;
