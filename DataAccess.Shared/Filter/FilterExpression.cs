@@ -10,11 +10,17 @@ public record FilterExpression(string PropertyName, Operator Operator) {
         get => val;
         set {
             val = value;
-            if (value is not null) ValueTypeName = value.GetType().AssemblyQualifiedName!;
+            setValueTypeName(value);
         }
     }
 
-    public string ValueTypeName { get; private set; } = "";
+    private void setValueTypeName(object? value) {
+        if (value is null) return;
+        var t = value.GetType();
+        if (t != typeof(JsonElement)) ValueTypeName = t.AssemblyQualifiedName!;
+    }
+
+    public string ValueTypeName { get; set; } = "";
 
     public string Name { get; init; } = PropertyName;
 

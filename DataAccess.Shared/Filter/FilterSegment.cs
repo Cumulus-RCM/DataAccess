@@ -7,7 +7,7 @@ public record FilterSegment {
     //NOTE: setters are required for deserialization
     public AndOr AndOr { get; set; } = AndOr.And;
 
-    public Dictionary<string, ConnectedExpression> FilterExpressions { get; private init; } = [];
+    public Dictionary<string, ConnectedExpression> FilterExpressions { get; set; } = [];
 
     public FilterSegment() { }
 
