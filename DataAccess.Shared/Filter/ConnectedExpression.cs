@@ -15,8 +15,8 @@ public record ConnectedExpression {
         this.AndOr = andOr ?? AndOr.And;
     }
 
-    public ConnectedExpression(string propertyName, Operator op, AndOr? andOr = null) 
-        : this(new FilterExpression(propertyName, op), andOr) { }
+    public ConnectedExpression(string propertyName, Operator op, AndOr? andOr = null, object? value = null) 
+        : this(new FilterExpression(propertyName, op) {Value = value}, andOr) { }
 
     public static bool TryParse(string json, out ConnectedExpression? filterSegment) {
         filterSegment = JsonSerializer.Deserialize<ConnectedExpression>(json);

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using BaseLib;
@@ -21,7 +20,7 @@ public class Reader<T> : IReader<T> where T : class {
         sqlBuilder = new SqlBuilder(tableInfo);
     }
 
-    public async Task<ReadOnlyCollection<dynamic>> GetAllDynamicAsync(IReadOnlyCollection<string> columns, Filter? filter = null, int pageSize = 0, int pageNum = 0, OrderBy? orderBy = null) {
+    public async Task<IReadOnlyCollection<dynamic>> GetAllDynamicAsync(IReadOnlyCollection<string> columns, Filter? filter = null, int pageSize = 0, int pageNum = 0, OrderBy? orderBy = null) {
         var sql = "";
         DynamicParameters? parms = null;
 
@@ -38,7 +37,7 @@ public class Reader<T> : IReader<T> where T : class {
         }
     }
 
-    public virtual async Task<ReadOnlyCollection<T>> GetAllAsync(Filter? filter = null, int pageSize = 0, int pageNum = 0, OrderBy? orderBy = null) {
+    public virtual async Task<IReadOnlyCollection<T>> GetAllAsync(Filter? filter = null, int pageSize = 0, int pageNum = 0, OrderBy? orderBy = null) {
         var sql = "";
         DynamicParameters? parms = null;
         try {
@@ -64,6 +63,11 @@ public class Reader<T> : IReader<T> where T : class {
         var filter = Filter.Create(new FilterExpression<T>(tableInfo.PrimaryKeyName, Operator.Equal) {Value = pkValue});
         var result = await GetAllAsync(filter, pageSize: 1, pageNum: 1).ConfigureAwait(false);
         return result.FirstOrDefault();
+    }
+
+    public virtual Task<IReadOnlyCollection<T>> GetAllByPkAsync(IEnumerable<string> pkValues) {
+        var filter = Filter.Create(new FilterExpression<T>(tableInfo.PrimaryKeyName, Operator.In) {Value = pkValues});
+        return GetAllAsync(filter);
     }
 
     public virtual async Task<dynamic?> GetByPkDynamicAsync(string pkValue, IReadOnlyCollection<string> columnNames) {
