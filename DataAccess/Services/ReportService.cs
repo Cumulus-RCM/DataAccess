@@ -42,11 +42,10 @@ public class ReportService(IDataService dataService, IDbConnectionManager connec
             ? $"OFFSET {pageSize * (pageNum - 1)} ROWS FETCH NEXT {pageSize} ROW ONLY"
             : "";
         var sql = $"{reportDefinition.ReportSql} {offsetFetchClause}";
-        var parameters = reportDefinition.GetDynamicParameters();
         try {
             using var conn = connectionManager.CreateConnection();
-            var result = await conn.QueryAsync(sql, parameters).ConfigureAwait(false);
-            return new Response<dynamic>(result);
+            var result = await conn.QueryAsync(sql, reportDefinition.DynamicParameters()).ConfigureAwait(false);
+            return new Response<dynamic>(result.ToArray());
         }
         catch (Exception exception) {
             Log.Error(exception, "Error in GetReportDataAsync:{0}", reportDefinition);
@@ -56,10 +55,9 @@ public class ReportService(IDataService dataService, IDbConnectionManager connec
 
     public async Task<long> GetCountAsync(ReportDefinition reportDefinition) {
         var sql = $"SELECT COUNT(*) FROM ({reportDefinition.ReportSql}) d";
-        var parameters = reportDefinition.GetDynamicParameters();
         try {
             using var conn = connectionManager.CreateConnection();
-            return await conn.ExecuteScalarAsync<long>(sql, parameters);
+            return await conn.ExecuteScalarAsync<long>(sql, reportDefinition.DynamicParameters());
         }
         catch (Exception exception) {
             Log.Error(exception, "Error in GetReportDataAsync: {0}", reportDefinition);
