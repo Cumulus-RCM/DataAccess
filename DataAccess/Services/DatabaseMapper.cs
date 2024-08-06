@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using DataAccess.Shared;
 
-namespace DataAccess;
+namespace DataAccess.Services;
 
 public class DatabaseMapper : IDatabaseMapper {
     private readonly Dictionary<Type, ITableInfo> tableInfos = [];

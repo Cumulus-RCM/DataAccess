@@ -7,7 +7,7 @@ using System.Text;
 using DataAccess.Shared;
 using Serilog;
 
-namespace DataAccess;
+namespace DataAccess.Services;
 
 public class SqlBuilder(ITableInfo tableInfo) {
     private const string PREFIX_PARAMETER_NAME = "@";

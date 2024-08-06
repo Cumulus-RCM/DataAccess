@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BaseLib;
 using Dapper;
+using DataAccess.Services;
 using DataAccess.Shared;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;

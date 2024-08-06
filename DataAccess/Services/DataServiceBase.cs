@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Data;
 using Dapper;
 using DataAccess.Shared;
-using System.Data;
 
-namespace DataAccess;
+namespace DataAccess.Services;
 
 public abstract record DataServiceBase(IReaderFactory ReaderFactory, ISaveStrategy SaveStrategy, IDatabaseMapper DatabaseMapper)
     : DataServiceUnitOfWork(SaveStrategy,DatabaseMapper), IDataService {
