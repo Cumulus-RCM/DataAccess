@@ -1,17 +1,20 @@
-﻿using System;
+﻿using System.Text.Json;
 
 namespace DataAccess.Shared.ReportService;
 
 public record ReportParameter  {
-    public string ParameterName { get; private set; }
-    public Type ParameterType { get; private set; }
-    public string? ParameterPrompt { get; init; }
+    public required string ParameterName { get; init; }
+    public required string ParameterTypeName { get; init; }
+    private string? parameterPrompt;
+    public string? ParameterPrompt { 
+        get => parameterPrompt ?? ParameterName;
+        private set => parameterPrompt = value;
+    } 
     public string InputFormat { get; init; } = "";
-    public object? Value { get; set; }
 
-    public ReportParameter(string parameterName, Type parameterType) {
-        ParameterName = parameterName;
-        ParameterType = parameterType;
-        ParameterPrompt ??= ParameterName;
+    private object? _value;
+    public object? Value {
+        get => _value;
+        set => _value = value is JsonElement ? null : value;
     }
 }
