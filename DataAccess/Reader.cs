@@ -21,35 +21,35 @@ public class Reader {
     
     public async Task<IReadOnlyCollection<dynamic>> GetAllAsync(Filter? filter = null, int pageSize = 0, int pageNum = 0, OrderBy? orderBy = null) {        
         orderBy ??= new OrderBy("1");
+        var f = filter?.ToSqlClause(null);
         var sql = buildSql();
-        var parms = filter?.GetDynamicParameters();
         try {
             using var conn = dbConnectionService.CreateConnection();
-            var result = await conn.QueryAsync(sql, parms).ConfigureAwait(false);
+            var result = await conn.QueryAsync(sql, f?.dynamicParameters).ConfigureAwait(false);
             return result.ToArray().AsReadOnly();
         }
         catch (Exception e) {
-            Log.Error(e, "Error in GetAllAsync: sql:{0}", [sql, paramsToString(parms)]);
+            Log.Error(e, "Error in GetAllAsync: sql:{0}", [sql, paramsToString(f?.dynamicParameters)]);
             return Array.Empty<dynamic>().AsReadOnly();
         }
 
         string buildSql() {
             if (pageNum <= 0) pageNum = 1;
 
-            var whereClause = SqlBuilder.FilterToSqlClause(filter);
             var orderByClause = SqlBuilder.OrderByToSqlClause(orderBy);
             var offsetFetchClause = pageSize > 0
                 ? $"OFFSET {pageSize * (pageNum - 1)} ROWS FETCH NEXT {pageSize} ROW ONLY"
                 : "";
-            var result = $"{baseSql} {whereClause} {orderByClause} {offsetFetchClause}";
+            var result = $"{baseSql} {f?.whereClause ?? ""} {orderByClause} {offsetFetchClause}";
             return result.Trim();
         }
     }
 
     protected async Task<int> getCountAsync(string countSql, Filter? filter = null) {
         try {
+            var f = filter?.ToSqlClause(null);
             using var conn = dbConnectionService.CreateConnection();
-            return await conn.ExecuteScalarAsync<int>(countSql, filter?.GetDynamicParameters()).ConfigureAwait(false);
+            return await conn.ExecuteScalarAsync<int>(countSql, f?.dynamicParameters).ConfigureAwait(false);
         }
         catch (Exception e) {
             Log.Error(e, "Error in GetCountAsync");
@@ -79,18 +79,15 @@ public class Reader<T> : Reader, IReader<T>  where T : class {
 
     public async Task<IReadOnlyCollection<dynamic>> GetAllDynamicAsync(IReadOnlyCollection<string> columns, Filter? filter = null,
         int pageSize = 0, int pageNum = 0, OrderBy? orderBy = null) {
-        var sql = "";
-        DynamicParameters? parms = null;
+        (string sql, DynamicParameters? dynamicParameters) = TableSqlBuilder.GetReadSql(filter, pageSize, pageNum, orderBy, columns);
 
         try {
-            sql = TableSqlBuilder.GetReadSql(filter, pageSize, pageNum, orderBy, columns);
             using var conn = dbConnectionService.CreateConnection();
-            parms = filter?.GetDynamicParameters();
-            var result = await conn.QueryAsync(sql, parms).ConfigureAwait(false);
+            var result = await conn.QueryAsync(sql, dynamicParameters).ConfigureAwait(false);
             return result.ToList().AsReadOnly();
         }
         catch (Exception e) {
-            Log.Error(e, "Error in GetAllAsync: sql:{0}", [sql, paramsToString(parms)]);
+            Log.Error(e, "Error in GetAllAsync: sql:{0}", [sql, paramsToString(dynamicParameters)]);
             return Array.Empty<dynamic>().AsReadOnly();
         }
     }
@@ -98,13 +95,11 @@ public class Reader<T> : Reader, IReader<T>  where T : class {
     public override Task<int> GetCountAsync(Filter? filter = null) => getCountAsync(TableSqlBuilder.GetCountSql(filter), filter);
 
     public new virtual async Task<IReadOnlyCollection<T>> GetAllAsync(Filter? filter = null, int pageSize = 0, int pageNum = 0, OrderBy? orderBy = null) {
-        var sql = "";
+        var (sql, dynamicParameters) = TableSqlBuilder.GetReadSql(filter, pageSize, pageNum, orderBy);
         DynamicParameters? parms = null;
         try {
-            sql = TableSqlBuilder.GetReadSql(filter, pageSize, pageNum, orderBy);
             using var conn = dbConnectionService.CreateConnection();
-            parms = filter?.GetDynamicParameters();
-            var result = await conn.QueryAsync<T>(sql, parms).ConfigureAwait(false);
+            var result = await conn.QueryAsync<T>(sql, dynamicParameters).ConfigureAwait(false);
             return result.ToList().AsReadOnly();
         }
         catch (Exception e) {

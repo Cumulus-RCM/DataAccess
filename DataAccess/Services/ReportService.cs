@@ -60,7 +60,7 @@ public class ReportService(IDataService dataService, IDbConnectionManager connec
         var sql = $"SELECT COUNT(*) FROM ({reportDefinition.ReportSql}) d";
         try {
             using var conn = connectionManager.CreateConnection();
-            return await conn.ExecuteScalarAsync<long>(sql, reportDefinition.DynamicParameters());
+            return await conn.ExecuteScalarAsync<long>(sql, reportDefinition.Filter);
         }
         catch (Exception exception) {
             Log.Error(exception, "Error in GetReportDataAsync: {0}", reportDefinition);

@@ -3,60 +3,13 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Text;
+using Dapper;
 using DataAccess.Shared;
 using Serilog;
 
 namespace DataAccess.Services;
 
 public class SqlBuilder {
-    public static string FilterToSqlClause(Filter? filter, ITableInfo? tableInfo = null) {
-        if (filter == null || filter.Segments.Count == 0) return "";
-        var where = $"WHERE {segmentToSql(filter.Segments.First(),0)} ";
-        if (filter.Segments.Count == 1) return where;
-        var sb = new StringBuilder(where);
-        var segIndex = 1;
-        foreach (var segment in filter.Segments.Skip(1)) {
-            sb.Append($" {segment.AndOr.DisplayName} ");
-            sb.Append(segmentToSql(segment, segIndex++));
-        }
-        return $"{sb}";
-
-        string segmentToSql(FilterSegment filterSegment, int segmentIndex) {
-            string result;
-            var expressions = filterSegment.FilterExpressions.Values;
-            var firstExpression = expressionToSql(expressions.First().FilterExpression, segmentIndex, 0);
-            if (expressions.Count == 1) 
-                result = firstExpression;
-            else {
-                var segmentStringBuilder = new StringBuilder(firstExpression);
-                var expressionIndex = 1;
-                foreach (var expression in expressions.Skip(1)) {
-                    segmentStringBuilder.Append($" {expression.AndOr.DisplayName} ");
-                    segmentStringBuilder.Append(expressionToSql(expression.FilterExpression, segmentIndex, expressionIndex++));
-                }
-                result = segmentStringBuilder.ToString();
-            }
-            return $"({result})";
-        }
-        string expressionToSql(FilterExpression fe, int segmentIndex, int expressionIndex) {
-            var columnName = $"{getMappedPropertyName(fe.PropertyName)}";
-            var (pre, post) = stringifyTemplates();
-            var value = fe.Operator.UsesValue ? $" {pre}@{fe.Name}{segmentIndex}{expressionIndex}{post}" : "";
-            return $" {columnName} {fe.Operator.SqlOperator}{value} ";
-
-            (string pre, string post) stringifyTemplates() {
-                //if (!isString(fe.PropertyName)) return ("", "");
-                var before = string.IsNullOrWhiteSpace(fe.Operator.PreTemplate) ? "" : $"'{fe.Operator.PreTemplate}' + ";
-                var after = string.IsNullOrWhiteSpace(fe.Operator.PostTemplate) ? "" : $" + '{fe.Operator.PostTemplate}'";
-                return (before, after);
-            }
-
-            string getMappedPropertyName(string propertyName) =>
-                tableInfo?.ColumnsMap.SingleOrDefault(x => x.PropertyName == propertyName)?.ColumnName ?? propertyName;
-        }
-    }
-
     public static string OrderByToSqlClause(OrderBy orderBy, ITableInfo? tableInfo = null) {
         var cols = string.Join(",", orderBy.OrderByExpressions.Select(expr => $"{getMappedColumnName(expr)} {expr.OrderDirection.DisplayName}"));
         return readifyOrderByClause(cols);
@@ -69,8 +22,8 @@ public class SqlBuilder {
     }
 
     public static string GetCountSql(string baseSql,Filter? filter) {
-        var whereClause = FilterToSqlClause(filter);
-        return $"SELECT COUNT(*) FROM {baseSql} {whereClause}";
+        var f = filter?.ToSqlClause(null);
+        return $"SELECT COUNT(*) FROM {baseSql} {f?.whereClause}";
     }
 
     private static string readifyClause(string? rawClause, string op) {
@@ -96,14 +49,14 @@ public class TableSqlBuilder(ITableInfo tableInfo) : SqlBuilder {
         };
     }
 
-    public string GetReadSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, OrderBy? orderBy = null, IReadOnlyCollection<string>? columnNames = null) {
+    public (string sql, DynamicParameters? dynamicParameters) GetReadSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, OrderBy? orderBy = null, IReadOnlyCollection<string>? columnNames = null) {
         if (pageNum <= 0) pageNum = 1;
         if (columnNames is not null) {
             var errColumnNames = columnNames.Where(colName => tableInfo.ColumnsMap.All(mappedCol => !colName.Equals(mappedCol.PropertyName, StringComparison.OrdinalIgnoreCase)));
             foreach (var columnName in errColumnNames) Log.Warning("Column:{columnName} specified in dynamic columnNames not found in Table:{TableName}", columnName, tableInfo.TableName);
         }
 
-        var whereClause = getWhereClause(filter);
+        var f = filter?.ToSqlClause(tableInfo.ColumnsMap);
         var orderByClause = OrderByToSqlClause(orderBy ?? new OrderBy(tableInfo.PrimaryKeyName), tableInfo);
         var offsetFetchClause = pageSize > 0
             ? $"OFFSET {pageSize * (pageNum - 1)} ROWS FETCH NEXT {pageSize} ROW ONLY"
@@ -118,16 +71,14 @@ public class TableSqlBuilder(ITableInfo tableInfo) : SqlBuilder {
         }
         else selectClause = tableInfo.CustomSelectSqlTemplate;
 
-        var result = $"{selectClause} {whereClause} {orderByClause} {offsetFetchClause}";
-        return result.Trim();
+        var result = $"{selectClause} {f?.whereClause} {orderByClause} {offsetFetchClause}";
+        return (result.Trim(), f?.dynamicParameters);
     }
 
     public string GetCountSql(Filter? filter = null) {
-        var whereClause = FilterToSqlClause(filter);
-        return $"SELECT COUNT(*) FROM {tableInfo.TableName} {whereClause}";
+        var f = filter?.ToSqlClause(tableInfo.ColumnsMap);
+        return $"SELECT COUNT(*) FROM {tableInfo.TableName} {f?.whereClause ?? ""}";
     }
-
-    private string getWhereClause(Filter? filter) => SqlBuilder.FilterToSqlClause(filter, tableInfo);
 
     private string getNextSequenceStatement() => !tableInfo.IsIdentity
         ? $"NEXT VALUE FOR {tableInfo.SequenceName}"
