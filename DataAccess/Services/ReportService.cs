@@ -37,20 +37,23 @@ public class ReportService(IDataService dataService, IDbConnectionManager connec
     }
 
     public async Task<Response<dynamic>> GetReportDataAsync(ReportDefinition reportDefinition, int pageSize = 0, int pageNum = 1) {
-        if (pageNum <= 0) pageNum = 1;
-        var offsetFetchClause = pageSize > 0
-            ? $"OFFSET {pageSize * (pageNum - 1)} ROWS FETCH NEXT {pageSize} ROW ONLY"
-            : "";
-        var sql = $"{reportDefinition.ReportSql} {offsetFetchClause}";
-        try {
-            using var conn = connectionManager.CreateConnection();
-            var result = await conn.QueryAsync(sql, reportDefinition.DynamicParameters()).ConfigureAwait(false);
-            return new Response<dynamic>(result.ToArray());
-        }
-        catch (Exception exception) {
-            Log.Error(exception, "Error in GetReportDataAsync:{0}", reportDefinition);
-            return Response<dynamic>.Fail(exception);
-        }
+        var reader = new Reader(connectionManager, reportDefinition.ReportSql);
+        var result = await reader.GetAllAsync(reportDefinition.Filter, pageSize, pageNum, reportDefinition.OrderBy).ConfigureAwait(false);
+        return new Response<dynamic>(result);
+        //if (pageNum <= 0) pageNum = 1;
+        //var offsetFetchClause = pageSize > 0
+        //    ? $"OFFSET {pageSize * (pageNum - 1)} ROWS FETCH NEXT {pageSize} ROW ONLY"
+        //    : "";
+        //var sql = $"{reportDefinition.ReportSql} {offsetFetchClause}";
+        //try {
+        //    using var conn = connectionManager.CreateConnection();
+        //    var result = await conn.QueryAsync(sql, reportDefinition.DynamicParameters()).ConfigureAwait(false);
+        //    return new Response<dynamic>(result.ToArray());
+        //}
+        //catch (Exception exception) {
+        //    Log.Error(exception, "Error in GetReportDataAsync:{0}", reportDefinition);
+        //    return Response<dynamic>.Fail(exception);
+        //}
     }
 
     public async Task<long> GetCountAsync(ReportDefinition reportDefinition) {

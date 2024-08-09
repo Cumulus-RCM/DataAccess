@@ -1,5 +1,4 @@
-﻿using System.Data;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using DataAccess.Shared.ReportService;
 
 namespace DataAccess.Shared;

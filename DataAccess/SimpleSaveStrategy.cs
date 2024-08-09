@@ -32,7 +32,7 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, ISequenc
                 .ToList();
             foreach (var dataChange in changes) {
                 tableInfo = dataChange.TableInfo;
-                sql = SqlBuilder.GetWriteSql(dataChange);
+                sql = TableSqlBuilder.GetWriteSql(dataChange);
                 if (dataChange.DataChangeKind == DataChangeKind.Insert) {
                     if (dataChange.IsCollection) {
                         var collection = (ICollection)dataChange.Entity;
