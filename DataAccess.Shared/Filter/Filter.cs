@@ -106,27 +106,14 @@ public class Filter {
 
     public string PrimaryExpressionPropertyName() => Segments.First().FilterExpressions.First().Value.FilterExpression.PropertyName;
 
-    public void SetParameterValue<T>(string? expName, T value) {
-        if (expName is null) return;
+    public void SetParameterValue<T>(string? expressionName, T value) {
+        if (expressionName is null) return;
         foreach (var segment in Segments) {
-            if (segment.FilterExpressions.TryGetValue(expName, out var exp)) {
+            if (segment.FilterExpressions.TryGetValue(expressionName, out var exp)) {
                 exp.FilterExpression.Value = value;
                 break;
             }
         }
-    }
-
-    private DynamicParameters getDynamicParameters() {
-        var parameters = new DynamicParameters();
-        for (var segmentIndex = 0; segmentIndex < Segments.Count; segmentIndex++) {
-            var segment = Segments[segmentIndex];
-            var expressionIndex = 0;
-            foreach (var expr in segment.FilterExpressions) {
-                parameters.Add($"{expr.Key}{segmentIndex}{expressionIndex++}", expr.Value.FilterExpression.Value);
-            }
-        }
-
-        return parameters;
     }
 
     public static bool TryParse(string json, out Filter? filter) {
@@ -199,7 +186,6 @@ public class Filter {
 
                 result = segmentStringBuilder.ToString();
             }
-
             return $"({result})";
         }
         string expressionToSql(FilterExpression fe, int segmentIndex, int expressionIndex) {
@@ -217,7 +203,20 @@ public class Filter {
             }
 
             string getMappedPropertyName(string propertyName) =>
-                columnsMap is null ? propertyName : columnsMap.SingleOrDefault(x => x.PropertyName == propertyName)?.ColumnName ?? propertyName;
+                columnsMap is null 
+                    ? propertyName 
+                    : columnsMap.SingleOrDefault(x => x.PropertyName == propertyName)?.ColumnName ?? propertyName;
+        }
+        DynamicParameters getDynamicParameters() {
+            var parameters = new DynamicParameters();
+            for (var segmentIndex = 0; segmentIndex < Segments.Count; segmentIndex++) {
+                var segment = Segments[segmentIndex];
+                var expressionIndex = 0;
+                foreach (var expr in segment.FilterExpressions) {
+                    parameters.Add($"{expr.Key}{segmentIndex}{expressionIndex++}", expr.Value.FilterExpression.Value);
+                }
+            }
+            return parameters;
         }
     }
 }
