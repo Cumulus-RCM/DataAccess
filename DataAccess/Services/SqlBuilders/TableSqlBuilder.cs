@@ -7,53 +7,28 @@ using Dapper;
 using DataAccess.Shared;
 using Serilog;
 
-namespace DataAccess.Services;
-
-public class SqlBuilder {
-    public static string OrderByToSqlClause(OrderBy orderBy, ITableInfo? tableInfo = null) {
-        var cols = string.Join(",", orderBy.OrderByExpressions.Select(expr => $"{getMappedColumnName(expr)} {expr.OrderDirection.DisplayName}"));
-        return readifyOrderByClause(cols);
-
-        string getMappedColumnName(OrderByExpression orderByExpression) => tableInfo is null 
-          ? orderByExpression.PropertyName
-          : tableInfo.ColumnsMap.Single(x => x.PropertyName == orderByExpression.PropertyName).ColumnName;
-            
-        string readifyOrderByClause(string? rawOrderByClause) => readifyClause(rawOrderByClause, "ORDER BY");
-    }
-
-    public static string GetCountSql(string baseSql,Filter? filter) {
-        var f = filter?.ToSqlClause(null);
-        return $"SELECT COUNT(*) FROM {baseSql} {f?.whereClause}";
-    }
-
-    private static string readifyClause(string? rawClause, string op) {
-        if (string.IsNullOrWhiteSpace(rawClause)) return "";
-        var result = rawClause.Trim();
-        return result.StartsWith(op, StringComparison.OrdinalIgnoreCase)
-            ? $" {result}"
-            : $" {op} {result}";
-    }
-}
+namespace DataAccess.Services.SqlBuilders;
 
 public class TableSqlBuilder(ITableInfo tableInfo) : SqlBuilder {
-    private const string PREFIX_PARAMETER_NAME = "@";
-    
-    public static string GetWriteSql(IDataChange dataChange) {
-        var sqlBuilder = new TableSqlBuilder(dataChange.TableInfo);
+    public string GetWriteSql(IDataChange dataChange) {
         return dataChange.DataChangeKind.Value switch {
-            DataChangeKind.UPDATE => sqlBuilder.getUpdateSql(),
-            DataChangeKind.INSERT => sqlBuilder.getInsertSql(dataChange.SqlShouldGenPk, dataChange.SqlShouldReturnPk),
-            DataChangeKind.DELETE => sqlBuilder.getDeleteSql(),
-            DataChangeKind.STORED_PROCEDURE => sqlBuilder.getStoredProcedureSql(),
+            DataChangeKind.UPDATE => getUpdateSql(),
+            DataChangeKind.INSERT => getInsertSql(dataChange.SqlShouldGenPk, dataChange.SqlShouldReturnPk),
+            DataChangeKind.DELETE => getDeleteSql(),
+            DataChangeKind.STORED_PROCEDURE => getStoredProcedureSql(),
             _ => throw new InvalidEnumArgumentException(nameof(IDataChange.DataChangeKind))
         };
     }
 
-    public (string sql, DynamicParameters? dynamicParameters) GetReadSql(Filter? filter = null, int pageSize = 0, int pageNum = 1, OrderBy? orderBy = null, IReadOnlyCollection<string>? columnNames = null) {
+    public (string sql, DynamicParameters? dynamicParameters) GetReadSql(Filter? filter = null, int pageSize = 0, int pageNum = 1,
+        OrderBy? orderBy = null, IReadOnlyCollection<string>? columnNames = null) {
         if (pageNum <= 0) pageNum = 1;
         if (columnNames is not null) {
-            var errColumnNames = columnNames.Where(colName => tableInfo.ColumnsMap.All(mappedCol => !colName.Equals(mappedCol.PropertyName, StringComparison.OrdinalIgnoreCase)));
-            foreach (var columnName in errColumnNames) Log.Warning("Column:{columnName} specified in dynamic columnNames not found in Table:{TableName}", columnName, tableInfo.TableName);
+            var errColumnNames = columnNames.Where(colName =>
+                tableInfo.ColumnsMap.All(mappedCol => !colName.Equals(mappedCol.PropertyName, StringComparison.OrdinalIgnoreCase)));
+            foreach (var columnName in errColumnNames)
+                Log.Warning("Column:{columnName} specified in dynamic columnNames not found in Table:{TableName}", columnName,
+                    tableInfo.TableName);
         }
 
         var f = filter?.ToSqlClause(tableInfo.ColumnsMap);
@@ -102,8 +77,10 @@ public class TableSqlBuilder(ITableInfo tableInfo) : SqlBuilder {
         if (shouldReturnNewId)
             returnNewId = tableInfo.IsIdentity ? "SELECT SCOPE_IDENTITY() as newID" : "SELECT @newId as newID";
 
-        var columnNames = string.Join(", ", tableInfo.ColumnsMap.Where(p => p is {CanWrite: true, IsPrimaryKey: false}).Select(x => x.ColumnName));
-        var parameterNames = string.Join(", ", tableInfo.ColumnsMap.Where(p => p is {CanWrite: true, IsPrimaryKey: false}).Select(x => $"@{x.PropertyName}"));
+        var columnNames = string.Join(", ",
+            tableInfo.ColumnsMap.Where(p => p is { CanWrite: true, IsPrimaryKey: false }).Select(x => x.ColumnName));
+        var parameterNames = string.Join(", ",
+            tableInfo.ColumnsMap.Where(p => p is { CanWrite: true, IsPrimaryKey: false }).Select(x => $"@{x.PropertyName}"));
         return @$"
 {getNewIdFromSequence};
 INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{parameterNames});
@@ -115,12 +92,14 @@ INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{para
         var setStatements = tableInfo.ColumnsMap
             .Where(property => changedPropertyNames is null ||
                                changedPropertiesList.Contains(property.PropertyName, StringComparer.OrdinalIgnoreCase))
-            .Where(property => property is {IsPrimaryKey: false, IsSkipByDefault: false})
+            .Where(property => property is { IsPrimaryKey: false, IsSkipByDefault: false })
             .Select(col => $"[{col.ColumnName}] = {PREFIX_PARAMETER_NAME}{col.PropertyName}");
-        return string.Format($"UPDATE {tableInfo.TableName} SET {string.Join(",", setStatements)} WHERE {tableInfo.PrimaryKeyName}={PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName}");
+        return string.Format(
+            $"UPDATE {tableInfo.TableName} SET {string.Join(",", setStatements)} WHERE {tableInfo.PrimaryKeyName}={PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName}");
     }
 
-    private string getDeleteSql() => tableInfo.CustomDeleteSqlTemplate ?? $"DELETE FROM {tableInfo.TableName} WHERE {tableInfo.PrimaryKeyName} IN ({PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName})";
+    private string getDeleteSql() => tableInfo.CustomDeleteSqlTemplate ??
+                                     $"DELETE FROM {tableInfo.TableName} WHERE {tableInfo.PrimaryKeyName} IN ({PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName})";
 
     private string getStoredProcedureSql() =>
         tableInfo.CustomStoredProcedureSqlTemplate ??

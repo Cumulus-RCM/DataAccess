@@ -7,7 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BaseLib;
 using Dapper;
-using DataAccess.Services;
+using DataAccess.Services.SqlBuilders;
 using DataAccess.Shared;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -32,7 +32,7 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, ISequenc
                 .ToList();
             foreach (var dataChange in changes) {
                 tableInfo = dataChange.TableInfo;
-                sql = TableSqlBuilder.GetWriteSql(dataChange);
+                sql = new TableSqlBuilder(dataChange.TableInfo).GetWriteSql(dataChange);
                 if (dataChange.DataChangeKind == DataChangeKind.Insert) {
                     if (dataChange.IsCollection) {
                         var collection = (ICollection)dataChange.Entity;

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BaseLib;
 using Dapper;
-using DataAccess.Services;
+using DataAccess.Services.SqlBuilders;
 using DataAccess.Shared;
 using Serilog;
 
