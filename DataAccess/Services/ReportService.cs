@@ -36,24 +36,18 @@ public class ReportService(IDataService dataService, IDbConnectionManager connec
         return reportInfo is null ? Response<ReportDefinition>.Empty() : new Response<ReportDefinition>(reportInfo);
     }
 
-    public async Task<Response<dynamic>> GetReportDataAsync(ReportDefinition reportDefinition, int pageSize = 0, int pageNum = 1) {
-        var reader = new Reader(connectionManager, reportDefinition.ReportSql);
-        var result = await reader.GetAllAsync(reportDefinition.Filter, pageSize, pageNum, reportDefinition.OrderBy).ConfigureAwait(false);
-        return new Response<dynamic>(result);
-        //if (pageNum <= 0) pageNum = 1;
-        //var offsetFetchClause = pageSize > 0
-        //    ? $"OFFSET {pageSize * (pageNum - 1)} ROWS FETCH NEXT {pageSize} ROW ONLY"
-        //    : "";
-        //var sql = $"{reportDefinition.ReportSql} {offsetFetchClause}";
-        //try {
-        //    using var conn = connectionManager.CreateConnection();
-        //    var result = await conn.QueryAsync(sql, reportDefinition.DynamicParameters()).ConfigureAwait(false);
-        //    return new Response<dynamic>(result.ToArray());
-        //}
-        //catch (Exception exception) {
-        //    Log.Error(exception, "Error in GetReportDataAsync:{0}", reportDefinition);
-        //    return Response<dynamic>.Fail(exception);
-        //}
+    public async Task<Response<dynamic>> GetReportDataAsync(ReportDefinition reportDefinition, int pageSize = 0, int pageNum = 0) {
+        try {
+            var reader = new Reader(connectionManager, reportDefinition.ReportSql);
+            var cnt = await reader.GetCountAsync(reportDefinition.Filter).ConfigureAwait(false);
+            if (cnt == 0) return Response<dynamic>.Empty();
+            var result = await reader.GetAllAsync(reportDefinition.Filter, pageSize, pageNum, reportDefinition.OrderBy).ConfigureAwait(false);
+            return new Response<dynamic>(result, cnt);
+        }
+        catch (Exception ex) {
+            Log.Error(ex, nameof(GetReportDataAsync));
+            return Response<dynamic>.Empty(ex.Message);
+        }
     }
 
     public async Task<long> GetCountAsync(ReportDefinition reportDefinition) {

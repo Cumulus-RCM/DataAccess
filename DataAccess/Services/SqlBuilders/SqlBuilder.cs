@@ -21,7 +21,7 @@ public class SqlBuilder {
 
     public static string GetCountSql(string baseSql, Filter? filter) {
         var f = filter?.ToSqlClause(null);
-        return $"SELECT COUNT(*) FROM {baseSql} {f?.whereClause}";
+        return $"SELECT COUNT(*) FROM ({baseSql} {f?.whereClause}) d";
     }
 
     private static string readifyClause(string? rawClause, string op) {

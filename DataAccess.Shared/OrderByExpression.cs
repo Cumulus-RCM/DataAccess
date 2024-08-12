@@ -35,6 +35,8 @@ public record OrderByExpression {
     public string PropertyName { get; set; }
     public OrderDirection OrderDirection { get; set; }
 
+    public OrderByExpression() { }
+
     public OrderByExpression(string propertyName, OrderDirection? orderDirection = null) {
         PropertyName = propertyName;
         OrderDirection = orderDirection ?? OrderDirection.Ascending;

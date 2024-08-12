@@ -19,7 +19,7 @@ public class Reader {
         this.baseSql = baseSql;
     }
     
-    public async Task<IReadOnlyCollection<dynamic>> GetAllAsync(Filter? filter = null, int pageSize = 0, int pageNum = 0, OrderBy? orderBy = null) {        
+    public async Task<IReadOnlyCollection<dynamic>> GetAllAsync(Filter? filter = null, int pageSize = 0, int pageNum = 1, OrderBy? orderBy = null) {        
         orderBy ??= new OrderBy("1");
         var f = filter?.ToSqlClause(null);
         var sql = buildSql();

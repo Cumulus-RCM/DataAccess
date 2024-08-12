@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using Serilog;
 
 namespace DataAccess.Shared.ReportService;
 
@@ -23,8 +24,16 @@ public record ReportDefinition {
        this.ColumnsJson = ColumnsJson;
 
         if (ColumnsJson is null) throw new InvalidOperationException($"No ColumnsJson in ReportDefinition for :{ReportName}");
-        ColumnDefinitions ??= JsonSerializer.Deserialize<ICollection<ReportColumn>>(ColumnsJson)
-                              ?? throw new InvalidOperationException($"No Columns Defined for Report:{ReportName}");
-        OrderBy = string.IsNullOrEmpty(OrderByJson) ? new OrderBy("1") : JsonSerializer.Deserialize<OrderBy>(OrderByJson) ;
+
+        try {
+            ColumnDefinitions ??= JsonSerializer.Deserialize<ICollection<ReportColumn>>(ColumnsJson)
+                                  ?? throw new InvalidOperationException($"No Columns Defined for Report:{ReportName}");
+
+            OrderBy = JsonSerializer.Deserialize<OrderBy>(OrderByJson) ?? new OrderBy("1");
+        }
+        catch (Exception ex) {
+            Log.Error(ex, "Error retrieving ReportDefinition Id:{Id}, ReportName:{ReportName}", Id, ReportName );
+            throw;
+        }
     }
 }
