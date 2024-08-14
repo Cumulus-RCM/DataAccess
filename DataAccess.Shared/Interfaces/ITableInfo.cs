@@ -11,7 +11,6 @@ public interface ITableInfo {
     string SequenceName { get; }
     bool IsIdentity { get; }
     bool IsSequencePk { get;}
-    bool IsTable { get; }
     int Priority { get; }
     IReadOnlyCollection<IColumnInfo> ColumnsMap { get; }
     void SetPrimaryKeyValue(object entity, IdPk value);

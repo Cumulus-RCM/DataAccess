@@ -32,10 +32,10 @@ public class OrderBy {
 }
 
 public record OrderByExpression {
-    public string PropertyName { get; set; }
-    public OrderDirection OrderDirection { get; set; }
+    public string PropertyName { get; init; } = null!;
+    public OrderDirection OrderDirection { get; init; } = null!;
 
-    public OrderByExpression() { }
+    private OrderByExpression() { }
 
     public OrderByExpression(string propertyName, OrderDirection? orderDirection = null) {
         PropertyName = propertyName;
