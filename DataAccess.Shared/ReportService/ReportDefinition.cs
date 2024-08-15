@@ -12,8 +12,14 @@ public record ReportDefinition {
     public string ReportSql { get; init; }
     public string ColumnsJson { get; init; }
     public string? OrderByJson { get; set; } 
+
+    [ColumnInfo(isSkipByDefault:true, canWrite:false)]
     public ICollection<ReportColumn> ColumnDefinitions { get; }
+    
+    [ColumnInfo(isSkipByDefault:true, canWrite:false)]
     public OrderBy OrderBy { get; }
+
+    [ColumnInfo(isSkipByDefault:true, canWrite:false)]
     public Filter? Filter { get; set; }
 
     public ReportDefinition(IdPk Id, string ReportName, string ReportDescription, string ReportSql, string ColumnsJson, string OrderByJson) {

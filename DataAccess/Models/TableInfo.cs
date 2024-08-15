@@ -34,13 +34,13 @@ public sealed record TableInfo<T> : ITableInfo {
     public TableInfo() : this(tableName: null) {
     }
 
-    public TableInfo(string? tableName = null, string? primaryKeyName = null, string? sequence = null, bool isIdentity = false,
-        IEnumerable<ColumnInfo>? mappedColumnsInfos = null) {
+    public TableInfo(string? tableName = null, string? primaryKeyName = null, string? sequence = null, bool isIdentity = false, IEnumerable<ColumnInfo>? mappedColumnsInfos = null) {
         TableName = tableName ?? EntityType.Name;
         PrimaryKeyName = primaryKeyName ?? "Id";
         IsIdentity = isIdentity;
 
         var properties = typeof(T).GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public);
+        var mappedColumns = getColumnInfos(properties, mappedColumnsInfos).ToList();
 
         var pkPropertyInfo = properties.SingleOrDefault(pi => pi.Name.Equals(PrimaryKeyName, StringComparison.InvariantCultureIgnoreCase)) ??
                              throw new InvalidDataException($"No PrimaryKeyName Defined for {TableName}.");
@@ -51,9 +51,6 @@ public sealed record TableInfo<T> : ITableInfo {
         PrimaryKeyType = pkPropertyInfo.PropertyType;
         pkSetter = pkPropertyInfo.GetSetMethod(true);
         pkGetter = pkPropertyInfo.GetGetMethod(true);
-
-
-        var mappedColumns = (mappedColumnsInfos ?? Enumerable.Empty<ColumnInfo>()).ToList();
 
         ColumnsMap = properties
             .GroupJoin(mappedColumns.ToList(), prop => prop.Name, mappedColumn => mappedColumn.PropertyName,
@@ -70,4 +67,18 @@ public sealed record TableInfo<T> : ITableInfo {
 
     public object GetPrimaryKeyValue(object entity) =>
         pkGetter?.Invoke((T)entity, null) ?? throw new InvalidDataException("PrimaryKeyName value is null");
+
+
+    private IEnumerable<ColumnInfo> getColumnInfos(PropertyInfo[] properties, IEnumerable<ColumnInfo>? mappedColumnsInfos) {
+        var attributedProperties = properties
+            .Select(p => ColumnInfo.FromAttribute(p))
+            .Where(x => x is not null)
+            .Cast<ColumnInfo>()
+            .ToArray();
+
+        return attributedProperties
+            .Concat(mappedColumnsInfos ?? [])
+            .GroupBy(c => c.PropertyName, StringComparer.InvariantCultureIgnoreCase)
+            .Select(g => g.Aggregate((first, second) => ColumnInfo.Combine(first, second)));
+    }
 }
