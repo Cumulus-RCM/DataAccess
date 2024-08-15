@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 
 namespace DataAccess.Shared;
 
@@ -18,6 +19,8 @@ public class DataChange<T> : IDataChange {
 }
 
 public class DataChangeFactory(IDatabaseMapper databaseMapper) {
-    public IDataChange Create<T>(DataChangeKind dataChangeKind, T entity, bool isCollection = false) => 
-        new DataChange<T>(dataChangeKind, entity, databaseMapper.GetTableInfo<T>()) {IsCollection = isCollection};
+    public IDataChange Create<T>(DataChangeKind dataChangeKind, T entity, bool isCollection = false) {
+        if (entity is IEnumerable) isCollection = true;
+        return new DataChange<T>(dataChangeKind, entity, databaseMapper.GetTableInfo<T>()) { IsCollection = isCollection };
+    }
 }
