@@ -43,7 +43,13 @@ public record FilterExpression<T> : FilterExpression {
     public FilterExpression() { }
 
     public static bool TryParse(string value, out FilterExpression<T>? result) {
+        result = null;
+        if (string.IsNullOrWhiteSpace(value)) return false;
         result = JsonSerializer.Deserialize<FilterExpression<T>>(value);
+        if (result is not null && result.Value is JsonElement jsonElement) {
+            var type = Type.GetType(result.ValueTypeName);
+            if (type is not null) result.Value = JsonSerializer.Deserialize(jsonElement.GetRawText(), type);
+        }
         return result is not null;
     }
 
