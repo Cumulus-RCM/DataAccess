@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Reflection;
 
 namespace DataAccess.Shared;
 
 [AttributeUsage(AttributeTargets.Property)]
-public sealed class ColumnInfoAttribute : Attribute {
+public sealed class ColumnInfoAttribute : Attribute
+{
     public string? ColumnName { get; }
     public bool IsSkipByDefault { get; }
     public bool CanWrite { get; }

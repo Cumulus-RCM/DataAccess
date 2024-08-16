@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using DataAccess.Shared;
 
 namespace DataAccess;
 
@@ -22,7 +23,7 @@ public class ColumnInfo : IColumnInfo {
     }
 
     public static ColumnInfo? FromAttribute(PropertyInfo property) {
-        var attribute = property.GetCustomAttribute<Shared.ColumnInfoAttribute>();
+        var attribute = property.GetCustomAttribute<ColumnInfoAttribute>();
         if (attribute is null) return null;
 
         return new ColumnInfo(

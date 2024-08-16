@@ -5,16 +5,14 @@ using System.Linq;
 using System.Reflection;
 using DataAccess.Shared;
 
-// ReSharper disable UnusedAutoPropertyAccessor.Global
-
 namespace DataAccess;
 
 public sealed record TableInfo<T> : ITableInfo {
-    public string TableName { get; }
-    public string PrimaryKeyName { get; }
+    public string TableName { get; private set; }
+    public string PrimaryKeyName { get; private init; } = "Id";
     public Type PrimaryKeyType { get; }
-    public string SequenceName { get; } = "";
-    public bool IsIdentity { get; }
+    public string SequenceName { get; private init; } = "";
+    public bool IsIdentity { get; private init; }
     public bool IsSequencePk { get; }
     public int Priority { get; init; } = 1000;
 
@@ -31,21 +29,24 @@ public sealed record TableInfo<T> : ITableInfo {
     private readonly MethodInfo? pkSetter;
     private readonly MethodInfo? pkGetter;
 
-    public TableInfo() : this(tableName: null) {
-    }
+    public TableInfo() : this(tableName: null) { }
 
-    public TableInfo(string? tableName = null, string? primaryKeyName = null, string? sequence = null, bool isIdentity = false, IEnumerable<ColumnInfo>? mappedColumnsInfos = null) {
-        TableName = tableName ?? EntityType.Name;
-        PrimaryKeyName = primaryKeyName ?? "Id";
-        IsIdentity = isIdentity;
+    public TableInfo(string? tableName = null, string? sequence = null, bool isIdentity = false, IEnumerable<ColumnInfo>? mappedColumnsInfos = null) {
+        var tableInfoAttribute = typeof(T).GetCustomAttribute<TableInfoAttribute>();
+        TableName = tableName ?? tableInfoAttribute?.TableName ?? EntityType.Name;
+        IsIdentity = tableInfoAttribute?.IsIdentity ?? isIdentity;
 
         var properties = typeof(T).GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public);
         var mappedColumns = getColumnInfos(properties, mappedColumnsInfos).ToList();
+        if (mappedColumns.Any(c => c.IsPrimaryKey)) PrimaryKeyName = mappedColumns.Single(c => c.IsPrimaryKey).ColumnName;
 
+        if (tableInfoAttribute?.PrimaryKeyName is not null) PrimaryKeyName = tableInfoAttribute.PrimaryKeyName;
         var pkPropertyInfo = properties.SingleOrDefault(pi => pi.Name.Equals(PrimaryKeyName, StringComparison.InvariantCultureIgnoreCase)) ??
                              throw new InvalidDataException($"No PrimaryKeyName Defined for {TableName}.");
-        IsSequencePk = !isIdentity
-                       && (pkPropertyInfo.PropertyType == typeof(int) || pkPropertyInfo.PropertyType == typeof(long));
+        
+        if (tableInfoAttribute?.IsIdentity is not null) IsIdentity = tableInfoAttribute.IsIdentity;
+        IsSequencePk = !isIdentity && (pkPropertyInfo.PropertyType == typeof(int) || pkPropertyInfo.PropertyType == typeof(IdPk));
+        if (tableInfoAttribute?.SequenceName is not null) sequence = tableInfoAttribute.SequenceName;
         SequenceName = IsSequencePk ? sequence ?? $"{TableName}_id_seq" : "";
 
         PrimaryKeyType = pkPropertyInfo.PropertyType;
@@ -67,7 +68,6 @@ public sealed record TableInfo<T> : ITableInfo {
 
     public object GetPrimaryKeyValue(object entity) =>
         pkGetter?.Invoke((T)entity, null) ?? throw new InvalidDataException("PrimaryKeyName value is null");
-
 
     private IEnumerable<ColumnInfo> getColumnInfos(PropertyInfo[] properties, IEnumerable<ColumnInfo>? mappedColumnsInfos) {
         var attributedProperties = properties
