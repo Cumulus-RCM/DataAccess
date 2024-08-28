@@ -45,13 +45,15 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, ISequenc
                         }
                         else {
                             if (conn is SqlConnection sqlConn && dbTransaction is SqlTransaction sqlTransaction) {
-                                var idsNeeded = collection.Cast<object>().Count(item => (IdPk) dataChange.TableInfo.GetPrimaryKeyValue(item) == 0);
+                                var idsNeeded = collection.Cast<object>()
+                                    .Count(item => (IdPk)dataChange.TableInfo.GetPrimaryKeyValue(item) == 0);
                                 var id = await sequenceGenerator.GetSequencesAsync(dataChange.TableInfo, idsNeeded).ConfigureAwait(false);
                                 foreach (var item in collection) {
-                                    if ((IdPk) tableInfo.GetPrimaryKeyValue(item) == 0) tableInfo.SetPrimaryKeyValue(item, id);
+                                    if ((IdPk)tableInfo.GetPrimaryKeyValue(item) == 0) tableInfo.SetPrimaryKeyValue(item, id);
                                     sb.Add(tableInfo.TableName, insertedIds: id.ItemAsEnumerable());
                                     id++;
                                 }
+
                                 await bulkInsert(sqlConn, tableName: tableInfo.TableName, collection, sqlTransaction).ConfigureAwait(false);
                             }
                         }
@@ -63,7 +65,7 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, ISequenc
                     }
                     else if (dataChange.TableInfo.PrimaryKeyType == typeof(IdPk)) {
                         await conn.ExecuteScalarAsync<int>($"{sql}", dataChange.Entity, dbTransaction).ConfigureAwait(false);
-                        var id = (IdPk) dataChange.TableInfo.GetPrimaryKeyValue(dataChange.Entity);
+                        var id = (IdPk)dataChange.TableInfo.GetPrimaryKeyValue(dataChange.Entity);
                         sb.Add(tableInfo.TableName, insertedIds: id.ItemAsEnumerable());
                     }
                 }
@@ -91,7 +93,7 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, ISequenc
 
     private static async Task<int> bulkInsert(SqlConnection conn, string tableName, IEnumerable items, SqlTransaction? transaction) {
         using var bulkCopy = new SqlBulkCopy(conn, SqlBulkCopyOptions.CheckConstraints | SqlBulkCopyOptions.FireTriggers, transaction);
-       
+
         bulkCopy.DestinationTableName = tableName;
         bulkCopy.EnableStreaming = true;
         bulkCopy.BatchSize = 1000;
@@ -107,13 +109,22 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, ISequenc
         return dataTable.Rows.Count;
 
         DataTable? convertItemsToDataTable() {
-            var json = JsonConvert.SerializeObject(items, new JsonSerializerSettings {ContractResolver = new WritablePropertiesOnlyResolver()});
+            var json = JsonConvert.SerializeObject(items, new JsonSerializerSettings {
+                ContractResolver = new WritablePropertiesOnlyResolver()
+            });
             return JsonConvert.DeserializeObject<DataTable>(json);
         }
     }
 
     private class WritablePropertiesOnlyResolver : DefaultContractResolver {
-        protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization) =>
-            base.CreateProperties(type, memberSerialization).Where(p => p.Writable).ToList();
+        protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization) {
+            var properties = base.CreateProperties(type, memberSerialization);
+            return properties.Where(p => {
+                var propertyInfo = type.GetProperty(p.PropertyName);
+                if (propertyInfo == null) return false;
+                var columnInfo = ColumnInfo.FromAttribute(propertyInfo);
+                return columnInfo?.CanWrite ?? p.Writable;
+            }).ToList();
+        }
     }
 }
