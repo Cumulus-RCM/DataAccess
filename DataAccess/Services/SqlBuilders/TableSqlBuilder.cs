@@ -57,11 +57,11 @@ public class TableSqlBuilder(ITableInfo tableInfo) : SqlBuilder {
 
     private (string whereClause, DynamicParameters dynamicParameters)? getFilterClause(Filter? filter) {
         if (tableInfo.IsSoftDelete) {
-            var filterExpression = new FilterExpression("IsDeleted", Operator.Equal) { Value = false };
-            if (filter is not null) filter.AddSegment(new FilterSegment(filterExpression));
-            else filter = Filter.Create(filterExpression);
+            var deletedFilterExpression = new FilterExpression("IsDeleted", Operator.Equal) { Value = false };
+            if (filter is not null) filter.AddSegment(new FilterSegment(deletedFilterExpression));
+            else filter = Filter.Create(deletedFilterExpression);
         }
-        return filter?.ToSqlClause(tableInfo.ColumnsMap);
+        return filter?.ToSqlClause(tableInfo.ColumnsMap) ?? ("", new DynamicParameters());
     }
 
     private string getNextSequenceStatement() => !tableInfo.IsIdentity
