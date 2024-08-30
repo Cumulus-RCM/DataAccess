@@ -21,6 +21,8 @@ public record ReportDefinition {
 
     [ColumnInfo(isSkipByDefault:true, canWrite:false)]
     public Filter? Filter { get; set; }
+    
+    public ReportDefinition() { }
 
     public ReportDefinition(IdPk Id, string ReportName, string ReportDescription, string ReportSql, string ColumnsJson, string OrderByJson) {
         this.Id = Id;

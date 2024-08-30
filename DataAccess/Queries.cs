@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using BaseLib;
 using DataAccess.Shared;
 using Serilog;
 
 namespace DataAccess;
 
-public class Queries<T>(IReader<T> reader) : IQueries<T> where T : class {
+public class Queries<T>(IReader<T> reader) : IQueries<T> where T : class, new() {
     public Task<Response<T>> GetAllAsync(string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null) {
         var filter = Filter.FromJson(filterJson);
         var orderBy = OrderBy.FromJson(orderByJson);
@@ -15,7 +17,7 @@ public class Queries<T>(IReader<T> reader) : IQueries<T> where T : class {
 
     public Task<int> GetCountAsync(string? filterJson = null) => reader.GetCountAsync(Filter.FromJson(filterJson));
 
-    public async Task<Response<dynamic>> GetAllDynamicAsync(IReadOnlyCollection<string> columnNames, string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null) {
+    public async Task<Response<T>> GetAllDynamicAsync(IReadOnlyCollection<string> columnNames, string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null) {
         var filter = Filter.FromJson(filterJson);
         var orderBy = OrderBy.FromJson(orderByJson);
 
@@ -23,14 +25,14 @@ public class Queries<T>(IReader<T> reader) : IQueries<T> where T : class {
             var cnt = 0;
             if (pageNumber == 0) {
                 cnt = await reader.GetCountAsync(filter).ConfigureAwait(false);
-                if (cnt == 0) return Response<dynamic>.Empty();
+                if (cnt == 0) return Response<T>.Empty();
             }
             var items = await reader.GetAllDynamicAsync(columnNames, filter, pageSize, pageNumber, orderBy).ConfigureAwait(false);
-            return new Response<dynamic>(items, cnt);
+            return new Response<T>((IReadOnlyCollection<T>)items.Select(i=> TypeHelper.DynamicToT(i)).ToList().AsReadOnly(), cnt);
         }
         catch (Exception ex) {
             Log.Error(ex, nameof(GetAllAsync));
-            return Response<dynamic>.Empty(ex.Message);
+            return Response<T>.Empty(ex.Message);
         }
     }
 
