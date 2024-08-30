@@ -12,6 +12,7 @@ public interface ITableInfo {
     bool IsIdentity { get; }
     bool IsSequencePk { get;}
     int Priority { get; }
+    bool IsSoftDelete { get; }
     IReadOnlyCollection<IColumnInfo> ColumnsMap { get; }
     void SetPrimaryKeyValue(object entity, IdPk value);
     object GetPrimaryKeyValue(object entity);

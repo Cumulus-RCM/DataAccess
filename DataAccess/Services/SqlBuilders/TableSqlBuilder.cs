@@ -31,7 +31,7 @@ public class TableSqlBuilder(ITableInfo tableInfo) : SqlBuilder {
                     tableInfo.TableName);
         }
 
-        var f = filter?.ToSqlClause(tableInfo.ColumnsMap);
+        var f = getFilterClause(filter);
         var orderByClause = OrderByToSqlClause(orderBy ?? new OrderBy(tableInfo.PrimaryKeyName), tableInfo);
         var offsetFetchClause = pageSize > 0
             ? $"OFFSET {pageSize * (pageNum - 1)} ROWS FETCH NEXT {pageSize} ROW ONLY"
@@ -51,8 +51,17 @@ public class TableSqlBuilder(ITableInfo tableInfo) : SqlBuilder {
     }
 
     public string GetCountSql(Filter? filter = null) {
-        var f = filter?.ToSqlClause(tableInfo.ColumnsMap);
+        var f = getFilterClause(filter);
         return $"SELECT COUNT(*) FROM {tableInfo.TableName} {f?.whereClause ?? ""}";
+    }
+
+    private (string whereClause, DynamicParameters dynamicParameters)? getFilterClause(Filter? filter) {
+        if (tableInfo.IsSoftDelete) {
+            var filterExpression = new FilterExpression("IsDeleted", Operator.Equal) { Value = false };
+            if (filter is not null) filter.AddSegment(new FilterSegment(filterExpression));
+            else filter = Filter.Create(filterExpression);
+        }
+        return filter?.ToSqlClause(tableInfo.ColumnsMap);
     }
 
     private string getNextSequenceStatement() => !tableInfo.IsIdentity
@@ -99,7 +108,10 @@ INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{para
     }
 
     private string getDeleteSql() => tableInfo.CustomDeleteSqlTemplate ??
-                                     $"DELETE FROM {tableInfo.TableName} WHERE {tableInfo.PrimaryKeyName} IN ({PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName})";
+                                     (tableInfo.IsSoftDelete 
+                                        ? $"UPDATE {tableInfo.TableName} SET IsDeleted = 1 WHERE {tableInfo.PrimaryKeyName} IN ({PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName}) "
+                                        : $"DELETE FROM {tableInfo.TableName} WHERE {tableInfo.PrimaryKeyName} IN ({PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName})"
+                                     );
 
     private string getStoredProcedureSql() =>
         tableInfo.CustomStoredProcedureSqlTemplate ??

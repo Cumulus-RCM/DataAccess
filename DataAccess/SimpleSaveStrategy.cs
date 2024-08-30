@@ -69,7 +69,6 @@ public class SimpleSaveStrategy(IDbConnectionManager connectionManager, ISequenc
                         sb.Add(tableInfo.TableName, insertedIds: id.ItemAsEnumerable());
                     }
                 }
-
                 else {
                     var ct = dataChange.DataChangeKind == DataChangeKind.StoredProcedure
                         ? CommandType.StoredProcedure

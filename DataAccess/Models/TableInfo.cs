@@ -15,6 +15,7 @@ public sealed record TableInfo<T> : ITableInfo {
     public bool IsIdentity { get; private init; }
     public bool IsSequencePk { get; }
     public int Priority { get; init; } = 1000;
+    public bool IsSoftDelete { get; }
 
     public IReadOnlyCollection<IColumnInfo> ColumnsMap { get; }
 
@@ -37,6 +38,7 @@ public sealed record TableInfo<T> : ITableInfo {
         IsIdentity = tableInfoAttribute?.IsIdentity ?? isIdentity;
 
         var properties = typeof(T).GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public);
+        IsSoftDelete = properties.Any(p => p.Name == "IsDeleted" && p.PropertyType == typeof(bool));
         var mappedColumns = getColumnInfos(properties, mappedColumnsInfos).ToList();
         if (mappedColumns.Any(c => c.IsPrimaryKey)) PrimaryKeyName = mappedColumns.Single(c => c.IsPrimaryKey).ColumnName;
 
