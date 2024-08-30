@@ -17,7 +17,7 @@ public class Queries<T>(IReader<T> reader) : IQueries<T> where T : class, new() 
 
     public Task<int> GetCountAsync(string? filterJson = null) => reader.GetCountAsync(Filter.FromJson(filterJson));
 
-    public async Task<Response<T>> GetAllDynamicAsync(IReadOnlyCollection<string> columnNames, string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null) {
+    public async Task<Response<T>> GetAllAsync(IReadOnlyCollection<string> columnNames, string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null) {
         var filter = Filter.FromJson(filterJson);
         var orderBy = OrderBy.FromJson(orderByJson);
 

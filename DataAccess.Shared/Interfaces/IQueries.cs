@@ -23,10 +23,10 @@ public interface IQueries<T> {
     Task<int> GetCountAsync(Filter? filter = null) => GetCountAsync(filter?.AsJson());
 
     [Get("/Dynamic")]
-    Task<Response<T>> GetAllDynamicAsync(IReadOnlyCollection<string> columnNames, string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null);
+    Task<Response<T>> GetAllAsync(IReadOnlyCollection<string> columnNames, string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null);
 
-    IObservable<Response<T>> GetAllDynamic(IReadOnlyCollection<string> columnNames, string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null) => 
-        Observable.FromAsync(() => GetAllDynamicAsync(columnNames, filterJson, pageSize, pageNumber, orderByJson));
+    IObservable<Response<T>> GetAll(IReadOnlyCollection<string> columnNames, string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null) => 
+        Observable.FromAsync(() => GetAllAsync(columnNames, filterJson, pageSize, pageNumber, orderByJson));
  
     Task<Response<T>> GetAllAsync(Filter? filter, int pageSize = 0, int pageNumber = 1, OrderBy? orderBy = null) =>
         GetAllAsync(filter?.AsJson(), pageSize, pageNumber, orderBy?.AsJson());
