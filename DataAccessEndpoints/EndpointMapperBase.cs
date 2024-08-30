@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Routing;
 namespace EndpointMapper; 
 
 public abstract class EndpointMapperBase {
-    protected static IEndpointRouteBuilder MapCrudEndpoint<T>(IEndpointRouteBuilder routeBuilder, IDataService dataService, IQueries<T>? queries = null) where T : class {
+    protected static IEndpointRouteBuilder MapCrudEndpoint<T>(IEndpointRouteBuilder routeBuilder, IDataService dataService, IQueries<T>? queries = null) where T : class, new() {
         var typeName = typeof(T).Name;
         queries ??= dataService.GetQueries<T>();
         var group = routeBuilder.MapGroup($"/{typeName}").WithTags(typeName);
