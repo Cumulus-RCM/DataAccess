@@ -27,8 +27,9 @@ public class Queries<T>(IReader<T> reader) : IQueries<T> where T : class, new() 
                 cnt = await reader.GetCountAsync(filter).ConfigureAwait(false);
                 if (cnt == 0) return Response<T>.Empty();
             }
-            var items = await reader.GetAllDynamicAsync(columnNames, filter, pageSize, pageNumber, orderBy).ConfigureAwait(false);
-            return new Response<T>((IReadOnlyCollection<T>)items.Select(i=> TypeHelper.DynamicToT(i)).ToList().AsReadOnly(), cnt);
+            var result = await reader.GetAllDynamicAsync(columnNames, filter, pageSize, pageNumber, orderBy).ConfigureAwait(false);
+            var itemsList = result.Select(i => (T)TypeHelper.DynamicToT<T>(i)).ToList().AsReadOnly();
+            return new Response<T>(itemsList, cnt);
         }
         catch (Exception ex) {
             Log.Error(ex, nameof(GetAllAsync));
