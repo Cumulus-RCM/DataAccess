@@ -77,51 +77,29 @@ public class Reader<T> : Reader, IReader<T>  where T : class {
         TableSqlBuilder = new TableSqlBuilder(tableInfo);
     }
 
-    public async Task<IReadOnlyCollection<dynamic>> GetAllDynamicAsync(IReadOnlyCollection<string> columns, Filter? filter = null,
-        int pageSize = 0, int pageNum = 0, OrderBy? orderBy = null) {
-        (string sql, DynamicParameters? dynamicParameters) = TableSqlBuilder.GetReadSql(filter, pageSize, pageNum, orderBy, columns);
-
-        try {
-            using var conn = dbConnectionService.CreateConnection();
-            var result = await conn.QueryAsync(sql, dynamicParameters).ConfigureAwait(false);
-            return result.ToList().AsReadOnly();
-        }
-        catch (Exception e) {
-            Log.Error(e, "Error in GetAllAsync: sql:{0}", [sql, paramsToString(dynamicParameters)]);
-            return Array.Empty<dynamic>().AsReadOnly();
-        }
-    }
-
-    public override Task<int> GetCountAsync(Filter? filter = null) => getCountAsync(TableSqlBuilder.GetCountSql(filter), filter);
-
-    public new virtual async Task<IReadOnlyCollection<T>> GetAllAsync(Filter? filter = null, int pageSize = 0, int pageNum = 0, OrderBy? orderBy = null) {
-        var (sql, dynamicParameters) = TableSqlBuilder.GetReadSql(filter, pageSize, pageNum, orderBy);
-        DynamicParameters? parms = null;
+    public virtual async Task<IReadOnlyCollection<T>> GetAllAsync(Filter? filter = null, int pageSize = 0, int pageNum = 0, OrderBy? orderBy = null, IReadOnlyCollection<string>? columnsNames = null) {
+        var (sql, dynamicParameters) = TableSqlBuilder.GetReadSql(filter, pageSize, pageNum, orderBy, columnsNames);
         try {
             using var conn = dbConnectionService.CreateConnection();
             var result = await conn.QueryAsync<T>(sql, dynamicParameters).ConfigureAwait(false);
             return result.ToList().AsReadOnly();
         }
         catch (Exception e) {
-            Log.Error(e, "Error in GetAllAsync: sql:{0}", [sql, paramsToString(parms)]);
+            Log.Error(e, "Error in GetAllAsync: sql:{0}", [sql, paramsToString(dynamicParameters)]);
             return Array.Empty<T>().AsReadOnly();
         }
     }
 
-    public virtual async Task<T?> GetByPkAsync(string pkValue) {
+    public override Task<int> GetCountAsync(Filter? filter = null) => getCountAsync(TableSqlBuilder.GetCountSql(filter), filter);
+
+    public virtual async Task<T?> GetByPkAsync(string pkValue, IReadOnlyCollection<string>? columnNames = null) {
         var filter = Filter.Create(new FilterExpression<T>(tableInfo.PrimaryKeyName, Operator.Equal) { Value = pkValue });
-        var result = await GetAllAsync(filter, pageSize: 1, pageNum: 1).ConfigureAwait(false);
+        var result = await GetAllAsync(filter, pageSize: 1, pageNum: 1, columnsNames:columnNames).ConfigureAwait(false);
         return result.FirstOrDefault();
     }
 
     public virtual Task<IReadOnlyCollection<T>> GetAllByPkAsync(IEnumerable<string> pkValues) {
         var filter = Filter.Create(new FilterExpression<T>(tableInfo.PrimaryKeyName, Operator.In) { Value = pkValues });
         return GetAllAsync(filter);
-    }
-
-    public virtual async Task<dynamic?> GetByPkDynamicAsync(string pkValue, IReadOnlyCollection<string> columnNames) {
-        var filter = Filter.Create(new FilterExpression<T>(tableInfo.PrimaryKeyName, Operator.Equal) { Value = pkValue });
-        var result = await GetAllDynamicAsync(columnNames, filter, pageSize: 1, pageNum: 1).ConfigureAwait(false);
-        return result.FirstOrDefault();
     }
 }

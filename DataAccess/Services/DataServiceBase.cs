@@ -12,7 +12,7 @@ public abstract record DataServiceBase(IReaderFactory ReaderFactory, ISaveStrate
         SqlMapper.AddTypeHandler(new DapperSqlDateOnlyTypeHandler());
     }
 
-    public virtual IQueries<T> GetQueries<T>() where T : class, new() => new Queries<T>(ReaderFactory.GetReader<T>());
+    public virtual IQueries<T> GetQueries<T>() where T : class => new Queries<T>(ReaderFactory.GetReader<T>());
 }
 
 public class SqlTimeOnlyTypeHandler : SqlMapper.TypeHandler<TimeOnly> {
