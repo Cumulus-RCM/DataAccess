@@ -10,7 +10,7 @@ namespace DataAccess;
 public class ReaderFactory : IReaderFactory{
     private readonly IDbConnectionManager connectionManager;
     private readonly IDatabaseMapper databaseMapper;
-    protected Lazy<Dictionary<Type, Type>> customReaders = new();
+    protected Lazy<Dictionary<Type, Type>> customReaders = new(new Dictionary<Type, Type>());
 
     public ReaderFactory(IDbConnectionManager connectionManager, IDatabaseMapper databaseMapper) {
         this.connectionManager = connectionManager;
@@ -25,9 +25,9 @@ public class ReaderFactory : IReaderFactory{
         return reader;
     }
 
-    protected Dictionary<Type, Type> getCustomQueriesFromAssembly(Assembly assembly) {
+    protected Dictionary<Type, Type> getCustomReadersFromAssembly(Assembly assembly) {
         var types = assembly.GetTypes();
-        var custom = types.Where(t => typeof(ICustomQueries).IsAssignableFrom(t) && !t.IsInterface).ToList();
+        var custom = types.Where(t => typeof(ICustomReader).IsAssignableFrom(t) && !t.IsInterface).ToList();
         return custom.Select(t => new KeyValuePair<Type,Type>(t.BaseType!.GetGenericArguments()[0], t)).ToDictionary(x=>x.Key, x=>x.Value);
     }
 }
