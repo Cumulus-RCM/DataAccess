@@ -30,7 +30,7 @@ public class Queries<T>(IReader<T> reader) : IQueries<T> where T : class {
         }
         catch (Exception ex) {
             Log.Error(ex, nameof(GetAllAsync));
-            return Response<T>.Empty(ex.Message);
+            return Response<T>.Fail(ex.Message);
         }
     }
 
