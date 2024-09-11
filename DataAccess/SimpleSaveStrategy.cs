@@ -2,13 +2,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using BaseLib;
 using Dapper;
 using DataAccess.Services.SqlBuilders;
 using DataAccess.Shared;
+using Microsoft.Data.SqlClient;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Serilog;
