@@ -18,7 +18,13 @@ public class DatabaseMapper : IDatabaseMapper {
 
     public ITableInfo GetTableInfo<T>() {
         var type = typeof(T);
-        if (type.IsGenericType) type = type.GenericTypeArguments[0]; //ICollection<T>
+        if (type.IsGenericType) {  //ICollection<T>
+            type = type.GenericTypeArguments[0]; 
+            return getTableInfo(type, ()=> {
+                var tableInfoType = typeof(TableInfo<>).MakeGenericType(type);
+                return (ITableInfo)Activator.CreateInstance(tableInfoType)!;
+            });
+        }
         return getTableInfo(type, ()=> new TableInfo<T>());
     }
 
