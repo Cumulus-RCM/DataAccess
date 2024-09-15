@@ -56,10 +56,11 @@ public class TableSqlBuilder(ITableInfo tableInfo) : SqlBuilder {
     }
 
     private (string whereClause, DynamicParameters dynamicParameters)? getFilterClause(Filter? filter) {
+        const string SOFT_DELETE_SEGMENT_NAME = "SoftDelete";
         if (tableInfo.IsSoftDelete) {
-            var deletedFilterExpression = new FilterExpression("IsDeleted", Operator.Equal) { Value = false };
-            if (filter is not null) filter.AddSegment(new FilterSegment(deletedFilterExpression));
-            else filter = Filter.Create(deletedFilterExpression);
+            if (filter is null) filter = Filter.Create(new FilterSegment(new FilterExpression("IsDeleted", Operator.Equal) {Value = false}) {Name = SOFT_DELETE_SEGMENT_NAME});
+            else if (filter.Segments.All(s => s.Name != SOFT_DELETE_SEGMENT_NAME))
+                filter.AddSegment(new FilterSegment(new FilterExpression("IsDeleted", Operator.Equal) {Value = false}) {Name = SOFT_DELETE_SEGMENT_NAME});
         }
         return filter?.ToSqlClause(tableInfo.ColumnsMap) ?? ("", new DynamicParameters());
     }
@@ -87,9 +88,9 @@ public class TableSqlBuilder(ITableInfo tableInfo) : SqlBuilder {
             returnNewId = tableInfo.IsIdentity ? "SELECT SCOPE_IDENTITY() as newID" : "SELECT @newId as newID";
 
         var columnNames = string.Join(", ",
-            tableInfo.ColumnsMap.Where(p => p is { CanWrite: true, IsPrimaryKey: false }).Select(x => x.ColumnName));
+            tableInfo.ColumnsMap.Where(p => p is {CanWrite: true, IsPrimaryKey: false}).Select(x => x.ColumnName));
         var parameterNames = string.Join(", ",
-            tableInfo.ColumnsMap.Where(p => p is { CanWrite: true, IsPrimaryKey: false }).Select(x => $"@{x.PropertyName}"));
+            tableInfo.ColumnsMap.Where(p => p is {CanWrite: true, IsPrimaryKey: false}).Select(x => $"@{x.PropertyName}"));
         return @$"
 {getNewIdFromSequence};
 INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{parameterNames});
@@ -101,16 +102,16 @@ INSERT INTO {tableInfo.TableName} ({pkName}{columnNames}) VALUES ({pkValue}{para
         var setStatements = tableInfo.ColumnsMap
             .Where(property => changedPropertyNames is null ||
                                changedPropertiesList.Contains(property.PropertyName, StringComparer.OrdinalIgnoreCase))
-            .Where(property => property is { IsPrimaryKey: false, IsSkipByDefault: false })
+            .Where(property => property is {IsPrimaryKey: false, IsSkipByDefault: false})
             .Select(col => $"[{col.ColumnName}] = {PREFIX_PARAMETER_NAME}{col.PropertyName}");
         return string.Format(
             $"UPDATE {tableInfo.TableName} SET {string.Join(",", setStatements)} WHERE {tableInfo.PrimaryKeyName}={PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName}");
     }
 
     private string getDeleteSql() => tableInfo.CustomDeleteSqlTemplate ??
-                                     (tableInfo.IsSoftDelete 
-                                        ? $"UPDATE {tableInfo.TableName} SET IsDeleted = 1 WHERE {tableInfo.PrimaryKeyName} IN ({PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName}) "
-                                        : $"DELETE FROM {tableInfo.TableName} WHERE {tableInfo.PrimaryKeyName} IN ({PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName})"
+                                     (tableInfo.IsSoftDelete
+                                         ? $"UPDATE {tableInfo.TableName} SET IsDeleted = 1 WHERE {tableInfo.PrimaryKeyName} IN ({PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName}) "
+                                         : $"DELETE FROM {tableInfo.TableName} WHERE {tableInfo.PrimaryKeyName} IN ({PREFIX_PARAMETER_NAME}{tableInfo.PrimaryKeyName})"
                                      );
 
     private string getStoredProcedureSql() =>
