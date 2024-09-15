@@ -52,7 +52,7 @@ public class Reader {
             return await conn.ExecuteScalarAsync<int>(countSql, f?.dynamicParameters).ConfigureAwait(false);
         }
         catch (Exception e) {
-            Log.Error(e, "Error in GetCountAsync");
+            Log.Error(e, "Error in GetCountAsync. SQL:{countSql}", countSql);
             return 0;
         }
     }
