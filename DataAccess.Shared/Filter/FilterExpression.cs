@@ -55,7 +55,7 @@ public record FilterExpression<T> : FilterExpression {
 
             return result is not null;
         }
-        catch (Exception ex) {
+        catch (Exception) {
             return false;
         }
         
@@ -71,7 +71,7 @@ public record FilterExpression<T> : FilterExpression {
         if (!(linqExpression.Body is BinaryExpression {Left: MemberExpression memberExpression} binaryExpression))
             throw new ArgumentException("The expression body must be a BinaryExpression with a MemberExpression operand.", nameof(linqExpression));
 
-        Name = memberExpression.Member.Name;
+        PropertyName = memberExpression.Member.Name;
         Operator = binaryExpression.NodeType switch {
             ExpressionType.Equal => Operator.Equal,
             ExpressionType.NotEqual => Operator.NotEqual,
