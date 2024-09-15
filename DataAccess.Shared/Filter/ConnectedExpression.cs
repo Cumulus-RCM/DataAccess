@@ -14,7 +14,7 @@ public record ConnectedExpression {
         this.FilterExpression = filterExpression;
         this.AndOr = andOr ?? AndOr.And;
     }
-
+    
     public ConnectedExpression(string propertyName, Operator op, AndOr? andOr = null, object? value = null) 
         : this(new FilterExpression(propertyName, op) {Value = value}, andOr) { }
 
@@ -32,6 +32,8 @@ public record ConnectedExpression<T> : ConnectedExpression {
     public ConnectedExpression(string propertyName, Operator op, AndOr andOr, object? value = null)
         : base(new FilterExpression<T>(propertyName, op, value),  andOr) { }
 
+    public ConnectedExpression(Expression<Func<T, bool>> linqExpression) : this(new FilterExpression<T>(linqExpression), AndOr.And){ }
+    
     public ConnectedExpression(Expression<Func<T, object>> propertyNameExpression, Operator op, AndOr andOr, object? value = null)
     : base(new FilterExpression<T>(propertyNameExpression, op,value), andOr) { }
 }

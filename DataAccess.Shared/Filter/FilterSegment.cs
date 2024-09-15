@@ -5,7 +5,9 @@ namespace DataAccess.Shared;
 
 public record FilterSegment {
     //NOTE: setters are required for deserialization
-    public AndOr AndOr { get; set; } = AndOr.And;
+    public AndOr AndOr { get; init; } = AndOr.And;
+    
+    public string Name { get; init; }
 
     public Dictionary<string, ConnectedExpression> FilterExpressions { get; set; } = [];
 
