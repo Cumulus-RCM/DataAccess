@@ -1,18 +1,40 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Linq;
+using System.Reflection;
 using Dapper;
 using DataAccess.Shared;
 
 namespace DataAccess.Services;
 
-public abstract record DataServiceBase(IReaderFactory ReaderFactory, ISaveStrategy SaveStrategy, IDatabaseMapper DatabaseMapper)
-    : DataServiceUnitOfWork(SaveStrategy,DatabaseMapper), IDataService {
+public abstract record DataServiceBase : DataServiceUnitOfWork, IDataService {
+    private readonly Lazy<Dictionary<Type, Type>> customQueries;
+    
+    protected DataServiceBase(IReaderFactory ReaderFactory, ISaveStrategy SaveStrategy, IDatabaseMapper DatabaseMapper, Assembly customQueriesAssembly) : base(SaveStrategy,DatabaseMapper) {
+        this.ReaderFactory = ReaderFactory;
+        customQueries = new Lazy<Dictionary<Type, Type>>(getCustomQueriesFromAssembly(customQueriesAssembly));
+    }
+
     static DataServiceBase() {
         SqlMapper.AddTypeHandler(new SqlTimeOnlyTypeHandler());
         SqlMapper.AddTypeHandler(new DapperSqlDateOnlyTypeHandler());
     }
 
-    public virtual IQueries<T> GetQueries<T>() where T : class => new Queries<T>(ReaderFactory.GetReader<T>());
+    public IReaderFactory ReaderFactory { get; init; }
+
+    public IQueries<T> GetQueries<T>() where T : class {
+        var isCustom = customQueries.Value.TryGetValue(typeof(T), out var customCrudType);
+        return (IQueries<T>) (isCustom
+            ? Activator.CreateInstance(customCrudType!, ReaderFactory.GetReader<T>())!
+            : new Queries<T>(ReaderFactory.GetReader<T>()));
+    }
+    
+    protected Dictionary<Type, Type> getCustomQueriesFromAssembly(Assembly assembly) {
+        var types = assembly.GetTypes();
+        var custom = types.Where(t => typeof(ICustomQueries).IsAssignableFrom(t) && !t.IsInterface).ToList();
+        return custom.Select(t => new KeyValuePair<Type,Type>(t.BaseType!.GetGenericArguments()[0], t)).ToDictionary(x=>x.Key, x=>x.Value);
+    }
 }
 
 public class SqlTimeOnlyTypeHandler : SqlMapper.TypeHandler<TimeOnly> {
