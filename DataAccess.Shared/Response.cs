@@ -7,6 +7,7 @@ namespace DataAccess.Shared;
 
 public record Response(Exception? Exception = null) {
     public bool IsSuccess => Exception is null;
+    public bool IsFailed => Exception is not null;
 }
 
 public record Response<T> : Response {
