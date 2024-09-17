@@ -16,6 +16,7 @@ public sealed record TableInfo<T> : ITableInfo {
     public bool IsSequencePk { get; }
     public int Priority { get; init; } = 1000;
     public bool IsSoftDelete { get; }
+    public bool IsReadOnly { get; }
 
     public IReadOnlyCollection<IColumnInfo> ColumnsMap { get; }
 
@@ -44,17 +45,18 @@ public sealed record TableInfo<T> : ITableInfo {
         if (mappedColumns.Any(c => c.IsPrimaryKey)) PrimaryKeyName = mappedColumns.Single(c => c.IsPrimaryKey).ColumnName;
 
         if (tableInfoAttribute?.PrimaryKeyName is not null) PrimaryKeyName = tableInfoAttribute.PrimaryKeyName;
-        var pkPropertyInfo = properties.SingleOrDefault(pi => pi.Name.Equals(PrimaryKeyName, StringComparison.InvariantCultureIgnoreCase)) ??
-                             throw new InvalidDataException($"No PrimaryKeyName Defined for {TableName}.");
-        
-        if (tableInfoAttribute?.IsIdentity is not null) IsIdentity = tableInfoAttribute.IsIdentity;
-        IsSequencePk = !isIdentity && (pkPropertyInfo.PropertyType == typeof(int) || pkPropertyInfo.PropertyType == typeof(IdPk));
-        if (tableInfoAttribute?.SequenceName is not null) sequence = tableInfoAttribute.SequenceName;
-        SequenceName = IsSequencePk ? sequence ?? $"{TableName}_id_seq" : "";
+        var pkPropertyInfo = properties.SingleOrDefault(pi => pi.Name.Equals(PrimaryKeyName, StringComparison.InvariantCultureIgnoreCase));
+        IsReadOnly = pkPropertyInfo is null;
+        if (pkPropertyInfo is not null) {
+            if (tableInfoAttribute?.IsIdentity is not null) IsIdentity = tableInfoAttribute.IsIdentity;
+            IsSequencePk = !isIdentity && (pkPropertyInfo.PropertyType == typeof(int) || pkPropertyInfo.PropertyType == typeof(IdPk));
+            if (tableInfoAttribute?.SequenceName is not null) sequence = tableInfoAttribute.SequenceName;
+            SequenceName = IsSequencePk ? sequence ?? $"{TableName}_id_seq" : "";
 
-        PrimaryKeyType = pkPropertyInfo.PropertyType;
-        pkSetter = pkPropertyInfo.GetSetMethod(true);
-        pkGetter = pkPropertyInfo.GetGetMethod(true);
+            PrimaryKeyType = pkPropertyInfo.PropertyType;
+            pkSetter = pkPropertyInfo.GetSetMethod(true);
+            pkGetter = pkPropertyInfo.GetGetMethod(true);
+        }
 
         ColumnsMap = properties
             .GroupJoin(mappedColumns.ToList(), prop => prop.Name, mappedColumn => mappedColumn.PropertyName,

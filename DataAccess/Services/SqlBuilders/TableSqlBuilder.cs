@@ -11,6 +11,7 @@ namespace DataAccess.Services.SqlBuilders;
 
 public class TableSqlBuilder(ITableInfo tableInfo) : SqlBuilder {
     public string GetWriteSql(IDataChange dataChange) {
+        if (tableInfo.IsReadOnly) throw new InvalidOperationException($"Table:{tableInfo.TableName} is read-only.");
         return dataChange.DataChangeKind.Value switch {
             DataChangeKind.UPDATE => getUpdateSql(),
             DataChangeKind.INSERT => getInsertSql(dataChange.SqlShouldGenPk, dataChange.SqlShouldReturnPk),

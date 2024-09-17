@@ -13,6 +13,7 @@ public interface ITableInfo {
     bool IsSequencePk { get;}
     int Priority { get; }
     bool IsSoftDelete { get; }
+    bool IsReadOnly { get; }
     IReadOnlyCollection<IColumnInfo> ColumnsMap { get; }
     void SetPrimaryKeyValue(object entity, IdPk value);
     object GetPrimaryKeyValue(object entity);
