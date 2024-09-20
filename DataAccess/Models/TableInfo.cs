@@ -40,7 +40,7 @@ public sealed record TableInfo<T> : ITableInfo {
         TableName = tableName ?? tableInfoAttribute?.TableName ?? EntityType.Name;
         IsIdentity = tableInfoAttribute?.IsIdentity ?? isIdentity;
 
-        var properties = typeof(T).GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public )
+        var properties = typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public )
             .Where(p => p.CanWrite).ToArray();
         IsSoftDelete = properties.Any(p => p.Name == "IsDeleted" && p.PropertyType == typeof(bool));
         var mappedColumns = getColumnInfos(properties, mappedColumnsInfos).ToList();
