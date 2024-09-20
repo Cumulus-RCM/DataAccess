@@ -28,8 +28,7 @@ public class TableSqlBuilder(ITableInfo tableInfo) : SqlBuilder {
             var errColumnNames = columnNames.Where(colName =>
                 tableInfo.ColumnsMap.All(mappedCol => !colName.Equals(mappedCol.PropertyName, StringComparison.OrdinalIgnoreCase)));
             foreach (var columnName in errColumnNames)
-                Log.Warning("Column:{columnName} specified in dynamic columnNames not found in Table:{TableName}", columnName,
-                    tableInfo.TableName);
+                Log.Warning("Column:{columnName} specified in dynamic columnNames not found in Table:{TableName}", columnName, tableInfo.TableName);
         }
 
         var f = getFilterClause(filter);
