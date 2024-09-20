@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Data;
-using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 
 namespace DataAccess.Shared;

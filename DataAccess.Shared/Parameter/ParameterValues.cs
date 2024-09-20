@@ -27,6 +27,8 @@ public class ParameterValues  {
         values.Add(parameterValue);
     }
 
+    public static ParameterValues Create<T>(string name, T value) => new(ParameterValue.Create(name, value));
+
     public void Add(ParameterValue parameterValue) {
         values.Add(parameterValue);
     }
