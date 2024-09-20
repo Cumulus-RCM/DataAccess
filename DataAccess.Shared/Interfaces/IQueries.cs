@@ -13,22 +13,26 @@ public interface IQueries<T> {
 
     [Get("/")]
     Task<Response<T>> GetAllAsync(string? filterJson = null, int pageSize = 0, int pageNumber = 1, string? orderByJson = null,
-        IReadOnlyCollection<string>? columnNames = null);
+        IReadOnlyCollection<string>? columnNames = null, string? parameterValues = null);
 
-    IObservable<Response<T>> GetAll(Filter? filterJson = null, int pageSize = 0, int pageNumber = 1, OrderBy? orderBy = null) =>
-        Observable.FromAsync(() => GetAllAsync(filterJson, pageSize, pageNumber, orderBy));
+    IObservable<Response<T>> GetAll(Filter? filter = null, int pageSize = 0, int pageNumber = 1, OrderBy? orderBy = null,
+        IReadOnlyCollection<string>? columnNames = null, ParameterValues? parameterValues = null) =>
+        Observable.FromAsync(() => GetAllAsync(filter, pageSize, pageNumber, orderBy, columnNames, parameterValues));
 
     [Get("/Count")]
-    Task<int> GetCountAsync(string? filterJson = null);
+    Task<int> GetCountAsync(string? filterJson = null, string? parameterValues = null);
 
-    Task<int> GetCountAsync(Filter? filter = null) => GetCountAsync(filter?.AsJson());
+    Task<int> GetCountAsync(Filter? filter = null, ParameterValues? parameterValues = null) => GetCountAsync(filter?.AsJson(), parameterValues?.AsJson());
 
-    Task<Response<T>> GetAllAsync(Filter? filter, int pageSize = 0, int pageNumber = 1, OrderBy? orderBy = null) =>
-        GetAllAsync(filter?.AsJson(), pageSize, pageNumber, orderBy?.AsJson());
+    Task<Response<T>> GetAllAsync(Filter? filter, int pageSize = 0, int pageNumber = 1, OrderBy? orderBy = null,
+        IReadOnlyCollection<string>? columnNames = null, ParameterValues? parameterValues = null) =>
+        GetAllAsync(filterJson: filter?.AsJson(), pageSize, pageNumber, orderBy?.AsJson(), columnNames, parameterValues?.AsJson());
 
     [Get("/{pkValue}")]
-    Task<Response<T>> GetByPkAsync(string pkValue, IReadOnlyCollection<string>? columnNames = null);
+    Task<Response<T>> GetByPkAsync(string pkValue, IReadOnlyCollection<string>? columnNames = null, string? parameterValues = null);
 
-    Task<Response<T>> GetByPkAsync<TKey>(TKey pk, IReadOnlyCollection<string>? columnNames = null) where TKey : notnull =>
-        GetByPkAsync(pk.ToString() ?? throw new InvalidDataException("Key must be have valid ToString() method."), columnNames);
+    Task<Response<T>> GetByPkAsync<TKey>(TKey pk, IReadOnlyCollection<string>? columnNames = null, ParameterValues? parameterValues = null) where TKey : notnull {
+        var pkString = pk.ToString() ?? throw new InvalidDataException("Key must be have valid ToString() method.");
+        return GetByPkAsync(pkString, columnNames, parameterValues?.AsJson());
+    }
 }

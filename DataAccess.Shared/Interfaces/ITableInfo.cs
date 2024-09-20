@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 
 namespace DataAccess.Shared;
 
@@ -18,6 +19,7 @@ public interface ITableInfo {
     void SetPrimaryKeyValue(object entity, IdPk value);
     object GetPrimaryKeyValue(object entity);
     string? CustomSelectSqlTemplate { get; }
+    ParameterValues? CustomSelectParameters { get; }
     string? CustomDeleteSqlTemplate { get; }
     string? CustomInsertSqlTemplate { get; }
     string? CustomUpdateSqlTemplate { get; }

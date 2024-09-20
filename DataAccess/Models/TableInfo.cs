@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -27,6 +28,7 @@ public sealed record TableInfo<T> : ITableInfo {
     public string? CustomInsertSqlTemplate { get; init; }
     public string? CustomUpdateSqlTemplate { get; init; }
     public string? CustomStoredProcedureSqlTemplate { get; init; }
+    public ParameterValues? CustomSelectParameters { get; init; } 
 
     private readonly MethodInfo? pkSetter;
     private readonly MethodInfo? pkGetter;
