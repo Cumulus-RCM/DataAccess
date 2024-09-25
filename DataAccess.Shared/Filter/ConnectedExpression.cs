@@ -25,15 +25,17 @@ public record ConnectedExpression {
 }
 
 public record ConnectedExpression<T> : ConnectedExpression {
-    public ConnectedExpression(FilterExpression<T> filterExpression, AndOr andOr, object? value = null) : base(filterExpression, andOr) {
+    public ConnectedExpression(FilterExpression<T> filterExpression, AndOr andOr, object? value = null, string? name = null) 
+        : base(filterExpression, andOr) {
         if (value is not null) FilterExpression.Value = value;
+        if (name is not null) FilterExpression.Name = name;
     }
 
-    public ConnectedExpression(string propertyName, Operator op, AndOr andOr, object? value = null)
-        : base(new FilterExpression<T>(propertyName, op, value),  andOr) { }
+    public ConnectedExpression(string propertyName, Operator op, AndOr andOr, object? value = null, string? name = null)
+        : base(new FilterExpression<T>(propertyName, op, value, name),  andOr) { }
 
-    public ConnectedExpression(Expression<Func<T, bool>> linqExpression) : this(new FilterExpression<T>(linqExpression), AndOr.And){ }
-    
-    public ConnectedExpression(Expression<Func<T, object>> propertyNameExpression, Operator op, AndOr andOr, object? value = null)
-    : base(new FilterExpression<T>(propertyNameExpression, op,value), andOr) { }
+    public ConnectedExpression(Expression<Func<T, bool>> linqExpression, string? name = null) : this(new FilterExpression<T>(linqExpression), AndOr.And, name:name){ }
+
+    public ConnectedExpression(Expression<Func<T, object>> propertyNameExpression, Operator op, AndOr andOr, object? value = null, string? name = null)
+        : base(new FilterExpression<T>(propertyNameExpression, op, value,name), andOr) { }
 }

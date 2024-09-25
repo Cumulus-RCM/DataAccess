@@ -23,7 +23,7 @@ public record FilterExpression(string PropertyName, Operator Operator) {
 
     public string ValueTypeName { get; set; } = "";
 
-    public string Name { get; init; } = PropertyName;
+    public string Name { get; set; } = PropertyName;
 
     protected FilterExpression() : this("", Operator.Contains) { }
 
@@ -34,11 +34,12 @@ public record FilterExpression(string PropertyName, Operator Operator) {
 }
 
 public record FilterExpression<T> : FilterExpression {
-    public FilterExpression(string propertyName, Operator op, object? value = null) : base(propertyName, op) {
+    public FilterExpression(string propertyName, Operator op, object? value = null, string? name = null) : base(propertyName, op) {
         //ensure property exists on T
         _ = typeof(T).GetProperty(propertyName) ??
             throw new ArgumentException($"Property: {propertyName} NOT found on {typeof(T).Name}");
         if (value is not null) Value = value;
+        if (name is not null) Name = name;
     }
 
     public FilterExpression() { }
@@ -58,13 +59,12 @@ public record FilterExpression<T> : FilterExpression {
         catch (Exception) {
             return false;
         }
-        
-            
     }
 
-    public FilterExpression(Expression<Func<T, object>> propertyNameExpression, Operator op, object? value = null) :
+    public FilterExpression(Expression<Func<T, object>> propertyNameExpression, Operator op, object? value = null, string? name = null) :
         this(MemberHelpers.GetMemberName(propertyNameExpression), op, value) {
         if (value is not null) Value = value;
+        if (name is not null) Name = name;
     }
 
     public FilterExpression(Expression<Func<T, bool>> linqExpression) {
