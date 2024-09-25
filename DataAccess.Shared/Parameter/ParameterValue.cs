@@ -4,9 +4,9 @@ using System.Text.Json.Serialization;
 
 namespace DataAccess.Shared;
 
-public class ParameterValue(string name, string value, string typeName) {
+public class ParameterValue(string name, string valueString, string typeName) {
     public string Name { get; init; } = name;
-    public string Value { get; set; } = value;
+    public string ValueString { get; set; } = valueString;
     public string TypeName { get; init; } = typeName;
 
     [JsonIgnore]

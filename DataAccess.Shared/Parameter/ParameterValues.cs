@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -41,7 +40,7 @@ public class ParameterValues  {
         if (dynamicParameters is null) return this.ToDynamicParameters();
         foreach (var pv in values) {
             if (!dynamicParameters.ParameterNames.Contains(pv.Name))
-              dynamicParameters.Add(name:pv.Name, value:pv.Value, dbType:pv.DbType);
+              dynamicParameters.Add(name:pv.Name, value:pv.ValueString, dbType:pv.DbType);
         }
         return dynamicParameters;
     }
@@ -53,10 +52,10 @@ public class ParameterValues  {
 
         static object convert(ParameterValue parameterValue) =>
             parameterValue.TypeName switch {
-                "string" => parameterValue.Value,
-                "Int32" => int.Parse(parameterValue.Value),
-                "Int64" => long.Parse(parameterValue.Value),
-                "decimal" => decimal.Parse(parameterValue.Value),
+                "string" => parameterValue.ValueString,
+                "Int32" => int.Parse(parameterValue.ValueString),
+                "Int64" => long.Parse(parameterValue.ValueString),
+                "decimal" => decimal.Parse(parameterValue.ValueString),
                 _ => throw new NotImplementedException()
             };
     }
