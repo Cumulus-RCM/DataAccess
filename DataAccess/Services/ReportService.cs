@@ -36,7 +36,7 @@ public class ReportService(IDataService dataService, IDbConnectionManager connec
         return reportInfo is null ? Response<ReportDefinition>.Empty() : new Response<ReportDefinition>(reportInfo);
     }
 
-    public async Task<Response<dynamic>> GetReportDataAsync(ReportDefinition reportDefinition, int pageSize = 0, int pageNum = 0) {
+    public async Task<Response<dynamic>> GetReportDataAsync(ReportDefinition reportDefinition, Filter? filter, int pageSize = 0, int pageNum = 0) {
         try {
             var reader = new Reader(connectionManager, reportDefinition.ReportSql);
             var cnt = await reader.GetCountAsync(reportDefinition.Filter).ConfigureAwait(false);
@@ -50,7 +50,7 @@ public class ReportService(IDataService dataService, IDbConnectionManager connec
         }
     }
 
-    public async Task<long> GetCountAsync(ReportDefinition reportDefinition) {
+    public async Task<long> GetCountAsync(ReportDefinition reportDefinition, Filter? filter) {
         var sql = $"SELECT COUNT(*) FROM ({reportDefinition.ReportSql}) d";
         try {
             using var conn = connectionManager.CreateConnection();
@@ -60,5 +60,15 @@ public class ReportService(IDataService dataService, IDbConnectionManager connec
             Log.Error(exception, "Error in GetReportDataAsync: {0}", reportDefinition);
             return 0;
         }
+    }
+
+    public async Task<Response> ExportReportToExcelAsync(ReportDefinition reportDefinition, Filter filter, string filename) {
+        var reader = new Reader(connectionManager, reportDefinition.ReportSql);
+        var result = await reader.GetAllAsync(reportDefinition.Filter, orderBy: reportDefinition.OrderBy).ConfigureAwait(false);
+        if (result is not null) {
+            
+        }
+
+        return new Response();
     }
 }
