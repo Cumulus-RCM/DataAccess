@@ -96,10 +96,10 @@ public class Reader<T> : Reader, IReader<T>  where T : class {
     private void setParameterValues(DynamicParameters? dynamicParameters, ParameterValues? parameters) {
         if (parameters is null) return;
         foreach (var pv in parameters.Values) {
-            var paramValue = tableInfo.CustomSelectParameters?.Values.SingleOrDefault(p => p.Name == pv.Name);
+            var paramValue = tableInfo.CustomSelectParameters?.Values.SingleOrDefault(p => p.Name.Equals(pv.Name, StringComparison.CurrentCultureIgnoreCase));
             if (paramValue is not null) {
                 dynamicParameters ??= new DynamicParameters();
-                dynamicParameters.Add(paramValue.Name, pv.Value, paramValue.DbType);
+                dynamicParameters.Add(paramValue.Name, pv.ValueString, paramValue.DbType);
             }
         }
     }
