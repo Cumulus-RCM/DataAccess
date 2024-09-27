@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq.Expressions;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace DataAccess.Shared;
 
@@ -24,6 +25,14 @@ public record FilterExpression(string PropertyName, Operator Operator) {
     public string ValueTypeName { get; set; } = "";
 
     public string Name { get; set; } = PropertyName;
+
+    [JsonInclude]
+    private string? alias;
+    [JsonIgnore]
+    public string Alias {
+        get => alias is null ? "" : $"{alias}.";
+        init => alias = value;
+    }
 
     protected FilterExpression() : this("", Operator.Contains) { }
 

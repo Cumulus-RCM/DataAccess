@@ -31,6 +31,7 @@ public class Filter {
     public Func<T, bool> ToLinqExpression<T>() {
         //Note: this only works for the first expression
         //Note: this only works for IN and StartsWith
+        return _ => true;
         var firstExpression = Segments.SelectMany(s => s.FilterExpressions).First();
         var expr = firstExpression.Value.FilterExpression;
         if (expr.Value is string filterStringValue) {
@@ -49,11 +50,14 @@ public class Filter {
                 methodInfo = typeof(string).GetMethod("Contains", [typeof(string)])!;
                 body = Expression.Call(filterValue, methodInfo, lowered);
             }
+            else if (expr.Operator == Operator.Equal) {
+                methodInfo = typeof(string).GetMethod("Equal", [typeof(string)])!;
+                body = Expression.Call(lowered, methodInfo, filterValue);
+            }
             else {
                 methodInfo = typeof(string).GetMethod("StartsWith", [typeof(string)])!;
                 body = Expression.Call(lowered, methodInfo, filterValue);
             }
-
             var lambda = Expression.Lambda<Func<T, bool>>(body, parameter);
             return lambda.Compile();
         }

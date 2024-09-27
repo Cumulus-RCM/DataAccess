@@ -51,7 +51,7 @@ public static class FilterSqlBuilder {
 
         string expressionToSql(FilterExpression fe, int segmentIndex, int expressionIndex) {
             if (fe.PropertyName == "") return "";
-            var columnName = $"{getMappedPropertyName(fe.PropertyName)}";
+            var columnName = $"{fe.Alias}{getMappedPropertyName(fe.PropertyName)}";
             var (pre, post) = stringifyTemplates();
             var value = fe.Operator.UsesValue ? $" {pre}@{fe.Name}{segmentIndex}{expressionIndex}{post}" : "";
             return $" {columnName} {fe.Operator.SqlOperator}{value} ";
