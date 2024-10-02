@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using BaseLib;
 using Dapper;
 using DataAccess.Shared;
 using Serilog;
@@ -51,6 +52,7 @@ public class TableSqlBuilder(ITableInfo tableInfo) : SqlBuilder {
     }
 
     public string GetCountSql(Filter? filter = null) {
+        if (tableInfo.CustomCountSqlTemplate.IsNotNullOrEmpty()) return tableInfo.CustomCountSqlTemplate;
         var f = getFilterClause(filter);
         return $"SELECT COUNT(*) FROM {tableInfo.TableName} {f?.whereClause ?? ""}";
     }
