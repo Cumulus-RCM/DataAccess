@@ -24,6 +24,7 @@ public sealed record TableInfo<T> : ITableInfo {
     public Type EntityType { get; } = typeof(T);
 
     public string? CustomSelectSqlTemplate { get; init; }
+    public string? CustomCountSqlTemplate { get; init; }
     public string? CustomDeleteSqlTemplate { get; init; }
     public string? CustomInsertSqlTemplate { get; init; }
     public string? CustomUpdateSqlTemplate { get; init; }

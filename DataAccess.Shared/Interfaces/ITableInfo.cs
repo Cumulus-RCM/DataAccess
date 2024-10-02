@@ -19,6 +19,7 @@ public interface ITableInfo {
     void SetPrimaryKeyValue(object entity, IdPk value);
     object GetPrimaryKeyValue(object entity);
     string? CustomSelectSqlTemplate { get; }
+    string? CustomCountSqlTemplate { get; }
     ParameterValues? CustomSelectParameters { get; }
     string? CustomDeleteSqlTemplate { get; }
     string? CustomInsertSqlTemplate { get; }
