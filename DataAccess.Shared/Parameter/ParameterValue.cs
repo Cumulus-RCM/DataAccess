@@ -15,6 +15,9 @@ public class ParameterValue(string name, string valueString, string typeName) {
         "Int32" => DbType.Int32,
         "Int64" => DbType.Int64,
         "decimal" => DbType.Decimal,
+        "DateTime" => DbType.DateTime,
+        "Date" => DbType.Date,
+        "Time" => DbType.Time,
         _ => throw new NotImplementedException()
     };
 
