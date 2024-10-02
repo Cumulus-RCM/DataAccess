@@ -20,7 +20,7 @@ public class Queries<T>(IReader<T> reader) : IQueries<T> where T : class {
         try {
             var cnt = 0;
             if (pageNumber == 0) {
-                cnt = await reader.GetCountAsync(filter).ConfigureAwait(false);
+                cnt = await reader.GetCountAsync(filter, parameters).ConfigureAwait(false);
                 if (cnt == 0) return Response<T>.Empty();
             }
 
