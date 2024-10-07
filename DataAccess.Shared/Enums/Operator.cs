@@ -17,6 +17,8 @@ public sealed record Operator : Enumeration {
     public static readonly Operator In = new(10, "IN", "In");
     public static readonly Operator IsNull = new(11, " IS NULL ", "is Null") {UsesValue = false};
     public static readonly Operator IsNotNull = new(12, " IS NOT NULL ", "is NOT Null") {UsesValue = false};
+    public static readonly Operator IsTrue = new(13, " = 1 ", "is true") { UsesValue = false };
+    public static readonly Operator IsFalse = new(14, " = 0 ", "is false") { UsesValue = false };
 
     [JsonIgnore]
     public string PreTemplate { get; private init; }= "";
