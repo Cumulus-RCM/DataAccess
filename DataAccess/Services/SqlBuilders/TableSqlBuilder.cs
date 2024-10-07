@@ -52,9 +52,11 @@ public class TableSqlBuilder(ITableInfo tableInfo) : SqlBuilder {
     }
 
     public string GetCountSql(Filter? filter = null) {
-        if (tableInfo.CustomCountSqlTemplate.IsNotNullOrEmpty()) return tableInfo.CustomCountSqlTemplate;
-        var f = getFilterClause(filter);
-        return $"SELECT COUNT(*) FROM {tableInfo.TableName} {f?.whereClause ?? ""}";
+        var where = getFilterClause(filter)?.whereClause ?? "";
+        var select = tableInfo.CustomSelectSqlTemplate!.IsNotNullOrEmpty()
+            ? tableInfo.CustomCountSqlTemplate!
+            : $"SELECT COUNT(*) FROM {tableInfo.TableName}";
+        return $"{select} {where}";
     }
 
     private (string whereClause, DynamicParameters dynamicParameters)? getFilterClause(Filter? filter) {
