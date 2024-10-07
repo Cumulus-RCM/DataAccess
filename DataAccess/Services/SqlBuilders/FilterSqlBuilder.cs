@@ -27,6 +27,7 @@ public static class FilterSqlBuilder {
         return ($"{sb}", dynamicParameters);
 
         string segmentToSql(FilterSegment filterSegment, int segmentIndex) {
+            if (filterSegment.FilterExpressions.Count == 0) return "";
             string result;
             var expressions = filterSegment.FilterExpressions.Values;
             var firstExpression = expressionToSql(expressions.First().FilterExpression, segmentIndex, 0);
