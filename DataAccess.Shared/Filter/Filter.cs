@@ -11,7 +11,7 @@ namespace DataAccess.Shared;
 public class Filter {
     public List<FilterSegment> Segments { get; init; } = [];
 
-    public Filter() {}
+    public Filter() { }
 
     public static Filter? FromJson(string? json) {
         if (string.IsNullOrWhiteSpace(json)) return null;
@@ -58,6 +58,7 @@ public class Filter {
                 methodInfo = typeof(string).GetMethod("StartsWith", [typeof(string)])!;
                 body = Expression.Call(lowered, methodInfo, filterValue);
             }
+
             var lambda = Expression.Lambda<Func<T, bool>>(body, parameter);
             return lambda.Compile();
         }
@@ -98,7 +99,7 @@ public class Filter {
         filter.Segments.AddRange(filterSegments);
         return filter;
     }
-    
+
     public static Filter Create(FilterSegment filterSegment) => new Filter(filterSegment);
 
     private Filter(FilterSegment filterSegment) => Segments.Add(filterSegment);
@@ -132,6 +133,12 @@ public class Filter {
 
     public void AddSegment(FilterSegment filterSegment) => Segments.Add(filterSegment);
 
+    public void RemoveExpression(FilterExpression filterExpression) {
+        foreach (var segment in Segments) {
+            segment.RemoveExpression(filterExpression.Name);
+        }
+    }
+
     public static Filter FromEntity<T>(T item) where T : class {
         var type = typeof(T);
         var props = type.GetProperties();
@@ -146,4 +153,4 @@ public class Filter {
 
         return new Filter(filterSegment);
     }
- }
+}
