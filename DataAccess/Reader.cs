@@ -6,17 +6,19 @@ using BaseLib;
 using Dapper;
 using DataAccess.Services.SqlBuilders;
 using DataAccess.Shared;
-using Serilog;
+using Microsoft.Extensions.Logging;
 
 namespace DataAccess;
 
 public class Reader {
     private readonly IDbConnectionManager dbConnectionService;
     private readonly string baseSql;
+    private readonly ILogger<Reader> logger;
 
-    public Reader(IDbConnectionManager dbConnectionService, string baseSql) {
+    public Reader(IDbConnectionManager dbConnectionService, string baseSql, ILoggerFactory loggerFactory) {
         this.dbConnectionService = dbConnectionService;
         this.baseSql = baseSql;
+        logger = loggerFactory.CreateLogger<Reader>();
     }
     
     public async Task<IReadOnlyCollection<dynamic>> GetAllAsync(Filter? filter = null, int pageSize = 0, int pageNum = 1, OrderBy? orderBy = null) {        
@@ -29,7 +31,7 @@ public class Reader {
             return result.ToArray().AsReadOnly();
         }
         catch (Exception e) {
-            Log.Error(e, "Error in GetAllAsync: sql:{0}", [sql, paramsToString(f?.dynamicParameters)]);
+            logger.LogError(e, "Error in GetAllAsync: sql:{0}", [sql, paramsToString(f?.dynamicParameters)]);
             return Array.Empty<dynamic>().AsReadOnly();
         }
 
@@ -55,7 +57,7 @@ public class Reader {
             return await conn.ExecuteScalarAsync<int>(countSql, dynamicParameters);
         }
         catch (Exception e) {
-            Log.Error(e, "Error in GetCountAsync. SQL:{countSql}", countSql);
+            logger.LogError(e, "Error in GetCountAsync. SQL:{countSql}", countSql);
             return 0;
         }
     }
@@ -68,14 +70,16 @@ public class Reader {
 }
 
 public class Reader<T> : Reader, IReader<T>  where T : class {
+    private ILogger<Reader> logger {  get; }
     protected readonly IDbConnectionManager dbConnectionService;
     protected readonly TableSqlBuilder TableSqlBuilder;
     private readonly ITableInfo tableInfo;
 
-    public Reader(IDbConnectionManager dbConnectionService, IDatabaseMapper databaseMapper) : base(dbConnectionService, "") {
+    public Reader(IDbConnectionManager dbConnectionService, IDatabaseMapper databaseMapper, ILoggerFactory loggerFactory) : base(dbConnectionService, "", loggerFactory) {
         this.dbConnectionService = dbConnectionService;
         tableInfo = databaseMapper.GetTableInfo<T>();
         TableSqlBuilder = new TableSqlBuilder(tableInfo);
+        logger = loggerFactory.CreateLogger<Reader>();
     }
 
     public virtual async Task<IReadOnlyCollection<T>> GetAllAsync(Filter? filter = null, int pageSize = 0, int pageNum = 0, OrderBy? orderBy = null,
@@ -88,7 +92,7 @@ public class Reader<T> : Reader, IReader<T>  where T : class {
             return result.ToList().AsReadOnly();
         }
         catch (Exception e) {
-            Log.Error(e, "Error in GetAllAsync: sql:{0}", [sql, paramsToString(dynamicParameters)]);
+            logger.LogError(e, "Error in GetAllAsync:{0}", [paramsToString(dynamicParameters)]);
             return Array.Empty<T>().AsReadOnly();
         }
     }
@@ -96,11 +100,10 @@ public class Reader<T> : Reader, IReader<T>  where T : class {
     private void setParameterValues(DynamicParameters? dynamicParameters, ParameterValues? parameters) {
         if (parameters is null) return;
         foreach (var pv in parameters.Values) {
-            var paramValue = tableInfo.CustomSelectParameters?.Values.SingleOrDefault(p => p.Name.Equals(pv.Name, StringComparison.CurrentCultureIgnoreCase));
-            if (paramValue is not null) {
-                dynamicParameters ??= new DynamicParameters();
-                dynamicParameters.Add(paramValue.Name, pv.ValueString, paramValue.DbType);
-            }
+            var dbType = TypeHelper.GetDbType(pv.TypeName);
+            logger.LogInformation("Parameter: Name:{0} ValueString:{1} TypeName:{2}, Type:{3}, DbType:{4}", pv.Name, pv.ValueString, pv.TypeName, Type.GetType(pv.TypeName), dbType);
+            dynamicParameters ??= new DynamicParameters();
+            dynamicParameters.Add(pv.Name, pv.GetValue(), dbType);
         }
     }
 
@@ -113,7 +116,7 @@ public class Reader<T> : Reader, IReader<T>  where T : class {
             return await conn.ExecuteScalarAsync<int>(sql, f?.dynamicParameters);
         }
         catch (Exception e) {
-            Log.Error(e, "Error in GetCountAsync: sql:{0}", [sql, paramsToString(f?.dynamicParameters)]);
+            logger.LogError(e, "Error in GetCountAsync: sql:{0}", [sql, paramsToString(f?.dynamicParameters)]);
             return 0;
         }
     }
