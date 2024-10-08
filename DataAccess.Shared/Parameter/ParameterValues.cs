@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using BaseLib;
 using Dapper;
 
 namespace DataAccess.Shared;
@@ -40,7 +41,7 @@ public class ParameterValues  {
         if (dynamicParameters is null) return this.ToDynamicParameters();
         foreach (var pv in values) {
             if (!dynamicParameters.ParameterNames.Contains(pv.Name))
-              dynamicParameters.Add(name:pv.Name, value:pv.ValueString, dbType:pv.DbType);
+              dynamicParameters.Add(pv.Name, pv.GetValue(), TypeHelper.GetDbType(pv.TypeName));
         }
         return dynamicParameters;
     }
