@@ -62,9 +62,9 @@ public class TableSqlBuilder(ITableInfo tableInfo) : SqlBuilder {
     private (string whereClause, DynamicParameters dynamicParameters)? getFilterClause(Filter? filter) {
         const string SOFT_DELETE_SEGMENT_NAME = "SoftDelete";
         if (tableInfo.IsSoftDelete) {
-            if (filter is null) filter = Filter.Create(new FilterSegment(new FilterExpression("IsDeleted", Operator.Equal) {Value = false}) {Name = SOFT_DELETE_SEGMENT_NAME});
+            if (filter is null) filter = Filter.Create(new FilterSegment(new FilterExpression("IsDeleted", Operator.IsFalse)) {Name = SOFT_DELETE_SEGMENT_NAME});
             else if (filter.Segments.All(s => s.Name != SOFT_DELETE_SEGMENT_NAME))
-                filter.AddSegment(new FilterSegment(new FilterExpression("IsDeleted", Operator.Equal) {Value = false}) {Name = SOFT_DELETE_SEGMENT_NAME});
+                filter.AddSegment(new FilterSegment(new FilterExpression("IsDeleted", Operator.IsFalse)) {Name = SOFT_DELETE_SEGMENT_NAME});
         }
         return filter?.ToSqlClause(tableInfo.ColumnsMap) ?? ("", new DynamicParameters());
     }

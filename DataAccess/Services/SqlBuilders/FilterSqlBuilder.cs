@@ -1,6 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
+using BaseLib;
 using Dapper;
 using DataAccess.Shared;
 
@@ -35,7 +38,7 @@ public static class FilterSqlBuilder {
                 result = firstExpression;
             else {
                 var segmentStringBuilder = new StringBuilder(firstExpression);
-                var expressionIndex = 1;
+                var expressionIndex = 0;
                 foreach (var expression in expressions.Skip(1)) {
                     var expressionSql = expressionToSql(expression.FilterExpression, segmentIndex, expressionIndex++);
                     if (expressionSql != "") {
@@ -74,12 +77,15 @@ public static class FilterSqlBuilder {
             for (var segmentIndex = 0; segmentIndex < filter.Segments.Count; segmentIndex++) {
                 var segment = filter.Segments[segmentIndex];
                 var expressionIndex = 0;
-                foreach (var expr in segment.FilterExpressions) {
-                    parameters.Add($"{expr.Key}{segmentIndex}{expressionIndex++}", expr.Value.FilterExpression.Value);
+                foreach (var expr in segment.FilterExpressions.Where(f => f.Value.FilterExpression.Operator.UsesValue)) {
+                    var dbType = TypeHelper.GetDbType(expr.Value.FilterExpression.ValueTypeName);
+                    parameters.Add($"{expr.Key}{segmentIndex}{expressionIndex++}", expr.Value.FilterExpression.Value, dbType);
                 }
             }
 
             return parameters;
+
+
         }
     }
 }
