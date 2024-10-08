@@ -6,13 +6,15 @@ using BaseLib;
 using Dapper;
 using DataAccess.Shared;
 using DataAccess.Shared.ReportService;
+using Microsoft.Extensions.Logging;
 using Serilog;
 
 namespace DataAccess.Services;
 
-public class ReportService(IDataService dataService, IDbConnectionManager connectionManager) : IReportService {
+public class ReportService(IDataService dataService, IDbConnectionManager connectionManager, ILoggerFactory loggerFactory) : IReportService {
     private Dictionary<string, ReportDefinition>? cachedReportDefinitions;
-
+    private ILogger<ReportService> logger = loggerFactory.CreateLogger<ReportService>();
+    
     public async Task<Response<(string reportName, string reportDescription)>> GetReportsAsync(bool forceRefresh) {
         await loadReportsAsync(forceRefresh).ConfigureAwait(false);
         var result = cachedReportDefinitions?.Select(kvp => (kvp.Key, kvp.Value.ReportDescription)).ToArray() ?? [];
@@ -38,7 +40,7 @@ public class ReportService(IDataService dataService, IDbConnectionManager connec
 
     public async Task<Response<dynamic>> GetReportDataAsync(ReportDefinition reportDefinition, Filter? filter, int pageSize = 0, int pageNum = 0) {
         try {
-            var reader = new Reader(connectionManager, reportDefinition.ReportSql);
+            var reader = new Reader(connectionManager, reportDefinition.ReportSql, loggerFactory);
             var cnt = await reader.GetCountAsync(reportDefinition.Filter).ConfigureAwait(false);
             if (cnt == 0) return Response<dynamic>.Empty();
             var result = await reader.GetAllAsync(reportDefinition.Filter, pageSize, pageNum, reportDefinition.OrderBy).ConfigureAwait(false);
@@ -63,7 +65,7 @@ public class ReportService(IDataService dataService, IDbConnectionManager connec
     }
 
     public async Task<Response> ExportReportToExcelAsync(ReportDefinition reportDefinition, Filter filter, string filename) {
-        var reader = new Reader(connectionManager, reportDefinition.ReportSql);
+        var reader = new Reader(connectionManager, reportDefinition.ReportSql, loggerFactory);
         var result = await reader.GetAllAsync(reportDefinition.Filter, orderBy: reportDefinition.OrderBy).ConfigureAwait(false);
         if (result is not null) {
             
