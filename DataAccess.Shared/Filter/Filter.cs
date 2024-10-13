@@ -133,10 +133,13 @@ public class Filter {
 
     public void AddSegment(FilterSegment filterSegment) => Segments.Add(filterSegment);
 
-    public void RemoveExpression(FilterExpression filterExpression) {
+    public bool RemoveExpression(FilterExpression filterExpression) {
+        var removedCnt = 0;
         foreach (var segment in Segments) {
-            segment.RemoveExpression(filterExpression.Name);
+            var result = segment.RemoveExpression(filterExpression.Name);
+            if (result) removedCnt++;
         }
+        return removedCnt > 0;
     }
 
     public static Filter FromEntity<T>(T item) where T : class {

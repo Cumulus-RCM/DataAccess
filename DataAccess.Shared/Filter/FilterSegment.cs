@@ -17,9 +17,9 @@ public record FilterSegment {
         AddExpression(filterExpression, andOr);
     }
 
-    public void RemoveExpression(ConnectedExpression connectedExpression) => RemoveExpression(connectedExpression.FilterExpression.Name);
+    public bool RemoveExpression(ConnectedExpression connectedExpression) => RemoveExpression(connectedExpression.FilterExpression.Name);
 
-    public void RemoveExpression(string expressionName) => FilterExpressions.Remove(expressionName);
+    public bool RemoveExpression(string expressionName) => FilterExpressions.Remove(expressionName);
 
     public void AddExpression(FilterExpression filterExpression, AndOr? andOr = null) {
         FilterExpressions.Add(filterExpression.Name, new ConnectedExpression(filterExpression, andOr ?? AndOr));
