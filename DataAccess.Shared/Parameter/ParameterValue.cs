@@ -19,6 +19,7 @@ public class ParameterValue(string name, string valueString, string typeName) {
         throw new InvalidExpressionException($"{ValueString} could not be converted to {type} from String.");
     }
 
+    //NOTE: DO NOT remove - needed for serialization
     public ParameterValue() : this("", "", "object") { }
 
     public static ParameterValue Create<T>(string name, T value) => new(name, value.ToString(), typeof(T).FullName);
