@@ -23,6 +23,20 @@ public record SaveResponse(IReadOnlyCollection<SaveResult> SaveResults) : Respon
 
     public static SaveResponse Failed(string message) => new([]) {Exception = new Exception(message)};
     public static SaveResponse Empty() => new([]);
+    
+    public static SaveResponse Merge(IEnumerable<SaveResponse> saveResponses) {
+        var saveResults = saveResponses
+            .SelectMany(response => response.SaveResults)
+            .GroupBy(x => x.TableName)
+            .Select(x => new SaveResult(
+                x.Key,
+                x.Sum(y => y.UpdatedCount),
+                x.Sum(y => y.DeletedCount),
+                x.SelectMany(y => y.InsertedIds ?? Array.Empty<IdPk>()).ToArray(),
+                x.FirstOrDefault(y => y.Exception is not null)?.Exception))
+            .ToArray();
+        return new SaveResponse(saveResults);
+    }
 }
 
 public class SaveResponseBuilder {
