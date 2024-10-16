@@ -11,7 +11,7 @@ namespace DataAccess.Services;
 public abstract record DataServiceBase : DataServiceUnitOfWork, IDataService {
     private readonly Lazy<Dictionary<Type, Type>> customQueries;
     
-    protected DataServiceBase(IReaderFactory ReaderFactory, ISaveStrategy SaveStrategy, IDatabaseMapper DatabaseMapper, Assembly customQueriesAssembly) : base(SaveStrategy,DatabaseMapper) {
+    protected DataServiceBase(IReaderFactory ReaderFactory, ISaveStrategy SaveStrategy, IDatabaseMapper DatabaseMapper, Assembly? customQueriesAssembly = null) : base(SaveStrategy,DatabaseMapper) {
         this.ReaderFactory = ReaderFactory;
         customQueries = new Lazy<Dictionary<Type, Type>>(getCustomQueriesFromAssembly(customQueriesAssembly));
     }
@@ -30,7 +30,8 @@ public abstract record DataServiceBase : DataServiceUnitOfWork, IDataService {
             : new Queries<T>(ReaderFactory.GetReader<T>()));
     }
     
-    protected Dictionary<Type, Type> getCustomQueriesFromAssembly(Assembly assembly) {
+    protected Dictionary<Type, Type> getCustomQueriesFromAssembly(Assembly? assembly) {
+        if (assembly is null) return new Dictionary<Type, Type>();
         var types = assembly.GetTypes();
         var custom = types.Where(t => typeof(ICustomQueries).IsAssignableFrom(t) && !t.IsInterface).ToList();
         return custom.Select(t => new KeyValuePair<Type,Type>(t.BaseType!.GetGenericArguments()[0], t)).ToDictionary(x=>x.Key, x=>x.Value);
