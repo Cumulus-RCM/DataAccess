@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Bogus.Healthcare" Version="35.6.1" />
+    <!--<PackageReference Include="Bogus.Tools.Analyzer" Version="34.0.2" PrivateAssets="All" />-->
+  </ItemGroup>
+
+	<ItemGroup>
+		<Compile Include="..\..\GlobalUsings.cs" Link="GlobalUsings.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\HipaaServices\Billing.DataAccess\Billing.DataAccess.csproj" />
+	  <ProjectReference Include="..\..\HipaaServices\Billing.Data\Billing.Data.csproj" />
+	  <ProjectReference Include="..\DataAccess.Shared\DataAccess.Shared.csproj" />
+	  <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
+	</ItemGroup>
+</Project>

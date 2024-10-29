@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -11,9 +11,9 @@
     <None Remove="DataAccess.csproj.DotSettings" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Include="..\..\HipaaServices\ClientServer.Common\Billing.Data\GlobalUsings.cs" Link="GlobalUsings.cs" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Include="..\..\GlobalUsings.cs" Link="GlobalUsings.cs" />
+	</ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.35" />
